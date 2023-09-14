@@ -8,21 +8,37 @@ pub mod extensions {
     deno_core::extension!(
         bueno,
         ops = [
+            #[cfg(feature = "battery")]
             battery::op_battery_charging,
+            #[cfg(feature = "battery")]
             battery::op_battery_charging_time,
+            #[cfg(feature = "battery")]
             battery::op_battery_discharging_time,
+            #[cfg(feature = "battery")]
             battery::op_battery_level,
+            #[cfg(feature = "fs")]
             fs::op_read_file,
+            #[cfg(feature = "fs")]
             fs::op_read_text_file,
+            #[cfg(feature = "fs")]
             fs::op_write_file,
+            #[cfg(feature = "fs")]
             fs::op_write_text_file,
+            #[cfg(feature = "fs")]
             fs::op_remove_file,
+            #[cfg(feature = "fs")]
             fs::op_remove_dir,
+            #[cfg(feature = "performance")]
             performance::op_high_res_time,
+            #[cfg(feature = "performance")]
             performance::op_time_origin,
+            #[cfg(feature = "timers")]
             timers::op_create_timer,
+            #[cfg(feature = "timers")]
             timers::op_queue_timer,
+            #[cfg(feature = "timers")]
             timers::op_queue_timer_deferred,
+            #[cfg(feature = "timers")]
             timers::op_clear_timer,
         ],
         esm_entry_point = "ext:bueno/runtime.js",

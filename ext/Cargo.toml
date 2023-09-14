@@ -16,3 +16,10 @@ bueno_ext_battery = { path = "./battery/" }
 bueno_ext_fs = { path = "./fs/" }
 bueno_ext_performance = { path = "./performance/" }
 bueno_ext_timers = { path = "./timers/" }
+
+[features]
+default = ["battery", "fs", "performance", "timers"]
+battery = []
+fs = []
+performance = []
+timers = []
