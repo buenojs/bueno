@@ -13,3 +13,5 @@ path = "lib.rs"
 [dependencies]
 deno_core.workspace = true
 tokio.workspace = true
+
+async-recursion = "1.0.5"
