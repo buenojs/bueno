@@ -45,6 +45,7 @@ pub mod extensions {
             "battery/mod.js",
             "web/mod.js",
             "web/events.js",
+            "web/streams.js",
             "web/encoding.js",
             "console/mod.js",
             "console/printer.js",
