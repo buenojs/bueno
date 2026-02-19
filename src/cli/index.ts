@@ -4,6 +4,8 @@
  * Main entry point for the Bueno CLI
  */
 
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { parseArgs, hasFlag, generateGlobalHelpText, generateHelpText, type ParsedArgs } from './core/args';
 import { cliConsole, colors, setColorEnabled } from './core/console';
 import { registry } from './commands';
@@ -17,8 +19,11 @@ import './commands/build';
 import './commands/start';
 import './commands/help';
 
-// CLI version (should match package.json)
-const VERSION = '0.1.0';
+// Read version from package.json dynamically
+const packageJson = JSON.parse(
+	readFileSync(join(import.meta.dir, '../../package.json'), 'utf-8')
+);
+const VERSION = packageJson.version;
 
 /**
  * CLI error types
