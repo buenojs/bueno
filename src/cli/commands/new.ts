@@ -88,7 +88,7 @@ function validateProjectName(name: string): boolean | string {
  */
 function getPackageJsonTemplate(config: ProjectConfig): string {
 	const dependencies: Record<string, string> = {
-		bueno: '^0.1.0',
+		'@buenojs/bueno': '^0.8.0',
 	};
 
 	const devDependencies: Record<string, string> = {
@@ -141,8 +141,8 @@ function getTsConfigTemplate(): string {
 				allowSyntheticDefaultImports: true,
 				jsx: 'react-jsx',
 				paths: {
-					bueno: ['./node_modules/bueno/dist/index.d.ts'],
-				},
+						'@buenojs/bueno': ['./node_modules/@buenojs/bueno/dist/index.d.ts'],
+					},
 			},
 			include: ['server/**/*', 'client/**/*'],
 			exclude: ['node_modules', 'dist'],
@@ -157,7 +157,7 @@ function getTsConfigTemplate(): string {
  */
 function getMainTemplate(config: ProjectConfig): string {
 	if (config.template === 'minimal') {
-		return `import { createServer } from 'bueno';
+		return `import { createServer } from '@buenojs/bueno';
 
 const app = createServer();
 
@@ -169,8 +169,8 @@ await app.listen(3000);
 `;
 	}
 
-	return `import { createApp, Module, Controller, Get, Injectable } from 'bueno';
-import type { Context } from 'bueno';
+	return `import { createApp, Module, Controller, Get, Injectable } from '@buenojs/bueno';
+import type { Context } from '@buenojs/bueno';
 
 // Services
 @Injectable()
@@ -217,7 +217,7 @@ function getConfigTemplate(config: ProjectConfig): string {
 		? `{ url: 'sqlite:./data.db' }`
 		: `{ url: process.env.DATABASE_URL ?? '${config.database}://localhost/${kebabCase(config.name)}' }`;
 
-	return `import { defineConfig } from 'bueno';
+	return `import { defineConfig } from '@buenojs/bueno';
 
 export default defineConfig({
   server: {

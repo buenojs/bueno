@@ -64,6 +64,8 @@ const MARKDOWN_ORDERED_LIST = /^(\s*)(\d+)\.\s+(.+)$/gm;
 const MARKDOWN_BLOCKQUOTE = /^>\s+(.+)$/gm;
 const MARKDOWN_HR = /^---$/gm;
 const MARKDOWN_PARAGRAPH = /\n\n/g;
+const MARKDOWN_TABLE_ROW = /^\|(.+)\|$/;
+const MARKDOWN_TABLE_DIVIDER = /^\|[-:\s|]+\|$/;
 
 function parseFrontmatter(content: string): {
 	frontmatter: Frontmatter;
@@ -113,6 +115,91 @@ function escapeHtml(text: string): string {
 		.replace(/</g, "&lt;")
 		.replace(/>/g, "&gt;");
 }
+function parseTables(html: string): string {
+	const lines = html.split("\n");
+	const result: string[] = [];
+	let inTable = false;
+	let tableLines: string[] = [];
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i];
+
+		if (MARKDOWN_TABLE_ROW.test(line)) {
+			if (!inTable) {
+				inTable = true;
+				tableLines = [];
+			}
+			tableLines.push(line);
+		} else {
+			if (inTable) {
+				// End of table, convert to HTML
+				result.push(convertTableToHtml(tableLines));
+				inTable = false;
+				tableLines = [];
+			}
+			result.push(line);
+		}
+	}
+
+	// Handle table at end of content
+	if (inTable && tableLines.length > 0) {
+		result.push(convertTableToHtml(tableLines));
+	}
+
+	return result.join("\n");
+}
+
+function convertTableToHtml(tableLines: string[]): string {
+	if (tableLines.length < 2) {
+		return tableLines.join("\n");
+	}
+
+	// First row is header
+	const headerLine = tableLines[0];
+	const dividerLine = tableLines[1];
+	const bodyLines = tableLines.slice(2);
+
+	// Parse header
+	const headers = parseTableRow(headerLine);
+
+	// Parse body rows
+	const bodyRows = bodyLines.map(parseTableRow);
+
+	// Build HTML
+	let html = '<div class="overflow-x-auto"><table>\n';
+
+	// Header
+	html += "<thead>\n<tr>\n";
+	for (const header of headers) {
+		html += `<th>${header.trim()}</th>\n`;
+	}
+	html += "</tr>\n</thead>\n";
+
+	// Body
+	if (bodyRows.length > 0) {
+		html += "<tbody>\n";
+		for (const row of bodyRows) {
+			html += "<tr>\n";
+			for (const cell of row) {
+				html += `<td>${cell.trim()}</td>\n`;
+			}
+			html += "</tr>\n";
+		}
+		html += "</tbody>\n";
+	}
+
+	html += "</table></div>";
+
+	return html;
+}
+
+function parseTableRow(line: string): string[] {
+	// Remove leading and trailing |
+	const content = line.replace(/^\|/, "").replace(/\|$/, "");
+	// Split by | and trim each cell
+	return content.split("|").map((cell) => cell.trim());
+}
+
 
 function parseMarkdown(markdown: string): string {
 	let html = markdown;
@@ -150,7 +237,13 @@ function parseMarkdown(markdown: string): string {
 
 	html = html.replace(MARKDOWN_HEADERS, (_, hashes, text) => {
 		const level = hashes.length;
-		return `<h${level}>${text.trim()}</h${level}>`;
+		const trimmedText = text.trim();
+		// Generate slug from heading text
+		const slug = trimmedText
+			.toLowerCase()
+			.replace(/[^a-z0-9]+/g, '-')
+			.replace(/^-|-$/g, '');
+		return `<h${level} id="${slug}">${trimmedText}</h${level}>`;
 	});
 
 	html = html.replace(MARKDOWN_BOLD, "<strong>$1</strong>");
@@ -219,6 +312,9 @@ function parseMarkdown(markdown: string): string {
 	}
 
 	html = processedLines.join("\n");
+
+	// Parse tables
+	html = parseTables(html);
 
 	html = html
 		.split(MARKDOWN_PARAGRAPH.source)

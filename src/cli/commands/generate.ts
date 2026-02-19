@@ -69,8 +69,8 @@ interface GeneratorConfig {
  */
 function getTemplate(type: GeneratorType): string {
 	const templates: Record<GeneratorType, string> = {
-		controller: `import { Controller, Get, Post, Put, Delete{{#if path}} } from 'bueno'{{/if}}{{#if service}}, { {{pascalCase service}}Service } from './{{kebabCase service}}.service'{{/if}};
-import type { Context } from 'bueno';
+		controller: `import { Controller, Get, Post, Put, Delete{{#if path}} } from '@buenojs/bueno'{{/if}}{{#if service}}, { {{pascalCase service}}Service } from './{{kebabCase service}}.service'{{/if}};
+import type { Context } from '@buenojs/bueno';
 
 @Controller('{{path}}')
 export class {{pascalCase name}}Controller {
@@ -109,7 +109,7 @@ export class {{pascalCase name}}Controller {
   }
 }
 `,
-		service: `import { Injectable } from 'bueno';
+		service: `import { Injectable } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Service {
@@ -139,7 +139,7 @@ export class {{pascalCase name}}Service {
   }
 }
 `,
-		module: `import { Module } from 'bueno';
+		module: `import { Module } from '@buenojs/bueno';
 import { {{pascalCase name}}Controller } from './{{kebabCase name}}.controller';
 import { {{pascalCase name}}Service } from './{{kebabCase name}}.service';
 
@@ -150,7 +150,7 @@ import { {{pascalCase name}}Service } from './{{kebabCase name}}.service';
 })
 export class {{pascalCase name}}Module {}
 `,
-		guard: `import { Injectable, type CanActivate, type Context } from 'bueno';
+		guard: `import { Injectable, type CanActivate, type Context } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Guard implements CanActivate {
@@ -161,7 +161,7 @@ export class {{pascalCase name}}Guard implements CanActivate {
   }
 }
 `,
-		interceptor: `import { Injectable, type NestInterceptor, type CallHandler, type Context } from 'bueno';
+		interceptor: `import { Injectable, type NestInterceptor, type CallHandler, type Context } from '@buenojs/bueno';
 import type { Observable } from 'rxjs';
 
 @Injectable()
@@ -180,7 +180,7 @@ export class {{pascalCase name}}Interceptor implements NestInterceptor {
   }
 }
 `,
-		pipe: `import { Injectable, type PipeTransform, type Context } from 'bueno';
+		pipe: `import { Injectable, type PipeTransform, type Context } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Pipe implements PipeTransform {
@@ -191,8 +191,8 @@ export class {{pascalCase name}}Pipe implements PipeTransform {
   }
 }
 `,
-		filter: `import { Injectable, type ExceptionFilter, type Context } from 'bueno';
-import type { Response } from 'bueno';
+		filter: `import { Injectable, type ExceptionFilter, type Context } from '@buenojs/bueno';
+import type { Response } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Filter implements ExceptionFilter {
@@ -238,7 +238,7 @@ export interface Update{{pascalCase name}}Dto extends Partial<Create{{pascalCase
   // TODO: Define optional properties for update
 }
 `,
-		middleware: `import type { Middleware, Context, Handler } from 'bueno';
+		middleware: `import type { Middleware, Context, Handler } from '@buenojs/bueno';
 
 /**
  * {{pascalCase name}} Middleware
@@ -259,7 +259,7 @@ export const {{camelCase name}}Middleware: Middleware = async (
   return result;
 };
 `,
-		migration: `import { createMigration, type MigrationRunner } from 'bueno';
+		migration: `import { createMigration, type MigrationRunner } from '@buenojs/bueno';
 
 export default createMigration('{{migrationId}}', '{{migrationName}}')
   .up(async (db: MigrationRunner) => {
