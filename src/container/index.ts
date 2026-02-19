@@ -382,5 +382,5 @@ export function Inject(token: Token | ForwardRef<Token>): ParameterDecorator {
 	};
 }
 
-// Export getter for use by modules
-export { getContainerMetadata as getInjectTokens };
+// Export getter and setter for use by modules
+export { getContainerMetadata as getInjectTokens, setContainerMetadata, getContainerMetadata };

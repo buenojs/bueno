@@ -58,6 +58,7 @@ interface ProjectConfig {
 	skipGit: boolean;
 	docker: boolean;
 	deploy: DeployPlatform[];
+	link: boolean;
 }
 
 /**
@@ -87,9 +88,13 @@ function validateProjectName(name: string): boolean | string {
  * Get package.json template
  */
 function getPackageJsonTemplate(config: ProjectConfig): string {
-	const dependencies: Record<string, string> = {
-		'@buenojs/bueno': '^0.8.0',
-	};
+	const dependencies: Record<string, string> = {};
+	
+	// If using link, don't add @buenojs/bueno to dependencies
+	// It will be linked from the local version
+	if (!config.link) {
+		dependencies['@buenojs/bueno'] = '^0.8.0';
+	}
 
 	const devDependencies: Record<string, string> = {
 		'@types/bun': 'latest',
@@ -186,8 +191,44 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  findAll(ctx: Context) {
-    return this.appService.findAll();
+  hello() {
+    return new Response(\`<html>
+<head>
+  <title>Welcome to Bueno</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+    h1 { color: #2563eb; }
+    code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+    pre { background: #f3f4f6; padding: 16px; border-radius: 8px; overflow-x: auto; }
+    a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>🎉 Welcome to Bueno Framework!</h1>
+  <p>Your Bun-native full-stack framework is running successfully.</p>
+  
+  <h2>Getting Started</h2>
+  <ul>
+    <li>Edit <code>server/main.ts</code> to modify this app</li>
+    <li>Add routes using the <code>@Get()</code>, <code>@Post()</code> decorators</li>
+    <li>Create services with <code>@Injectable()</code> and inject them in controllers</li>
+  </ul>
+  
+  <h2>Documentation</h2>
+  <p>Visit <a href="https://buenojs.dev">https://buenojs.dev</a> for full documentation.</p>
+  
+  <h2>Quick Example</h2>
+  <pre><code>@Controller('/api')
+class MyController {
+  @Get('/users')
+  getUsers() {
+    return { users: [] };
+  }
+}</code></pre>
+</body>
+</html>\`, {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    });
   }
 
   @Get('health')
@@ -554,6 +595,7 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 	const skipInstall = hasFlag(args, 'skip-install');
 	const skipGit = hasFlag(args, 'skip-git');
 	const docker = hasFlag(args, 'docker');
+	const link = hasFlag(args, 'link');
 	
 	// Get deployment platforms (can be specified multiple times)
 	const deployPlatforms = getOptionValues(args, 'deploy');
@@ -628,6 +670,7 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 		skipGit,
 		docker,
 		deploy,
+		link,
 	};
 
 	// Check if directory exists
@@ -649,6 +692,7 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 		['Docker', docker ? colors.green('Yes') : colors.red('No')],
 		['Deploy', deploy.length > 0 ? colors.green(deploy.map(getDeployPlatformName).join(', ')) : colors.red('None')],
 		['Install dependencies', skipInstall ? colors.red('No') : colors.green('Yes')],
+		['Use local package', link ? colors.green('Yes (bun link)') : colors.red('No')],
 		['Initialize git', skipGit ? colors.red('No') : colors.green('Yes')],
 	];
 
@@ -680,6 +724,30 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 			}
 		} catch {
 			installSpinner.warn('Failed to install dependencies. Run `bun install` manually.');
+		}
+		
+		// Link local @buenojs/bueno if --link flag is set
+		if (link) {
+			cliConsole.subheader('Linking local @buenojs/bueno...');
+			const linkSpinner = spinner('Running bun link @buenojs/bueno...');
+
+			try {
+				const proc = Bun.spawn(['bun', 'link', '@buenojs/bueno'], {
+					cwd: projectPath,
+					stdout: 'pipe',
+					stderr: 'pipe',
+				});
+
+				const exitCode = await proc.exited;
+
+				if (exitCode === 0) {
+					linkSpinner.success('Local @buenojs/bueno linked successfully');
+				} else {
+					linkSpinner.warn('Failed to link @buenojs/bueno. Make sure you have run `bun link` in the bueno directory first.');
+				}
+			} catch {
+				linkSpinner.warn('Failed to link @buenojs/bueno. Make sure you have run `bun link` in the bueno directory first.');
+			}
 		}
 	}
 
@@ -773,6 +841,12 @@ defineCommand(
 				description: 'Include Docker configuration (Dockerfile, docker-compose.yml)',
 			},
 			{
+				name: 'link',
+				type: 'boolean',
+				default: false,
+				description: 'Use local @buenojs/bueno via bun link (for development)',
+			},
+			{
 				name: 'deploy',
 				type: 'string',
 				description: 'Deployment platform configuration (render, fly, railway). Can be specified multiple times.',
@@ -798,6 +872,7 @@ defineCommand(
 			'bueno new my-app --docker --deploy render',
 			'bueno new my-app --docker --database postgresql --deploy render',
 			'bueno new my-app -y',
+			'bueno new my-app --link',
 		],
 	},
 	handleNew,

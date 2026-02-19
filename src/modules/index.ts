@@ -14,6 +14,8 @@ import {
 	isForwardRef,
 	resolveForwardRef,
 	getInjectTokens,
+	setContainerMetadata,
+	getContainerMetadata,
 } from "../container";
 import {
 	type LazyModuleLoader,
@@ -162,11 +164,11 @@ export function Inject(token: Token | ForwardRef<Token>): ParameterDecorator {
 		propertyKey: string | symbol | undefined,
 		parameterIndex: number,
 	) => {
-		const targetObj = target as Constructor;
+		const targetObj = target as object;
 		const existingTokens: Array<Token | ForwardRef<Token>> =
-			getMetadata(targetObj, "inject:tokens") ?? [];
+			getContainerMetadata<Array<Token | ForwardRef<Token>>>(targetObj, "inject:tokens") ?? [];
 		existingTokens[parameterIndex] = token;
-		setMetadata(targetObj, "inject:tokens", existingTokens);
+		setContainerMetadata(targetObj, "inject:tokens", existingTokens);
 	};
 }
 
@@ -246,9 +248,16 @@ export class AppModule {
 			}
 		}
 
-		// Add providers
+		// Add providers (normalize class references to provider objects)
 		if (metadata.providers) {
-			this.providers.push(...metadata.providers);
+			const normalizedProviders = metadata.providers.map(p => {
+				// If it's a class constructor (function) without token, normalize it
+				if (typeof p === 'function' && !p.token) {
+					return { token: p, useClass: p };
+				}
+				return p;
+			});
+			this.providers.push(...normalizedProviders);
 		}
 
 		// Add controllers
@@ -475,8 +484,20 @@ export class Application {
 			>(controllerClass.prototype, "routes") ?? [];
 
 		// Create controller instance
-		const injectTokens =
+		// First, check for explicit injection tokens from @Inject decorator
+		let injectTokens =
 			getInjectTokens<Array<Token | ForwardRef<Token>>>(controllerClass, "inject:tokens") ?? [];
+		
+		// If no explicit tokens, try to use TypeScript's design:paramtypes metadata
+		// This requires the reflect-metadata polyfill to be imported by the user
+		if (injectTokens.length === 0 && typeof Reflect !== 'undefined' && typeof Reflect.getMetadata === 'function') {
+			const paramTypes = Reflect.getMetadata('design:paramtypes', controllerClass) as Array<new (...args: unknown[]) => unknown> | undefined;
+			if (paramTypes) {
+				// Use the constructor parameter types as injection tokens
+				injectTokens = paramTypes.map((paramType) => paramType as unknown as Token);
+			}
+		}
+		
 		const deps = injectTokens.map((tokenOrRef) => {
 			// Resolve forward reference if needed
 			const token = isForwardRef(tokenOrRef) ? resolveForwardRef(tokenOrRef) : tokenOrRef;
