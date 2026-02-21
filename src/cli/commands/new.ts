@@ -7,59 +7,32 @@
 import { defineCommand } from './index';
 import { getOption, hasFlag, getOptionValues, type ParsedArgs } from '../core/args';
 import { cliConsole, colors, printTable } from '../core/console';
-import { prompt, confirm, select, isInteractive } from '../core/prompt';
+import { prompt, select, isInteractive } from '../core/prompt';
 import { spinner, runTasks, type TaskOptions } from '../core/spinner';
 import {
 	fileExists,
 	writeFile,
 	createDirectory,
-	copyDirectory,
 	joinPaths,
 } from '../utils/fs';
 import { kebabCase } from '../utils/strings';
+import { getBuenoDependency } from '../utils/version';
 import { CLIError, CLIErrorType } from '../index';
-import {
-	getDockerfileTemplate,
-	getDockerignoreTemplate,
-	getDockerComposeTemplate,
-	getDockerEnvTemplate,
-} from '../templates/docker';
 import {
 	type DeployPlatform,
 	getDeployTemplate,
 	getDeployFilename,
 	getDeployPlatformName,
-} from '../templates/deploy';
-
-/**
- * Project templates
- */
-type ProjectTemplate = 'default' | 'minimal' | 'fullstack' | 'api';
-
-/**
- * Frontend frameworks
- */
-type FrontendFramework = 'react' | 'vue' | 'svelte' | 'solid';
-
-/**
- * Database drivers
- */
-type DatabaseDriver = 'sqlite' | 'postgresql' | 'mysql';
-
-/**
- * Project configuration
- */
-interface ProjectConfig {
-	name: string;
-	template: ProjectTemplate;
-	framework: FrontendFramework;
-	database: DatabaseDriver;
-	skipInstall: boolean;
-	skipGit: boolean;
-	docker: boolean;
-	deploy: DeployPlatform[];
-	link: boolean;
-}
+} from '../templates';
+import {
+	type ProjectTemplate,
+	type ProjectConfig,
+	type FrontendFramework,
+	type DatabaseDriver,
+	getTemplateOptions,
+	getDatabaseOptions,
+	getFrontendOptions,
+} from '../templates';
 
 /**
  * Validate project name
@@ -87,34 +60,30 @@ function validateProjectName(name: string): boolean | string {
 /**
  * Get package.json template
  */
-function getPackageJsonTemplate(config: ProjectConfig): string {
-	const dependencies: Record<string, string> = {};
+function getPackageJsonTemplate(config: ProjectConfig, template: { dependencies?: Record<string, string>; devDependencies?: Record<string, string>; scripts?: Record<string, string> }): string {
+	const dependencies: Record<string, string> = {
+		...getBuenoDependency(),
+		...(template.dependencies || {}),
+	};
 	
 	// If using link, don't add @buenojs/bueno to dependencies
-	// It will be linked from the local version
-	if (!config.link) {
-		dependencies['@buenojs/bueno'] = '^0.8.0';
+	if (config.link) {
+		delete dependencies['@buenojs/bueno'];
 	}
 
 	const devDependencies: Record<string, string> = {
 		'@types/bun': 'latest',
 		typescript: '^5.3.0',
+		...(template.devDependencies || {}),
 	};
-
-	if (config.template === 'fullstack' || config.template === 'default') {
-		dependencies.zod = '^4.0.0';
-	}
 
 	const scripts: Record<string, string> = {
 		dev: 'bun run --watch server/main.ts',
 		build: 'bun build ./server/main.ts --outdir ./dist --target bun',
 		start: 'bun run dist/main.js',
 		test: 'bun test',
+		...(template.scripts || {}),
 	};
-
-	if (config.template === 'fullstack') {
-		scripts['dev:frontend'] = 'bun run --watch client/index.html';
-	}
 
 	return JSON.stringify(
 		{
@@ -158,135 +127,10 @@ function getTsConfigTemplate(): string {
 }
 
 /**
- * Get main.ts template
- */
-function getMainTemplate(config: ProjectConfig): string {
-	if (config.template === 'minimal') {
-		return `import { createServer } from '@buenojs/bueno';
-
-const app = createServer();
-
-app.router.get('/', () => {
-  return { message: 'Hello, Bueno!' };
-});
-
-await app.listen(3000);
-`;
-	}
-
-	return `import { createApp, Module, Controller, Get, Injectable } from '@buenojs/bueno';
-import type { Context } from '@buenojs/bueno';
-
-// Services
-@Injectable()
-export class AppService {
-  findAll() {
-    return { message: 'Welcome to Bueno!', items: [] };
-  }
-}
-
-// Controllers
-@Controller()
-export class AppController {
-  constructor(private readonly appService: AppService) {}
-
-  @Get()
-  hello() {
-    return new Response(\`<html>
-<head>
-  <title>Welcome to Bueno</title>
-  <style>
-    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-    h1 { color: #2563eb; }
-    code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
-    pre { background: #f3f4f6; padding: 16px; border-radius: 8px; overflow-x: auto; }
-    a { color: #2563eb; }
-  </style>
-</head>
-<body>
-  <h1>🎉 Welcome to Bueno Framework!</h1>
-  <p>Your Bun-native full-stack framework is running successfully.</p>
-  
-  <h2>Getting Started</h2>
-  <ul>
-    <li>Edit <code>server/main.ts</code> to modify this app</li>
-    <li>Add routes using the <code>@Get()</code>, <code>@Post()</code> decorators</li>
-    <li>Create services with <code>@Injectable()</code> and inject them in controllers</li>
-  </ul>
-  
-  <h2>Documentation</h2>
-  <p>Visit <a href="https://buenojs.dev">https://buenojs.dev</a> for full documentation.</p>
-  
-  <h2>Quick Example</h2>
-  <pre><code>@Controller('/api')
-class MyController {
-  @Get('/users')
-  getUsers() {
-    return { users: [] };
-  }
-}</code></pre>
-</body>
-</html>\`, {
-      headers: { 'Content-Type': 'text/html; charset=utf-8' }
-    });
-  }
-
-  @Get('health')
-  health(ctx: Context) {
-    return { status: 'ok', timestamp: new Date().toISOString() };
-  }
-}
-
-// Module
-@Module({
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule {}
-
-// Bootstrap
-const app = createApp(AppModule);
-await app.listen(3000);
-`;
-}
-
-/**
- * Get bueno.config.ts template
- */
-function getConfigTemplate(config: ProjectConfig): string {
-	const dbConfig = config.database === 'sqlite'
-		? `{ url: 'sqlite:./data.db' }`
-		: `{ url: process.env.DATABASE_URL ?? '${config.database}://localhost/${kebabCase(config.name)}' }`;
-
-	return `import { defineConfig } from '@buenojs/bueno';
-
-export default defineConfig({
-  server: {
-    port: 3000,
-    host: 'localhost',
-  },
-
-  database: ${dbConfig},
-
-  logger: {
-    level: 'info',
-    pretty: true,
-  },
-
-  health: {
-    enabled: true,
-    healthPath: '/health',
-    readyPath: '/ready',
-  },
-});
-`;
-}
-
-/**
  * Get .env.example template
  */
 function getEnvExampleTemplate(config: ProjectConfig): string {
-	if (config.database === 'sqlite') {
+	if (config.database === 'none' || config.database === 'sqlite') {
 		return `# Bueno Environment Variables
 NODE_ENV=development
 `;
@@ -341,9 +185,17 @@ coverage/
  * Get README.md template
  */
 function getReadmeTemplate(config: ProjectConfig): string {
+	const templateDescriptions: Record<ProjectTemplate, string> = {
+		default: 'Standard project with modules and database',
+		minimal: 'Bare minimum project structure',
+		fullstack: 'Full-stack project with SSR and frontend',
+		api: 'API-only project without frontend',
+		website: 'Static website with SSG',
+	};
+
 	return `# ${config.name}
 
-A Bueno application.
+A Bueno application - ${templateDescriptions[config.template]}.
 
 ## Getting Started
 
@@ -375,8 +227,46 @@ bun run start
 
 ## Learn More
 
-- [Bueno Documentation](https://github.com/sivaraj/bueno#readme)
+- [Bueno Documentation](https://bueno.github.io)
 - [Bun Documentation](https://bun.sh/docs)
+`;
+}
+
+/**
+ * Get bueno.config.ts template
+ */
+function getConfigTemplate(config: ProjectConfig): string {
+	let dbConfig = 'undefined';
+	
+	if (config.database === 'sqlite') {
+		dbConfig = `{ url: 'sqlite:./data.db' }`;
+	} else if (config.database === 'postgresql') {
+		dbConfig = `{ url: process.env.DATABASE_URL ?? 'postgresql://localhost/${kebabCase(config.name)}' }`;
+	} else if (config.database === 'mysql') {
+		dbConfig = `{ url: process.env.DATABASE_URL ?? 'mysql://localhost/${kebabCase(config.name)}' }`;
+	}
+
+	return `import { defineConfig } from '@buenojs/bueno';
+
+export default defineConfig({
+  server: {
+    port: 3000,
+    host: 'localhost',
+  },
+
+  ${config.database !== 'none' ? `database: ${dbConfig},` : ''}
+
+  logger: {
+    level: 'info',
+    pretty: true,
+  },
+
+  health: {
+    enabled: true,
+    healthPath: '/health',
+    readyPath: '/ready',
+  },
+});
 `;
 }
 
@@ -386,6 +276,7 @@ bun run start
 async function createProjectFiles(
 	projectPath: string,
 	config: ProjectConfig,
+	templateResult: { files: { path: string; content: string }[]; directories: string[]; dependencies?: Record<string, string>; devDependencies?: Record<string, string>; scripts?: Record<string, string> },
 ): Promise<void> {
 	const tasks: TaskOptions[] = [];
 
@@ -393,6 +284,7 @@ async function createProjectFiles(
 	tasks.push({
 		text: 'Creating project structure',
 		task: async () => {
+			// Base directories
 			await createDirectory(joinPaths(projectPath, 'server', 'modules', 'app'));
 			await createDirectory(joinPaths(projectPath, 'server', 'common', 'middleware'));
 			await createDirectory(joinPaths(projectPath, 'server', 'common', 'guards'));
@@ -403,6 +295,11 @@ async function createProjectFiles(
 			await createDirectory(joinPaths(projectPath, 'server', 'config'));
 			await createDirectory(joinPaths(projectPath, 'tests', 'unit'));
 			await createDirectory(joinPaths(projectPath, 'tests', 'integration'));
+			
+			// Template-specific directories
+			for (const dir of templateResult.directories) {
+				await createDirectory(joinPaths(projectPath, dir));
+			}
 		},
 	});
 
@@ -412,7 +309,7 @@ async function createProjectFiles(
 		task: async () => {
 			await writeFile(
 				joinPaths(projectPath, 'package.json'),
-				getPackageJsonTemplate(config),
+				getPackageJsonTemplate(config, templateResult),
 			);
 		},
 	});
@@ -428,27 +325,31 @@ async function createProjectFiles(
 		},
 	});
 
-	// Create main.ts
-	tasks.push({
-		text: 'Creating server/main.ts',
-		task: async () => {
-			await writeFile(
-				joinPaths(projectPath, 'server', 'main.ts'),
-				getMainTemplate(config),
-			);
-		},
-	});
+	// Create template-specific files
+	for (const file of templateResult.files) {
+		tasks.push({
+			text: `Creating ${file.path}`,
+			task: async () => {
+				await writeFile(
+					joinPaths(projectPath, file.path),
+					file.content,
+				);
+			},
+		});
+	}
 
-	// Create bueno.config.ts
-	tasks.push({
-		text: 'Creating bueno.config.ts',
-		task: async () => {
-			await writeFile(
-				joinPaths(projectPath, 'bueno.config.ts'),
-				getConfigTemplate(config),
-			);
-		},
-	});
+	// Create bueno.config.ts (not for website template)
+	if (config.template !== 'website') {
+		tasks.push({
+			text: 'Creating bueno.config.ts',
+			task: async () => {
+				await writeFile(
+					joinPaths(projectPath, 'bueno.config.ts'),
+					getConfigTemplate(config),
+				);
+			},
+		});
+	}
 
 	// Create .env.example
 	tasks.push({
@@ -484,13 +385,13 @@ async function createProjectFiles(
 	});
 
 	// Create Docker files if enabled
-	if (config.docker) {
+	if (config.docker && config.template !== 'website') {
 		tasks.push({
 			text: 'Creating Dockerfile',
 			task: async () => {
 				await writeFile(
 					joinPaths(projectPath, 'Dockerfile'),
-					getDockerfileTemplate(config.name, config.database),
+					getDockerfileTemplate(config.name, config.database === 'none' ? undefined : config.database),
 				);
 			},
 		});
@@ -510,7 +411,7 @@ async function createProjectFiles(
 			task: async () => {
 				await writeFile(
 					joinPaths(projectPath, 'docker-compose.yml'),
-					getDockerComposeTemplate(config.name, config.database),
+					getDockerComposeTemplate(config.name, config.database === 'none' ? undefined : config.database),
 				);
 			},
 		});
@@ -520,7 +421,7 @@ async function createProjectFiles(
 			task: async () => {
 				await writeFile(
 					joinPaths(projectPath, '.env.docker'),
-					getDockerEnvTemplate(config.name, config.database),
+					getDockerEnvTemplate(config.name, config.database === 'none' ? undefined : config.database),
 				);
 			},
 		});
@@ -534,7 +435,7 @@ async function createProjectFiles(
 			task: async () => {
 				await writeFile(
 					joinPaths(projectPath, filename),
-					getDeployTemplate(platform, config.name, config.database),
+					getDeployTemplate(platform, config.name, config.database === 'none' ? 'sqlite' : config.database),
 				);
 			},
 		});
@@ -542,6 +443,14 @@ async function createProjectFiles(
 
 	await runTasks(tasks);
 }
+
+// Import docker templates
+import {
+	getDockerfileTemplate,
+	getDockerignoreTemplate,
+	getDockerComposeTemplate,
+	getDockerEnvTemplate,
+} from '../templates';
 
 /**
  * Handle new command
@@ -620,37 +529,25 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 		if (!template) {
 			template = await select<ProjectTemplate>(
 				'Select a template:',
-				[
-					{ value: 'default', name: 'Default - Standard project with modules and database' },
-					{ value: 'minimal', name: 'Minimal - Bare minimum project structure' },
-					{ value: 'fullstack', name: 'Fullstack - Full-stack project with SSR and auth' },
-					{ value: 'api', name: 'API - API-only project without frontend' },
-				],
+				getTemplateOptions(),
 				{ default: 'default' },
 			);
 		}
 
+		// Only ask for framework if template supports it
 		if ((template === 'fullstack' || template === 'default') && !framework) {
 			framework = await select<FrontendFramework>(
 				'Select a frontend framework:',
-				[
-					{ value: 'react', name: 'React' },
-					{ value: 'vue', name: 'Vue' },
-					{ value: 'svelte', name: 'Svelte' },
-					{ value: 'solid', name: 'Solid' },
-				],
+				getFrontendOptions(),
 				{ default: 'react' },
 			);
 		}
 
-		if (!database) {
+		// Website template doesn't need database or frontend selection
+		if (template !== 'website' && !database) {
 			database = await select<DatabaseDriver>(
 				'Select a database:',
-				[
-					{ value: 'sqlite', name: 'SQLite - Local file-based database' },
-					{ value: 'postgresql', name: 'PostgreSQL - Production-ready relational database' },
-					{ value: 'mysql', name: 'MySQL - Popular relational database' },
-				],
+				getDatabaseOptions(),
 				{ default: 'sqlite' },
 			);
 		}
@@ -661,11 +558,14 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 	framework = framework || 'react';
 	database = database || 'sqlite';
 
+	// For website template, override database and framework
+	const isWebsite = template === 'website';
+
 	const config: ProjectConfig = {
 		name,
 		template,
-		framework,
-		database,
+		framework: isWebsite ? 'none' : framework,
+		database: isWebsite ? 'none' : database,
 		skipInstall,
 		skipGit,
 		docker,
@@ -687,21 +587,25 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 
 	const rows = [
 		['Template', template],
-		['Framework', framework],
-		['Database', database],
+		['Framework', isWebsite ? 'N/A (Static Site)' : framework],
+		['Database', isWebsite ? 'N/A' : database],
 		['Docker', docker ? colors.green('Yes') : colors.red('No')],
 		['Deploy', deploy.length > 0 ? colors.green(deploy.map(getDeployPlatformName).join(', ')) : colors.red('None')],
 		['Install dependencies', skipInstall ? colors.red('No') : colors.green('Yes')],
 		['Use local package', link ? colors.green('Yes (bun link)') : colors.red('No')],
-		['Initialize git', skipGit ? colors.red('No') : colors.green('Yes')],
 	];
 
 	printTable(['Setting', 'Value'], rows);
 	cliConsole.log('');
 
+	// Get the appropriate template function
+	const { getProjectTemplate } = await import('../templates');
+	const templateFn = getProjectTemplate(template);
+	const templateResult = templateFn(config);
+
 	// Create project
 	cliConsole.subheader('Creating project files...');
-	await createProjectFiles(projectPath, config);
+	await createProjectFiles(projectPath, config, templateResult);
 
 	// Install dependencies
 	if (!skipInstall) {
@@ -751,34 +655,8 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 		}
 	}
 
-	// Initialize git
-	if (!skipGit) {
-		cliConsole.subheader('Initializing git repository...');
-		const gitSpinner = spinner('Running git init...');
-
-		try {
-			const proc = Bun.spawn(['git', 'init'], {
-				cwd: projectPath,
-				stdout: 'pipe',
-				stderr: 'pipe',
-			});
-
-			const exitCode = await proc.exited;
-
-			if (exitCode === 0) {
-				// Add all files
-				Bun.spawn(['git', 'add', '.'], { cwd: projectPath });
-				Bun.spawn(['git', 'commit', '-m', 'Initial commit from Bueno CLI'], {
-					cwd: projectPath,
-				});
-				gitSpinner.success('Git repository initialized');
-			} else {
-				gitSpinner.warn('Failed to initialize git. Run `git init` manually.');
-			}
-		} catch {
-			gitSpinner.warn('Failed to initialize git. Run `git init` manually.');
-		}
-	}
+	// Git initialization - now disabled by default (removed)
+	// Users can run `git init` manually if needed
 
 	// Show success message
 	cliConsole.log('');
@@ -786,9 +664,22 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 	cliConsole.log('');
 	cliConsole.log('Next steps:');
 	cliConsole.log(`  ${colors.cyan(`cd ${kebabCase(name)}`)}`);
-	cliConsole.log(`  ${colors.cyan('bun run dev')}`);
+	
+	if (isWebsite) {
+		cliConsole.log(`  ${colors.cyan('bun run dev')} - Start development server`);
+		cliConsole.log(`  ${colors.cyan('bun run build')} - Build static site`);
+	} else {
+		cliConsole.log(`  ${colors.cyan('bun run dev')}`);
+	}
+	
 	cliConsole.log('');
 	cliConsole.log(`Documentation: ${colors.dim('https://github.com/sivaraj/bueno')}`);
+}
+
+// Import the template function getter dynamically
+async function importTemplateFn(template: ProjectTemplate) {
+	const { getProjectTemplate } = await import('../templates');
+	return getProjectTemplate(template);
 }
 
 // Register the command
@@ -808,19 +699,19 @@ defineCommand(
 				name: 'template',
 				alias: 't',
 				type: 'string',
-				description: 'Project template (default, minimal, fullstack, api)',
+				description: 'Project template (default, minimal, fullstack, api, website)',
 			},
 			{
 				name: 'framework',
 				alias: 'f',
 				type: 'string',
-				description: 'Frontend framework (react, vue, svelte, solid)',
+				description: 'Frontend framework (react, vue, svelte, solid, none)',
 			},
 			{
 				name: 'database',
 				alias: 'd',
 				type: 'string',
-				description: 'Database driver (sqlite, postgresql, mysql)',
+				description: 'Database driver (sqlite, postgresql, mysql, none)',
 			},
 			{
 				name: 'skip-install',
@@ -832,7 +723,7 @@ defineCommand(
 				name: 'skip-git',
 				type: 'boolean',
 				default: false,
-				description: 'Skip git initialization',
+				description: 'Skip git initialization (deprecated - git init is no longer automatic)',
 			},
 			{
 				name: 'docker',
@@ -864,6 +755,7 @@ defineCommand(
 			'bueno new my-api --template api',
 			'bueno new my-fullstack --template fullstack --framework react',
 			'bueno new my-project --database postgresql',
+			'bueno new my-website --template website',
 			'bueno new my-app --docker',
 			'bueno new my-app --docker --database postgresql',
 			'bueno new my-app --deploy render',

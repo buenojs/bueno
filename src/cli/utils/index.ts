@@ -6,3 +6,4 @@
 
 export * from './strings';
 export * from './fs';
+export * from './version';
