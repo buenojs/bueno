@@ -104,7 +104,7 @@ async function createMigration(name: string, dryRun: boolean): Promise<string> {
 	const fileName = `${id}_${kebabName}.ts`;
 	const filePath = joinPaths(migrationsDir, fileName);
 
-	const template = `import { createMigration, type MigrationRunner } from '@buenojs/bueno';
+	const template = `import { createMigration, type MigrationRunner } from '@buenojs/bueno/migrations';
 
 export default createMigration('${id}', '${kebabName}')
   .up(async (db: MigrationRunner) => {
@@ -236,7 +236,7 @@ async function handleMigration(args: ParsedArgs): Promise<void> {
 			cliConsole.log('');
 			cliConsole.log('Example:');
 			cliConsole.log(colors.cyan(`
-		import { createMigrationRunner, loadMigrations } from '@buenojs/bueno';
+		import { createMigrationRunner, loadMigrations } from '@buenojs/bueno/migrations';
 import { db } from './database';
 
 const runner = createMigrationRunner(db);
@@ -255,7 +255,7 @@ await runner.migrate(migrations);
 			cliConsole.log('');
 			cliConsole.log('Example:');
 			cliConsole.log(colors.cyan(`
-		import { createMigrationRunner, loadMigrations } from '@buenojs/bueno';
+		import { createMigrationRunner, loadMigrations } from '@buenojs/bueno/migrations';
 import { db } from './database';
 
 const runner = createMigrationRunner(db);
@@ -274,7 +274,7 @@ await runner.rollback(migrations, ${steps});
 			cliConsole.log('');
 			cliConsole.log('Example:');
 			cliConsole.log(colors.cyan(`
-		import { createMigrationRunner, loadMigrations } from '@buenojs/bueno';
+		import { createMigrationRunner, loadMigrations } from '@buenojs/bueno/migrations';
 import { db } from './database';
 
 const runner = createMigrationRunner(db);
@@ -293,7 +293,7 @@ await runner.reset(migrations);
 			cliConsole.log('');
 			cliConsole.log('Example:');
 			cliConsole.log(colors.cyan(`
-		import { createMigrationRunner, loadMigrations } from '@buenojs/bueno';
+		import { createMigrationRunner, loadMigrations } from '@buenojs/bueno/migrations';
 import { db } from './database';
 
 const runner = createMigrationRunner(db);

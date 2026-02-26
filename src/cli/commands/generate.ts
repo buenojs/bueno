@@ -259,7 +259,7 @@ export const {{camelCase name}}Middleware: Middleware = async (
   return result;
 };
 `,
-		migration: `import { createMigration, type MigrationRunner } from '@buenojs/bueno';
+		migration: `import { createMigration, type MigrationRunner } from '@buenojs/bueno/migrations';
 
 export default createMigration('{{migrationId}}', '{{migrationName}}')
   .up(async (db: MigrationRunner) => {

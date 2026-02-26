@@ -53,42 +53,16 @@ export {
 	createApp,
 } from "./modules";
 
-// Database
+// Database (connection layer)
 export {
 	Database,
 	createConnection,
 	detectDriver,
-	QueryBuilder,
-	table,
 	ReservedConnection,
 	type DatabaseConfig as DatabaseConfigType,
 	type DatabaseDriver,
 	type QueryResult,
 	type Transaction,
-	// Schema
-	SchemaBuilder,
-	createSchema,
-	defineTable,
-	generateCreateTable,
-	generateDropTable,
-	generateCreateIndex,
-	type ColumnType,
-	type ColumnOptions,
-	type TableSchema,
-	type IndexDefinition,
-	type ConstraintDefinition,
-	type TypeScriptType,
-	type InferType,
-	type InferInsertType,
-	// Migrations
-	MigrationRunner,
-	MigrationBuilder,
-	createMigration,
-	createMigrationRunner,
-	generateMigrationId,
-	type Migration,
-	type MigrationRecord,
-	type MigrationOptions,
 } from "./database";
 
 // Validation
