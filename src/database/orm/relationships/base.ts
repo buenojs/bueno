@@ -37,6 +37,17 @@ export abstract class Relationship<
 	) {
 		this.db = getModelDatabase(relatedClass.name);
 		this.query = new OrmQueryBuilder(this.db, relatedClass.table as string);
+		// Note: subclasses that use private fields must call initConstraints()
+		// themselves after their field assignments, rather than relying on this call.
+		this.addConstraints();
+	}
+
+	/**
+	 * Initialize constraints — call this in subclass constructors after all
+	 * private fields are assigned, if the subclass needs them in addConstraints().
+	 */
+	protected initConstraints(): void {
+		this.query = new OrmQueryBuilder(this.db, this.relatedClass.table as string);
 		this.addConstraints();
 	}
 
@@ -100,11 +111,14 @@ export abstract class Relationship<
 	// ============= Query Terminals =============
 
 	async get(): Promise<TRelated[]> {
-		return this.query.get();
+		const rows = await this.query.get();
+		return this.relatedClass.hydrate(rows) as TRelated[];
 	}
 
 	async first(): Promise<TRelated | null> {
-		return this.query.first();
+		const rows = await this.query.limit(1).get();
+		if (rows.length === 0) return null;
+		return this.relatedClass.hydrate([rows[0]])[0] as TRelated;
 	}
 
 	async count(): Promise<number> {

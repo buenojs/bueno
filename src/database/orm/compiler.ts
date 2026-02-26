@@ -161,6 +161,13 @@ export class QueryCompiler {
 					return `${prefix}${w.column} IN (${placeholders})`;
 				}
 
+				if (w.operator === "NOT IN" && Array.isArray(w.value)) {
+					const placeholders = w.value
+						.map((v) => this.addParam(v))
+						.join(", ");
+					return `${prefix}${w.column} NOT IN (${placeholders})`;
+				}
+
 				if (w.operator === "IS NULL") {
 					return `${prefix}${w.column} IS NULL`;
 				}
@@ -261,7 +268,7 @@ export class QueryCompiler {
 	compileCount(state: QueryState, column = "*"): CompiledQuery {
 		this.reset();
 		const countCol = column === "*" ? "COUNT(*)" : `COUNT(${column})`;
-		const parts: string[] = [`SELECT ${countCol}`];
+		const parts: string[] = [`SELECT ${countCol} AS count`];
 
 		const alias = state.alias ? ` AS ${state.alias}` : "";
 		parts.push(`FROM ${state.table}${alias}`);

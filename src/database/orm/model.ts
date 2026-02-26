@@ -78,15 +78,21 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 		// Return a Proxy to intercept property access
 		return new Proxy(this, {
 			get: (target, prop: string) => {
-				// Methods and private fields first
-				if (prop.startsWith("_") || typeof (target as any)[prop] === "function") {
+				// Internal properties first
+				if (prop.startsWith("_")) {
 					return (target as any)[prop];
 				}
 				// Check if relation is loaded (from eager loading or lazy access)
+				// This must come before checking if it's a function, so eager-loaded
+				// relations take precedence over the relationship methods
 				if ((target as any)._relations.has(prop)) {
 					return (target as any)._relations.get(prop);
 				}
-				// Then try to get as attribute
+				// Then check if it's a method
+				if (typeof (target as any)[prop] === "function") {
+					return (target as any)[prop];
+				}
+				// Finally try to get as attribute
 				return target.getAttribute(prop as keyof TAttributes);
 			},
 			set: (target, prop: string, value) => {
@@ -98,6 +104,18 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 				// Set as attribute
 				target.setAttribute(prop as keyof TAttributes, value as any);
 				return true;
+			},
+			has: (target, prop: string) => {
+				// Check internal properties
+				if (prop.startsWith("_") || prop in Object.getPrototypeOf(target)) {
+					return true;
+				}
+				// Check relations
+				if ((target as any)._relations.has(prop)) {
+					return true;
+				}
+				// Check attributes
+				return (target as any)._attributes.hasOwnProperty(prop);
 			},
 		});
 	}
@@ -327,7 +345,10 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 
 			const dirty = this.getDirty();
 			if (modelClass.timestamps) {
-				dirty[modelClass.updatedAtColumn as keyof TAttributes] = new Date() as TAttributes[keyof TAttributes];
+				const now = new Date().toISOString();
+				dirty[modelClass.updatedAtColumn as keyof TAttributes] = now as TAttributes[keyof TAttributes];
+				// Also update the in-memory attribute so model.updated_at reflects the new value
+				this._attributes[modelClass.updatedAtColumn as keyof TAttributes] = now as TAttributes[keyof TAttributes];
 			}
 
 			const builder = new OrmQueryBuilder(db, modelClass.table);
@@ -341,8 +362,9 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 			const data = { ...this._attributes };
 
 			if (modelClass.timestamps) {
-				data[modelClass.createdAtColumn as keyof TAttributes] = new Date() as TAttributes[keyof TAttributes];
-				data[modelClass.updatedAtColumn as keyof TAttributes] = new Date() as TAttributes[keyof TAttributes];
+				const now = new Date().toISOString();
+				data[modelClass.createdAtColumn as keyof TAttributes] = now as TAttributes[keyof TAttributes];
+				data[modelClass.updatedAtColumn as keyof TAttributes] = now as TAttributes[keyof TAttributes];
 			}
 
 			const builder = new OrmQueryBuilder<TAttributes>(db, modelClass.table);
@@ -366,7 +388,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 			// Soft delete: set deleted_at
 			this.setAttribute(
 				modelClass.deletedAtColumn as keyof TAttributes,
-				new Date() as TAttributes[keyof TAttributes],
+				new Date().toISOString() as TAttributes[keyof TAttributes],
 			);
 			await this.save();
 		} else {
@@ -591,11 +613,15 @@ export class ModelQueryBuilder<M extends Model> extends OrmQueryBuilder<any> {
 
 	/**
 	 * Override first() to hydrate Model instance
+	 * Note: We must fetch raw data directly to avoid double-hydration
+	 * (since get() is overridden to already hydrate)
 	 */
 	override async first(): Promise<M | null> {
-		const row = await super.first();
-		if (!row) return null;
+		// Get raw row from parent OrmQueryBuilder.get() bypassing our override
+		const rows = await OrmQueryBuilder.prototype.get.call(this);
+		if (rows.length === 0) return null;
 
+		const row = rows[0];
 		const models = this.modelClass.hydrate([row]);
 
 		// Load eager relationships
@@ -607,22 +633,76 @@ export class ModelQueryBuilder<M extends Model> extends OrmQueryBuilder<any> {
 	}
 
 	/**
-	 * Override paginate() to hydrate Model instances
+	 * Override paginate() to return hydrated Model instances
+	 * Note: super.paginate() calls get() which already hydrates,
+	 * so we just need to return the result as-is
 	 */
 	override async paginate(
 		page: number,
 		limit: number,
 	) {
-		const result = await super.paginate(page, limit);
-		const models = this.modelClass.hydrate(result.data);
+		const offset = (page - 1) * limit;
+		const [data, total] = await Promise.all([
+			this.clone().offset(offset).limit(limit).get(),
+			this.clone().count(),
+		]);
 
 		return {
-			data: models,
-			total: result.total,
-			page: result.page,
-			limit: result.limit,
-			totalPages: result.totalPages,
+			data,
+			total,
+			page,
+			limit,
+			totalPages: Math.ceil(total / limit),
 		};
+	}
+
+	/**
+	 * Find first or create — find by conditions or create with values
+	 */
+	async firstOrCreate(
+		conditions: Record<string, unknown>,
+		values?: Record<string, unknown>,
+	): Promise<M> {
+		// Build a fresh query with conditions
+		const query = new ModelQueryBuilder(this.modelClass);
+		for (const [key, value] of Object.entries(conditions)) {
+			query.where(key, value);
+		}
+
+		// Try to find existing
+		const found = await query.first();
+		if (found) return found;
+
+		// Create if not found
+		const createData = { ...conditions, ...values };
+		return this.modelClass.create(createData as Record<string, unknown>);
+	}
+
+	/**
+	 * Update or create — update if exists or create if not
+	 */
+	async updateOrCreate(
+		conditions: Record<string, unknown>,
+		values: Record<string, unknown>,
+	): Promise<M> {
+		// Build a fresh query with conditions
+		const query = new ModelQueryBuilder(this.modelClass);
+		for (const [key, value] of Object.entries(conditions)) {
+			query.where(key, value);
+		}
+
+		// Try to find existing
+		const found = await query.first();
+		if (found) {
+			// Update if found
+			found.fill(values);
+			await found.save();
+			return found;
+		}
+
+		// Create if not found
+		const createData = { ...conditions, ...values };
+		return this.modelClass.create(createData as Record<string, unknown>);
 	}
 
 	/**

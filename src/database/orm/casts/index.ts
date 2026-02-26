@@ -25,7 +25,8 @@ const builtInCasts: Record<string, CastObject> = {
 	},
 
 	boolean: {
-		get(value: unknown): boolean {
+		get(value: unknown): boolean | null {
+			if (value === null || value === undefined) return null;
 			if (typeof value === "boolean") return value;
 			if (typeof value === "number") return value !== 0;
 			if (typeof value === "string") return value !== "0" && value !== "false";
@@ -86,7 +87,8 @@ const builtInCasts: Record<string, CastObject> = {
 		get(value: unknown): Date | null {
 			if (!value) return null;
 			if (value instanceof Date) return value;
-			return new Date(String(value));
+			if (typeof value === "number") return new Date(value);
+			return new Date(Number(value));
 		},
 		set(value: unknown): number {
 			if (value instanceof Date) {

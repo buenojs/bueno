@@ -26,9 +26,15 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 		private relatedKey: string = "id",
 	) {
 		super(parentModel, relatedClass, foreignPivotKey, parentKey);
+		// Private fields are assigned after super() returns, so we must
+		// re-initialize constraints now that they are available.
+		this.initConstraints();
 	}
 
 	addConstraints(): void {
+		// Guard: if pivotTable hasn't been assigned yet (called from base super()),
+		// do nothing — initConstraints() will call us again after field assignment.
+		if (!this.pivotTable) return;
 		const parentId = this.parentModel.getAttribute(this.parentKey as any);
 
 		this.query.join(
@@ -101,7 +107,15 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 				...pivotData,
 			};
 
-			await new OrmQueryBuilder(db, this.pivotTable).insert(data);
+			// Use raw insert to avoid OrmQueryBuilder.insert()'s SELECT-by-id fetch-back,
+			// which fails on pivot tables that have no 'id' primary key column.
+			const columns = Object.keys(data).join(", ");
+			const placeholders = Object.keys(data).map(() => "?").join(", ");
+			const values = Object.values(data);
+			await db.raw(
+				`INSERT INTO ${this.pivotTable} (${columns}) VALUES (${placeholders})`,
+				values,
+			);
 		}
 	}
 
