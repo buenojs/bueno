@@ -26,6 +26,31 @@ export interface NotificationMessage {
 	metadata?: Record<string, unknown>;
 }
 
+// ============= Template Reference Type =============
+
+/**
+ * Reference to a template file with rendering data.
+ * Used in message fields that support template rendering.
+ * The NotificationService will resolve this to a rendered string before sending.
+ */
+export interface TemplateRef {
+	/** Template identifier (path without extension, e.g. "emails/welcome") */
+	templateId: string;
+	/** Data to pass to the template renderer */
+	data: Record<string, unknown>;
+	/** Optional variant override (e.g. "email", "sms"). Auto-detected from channel if omitted. */
+	variant?: string;
+	/** Output format: "html" or "text". Defaults based on field context. */
+	outputFormat?: "html" | "text";
+}
+
+/**
+ * Type guard for TemplateRef
+ */
+export function isTemplateRef(value: unknown): value is TemplateRef {
+	return typeof value === "object" && value !== null && "templateId" in value;
+}
+
 // ============= Email Channel Types =============
 
 export interface EmailRecipient {
@@ -48,8 +73,8 @@ export interface EmailMessage extends NotificationMessage {
 	channel: "email";
 	recipient: string; // email address
 	subject: string;
-	html?: string;
-	text?: string;
+	html?: string | TemplateRef;
+	text?: string | TemplateRef;
 	cc?: EmailRecipients;
 	bcc?: EmailRecipients;
 	replyTo?: string;
@@ -69,7 +94,7 @@ export interface EmailMessage extends NotificationMessage {
 export interface SMSMessage extends NotificationMessage {
 	channel: "sms";
 	recipient: string; // phone number
-	message: string; // Max 160 chars typically
+	message: string | TemplateRef; // Max 160 chars typically
 	senderId?: string;
 	scheduledAt?: Date;
 }
@@ -89,8 +114,8 @@ export interface WhatsAppMessage extends NotificationMessage {
 export interface PushNotificationMessage extends NotificationMessage {
 	channel: "push";
 	recipient: string; // device token or user ID
-	title: string;
-	body: string;
+	title: string | TemplateRef;
+	body: string | TemplateRef;
 	actionUrl?: string;
 	imageUrl?: string;
 	data?: Record<string, unknown>;
@@ -238,6 +263,8 @@ export interface NotificationServiceConfig {
 	queue?: boolean;
 	/** Enable metrics collection */
 	enableMetrics?: boolean;
+	/** Optional template engine for rendering TemplateRef fields */
+	templateEngine?: import("../templates/engine").TemplateEngine;
 }
 
 // ============= Metrics Types =============

@@ -5,6 +5,8 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { mkdirSync, rmSync, writeFileSync } from "fs";
+import { resolve } from "path";
 import {
 	NotificationService,
 	EmailChannelService,
@@ -15,7 +17,9 @@ import {
 	type SMSMessage,
 	type WhatsAppMessage,
 	type PushNotificationMessage,
+	type TemplateRef,
 } from "../../src/notification";
+import { TemplateEngine } from "../../src/templates";
 
 // ============= Test Fixtures =============
 
@@ -502,5 +506,483 @@ describe("Multi-Channel Notifications", () => {
 
 		expect(results.length).toBe(4);
 		expect(results.every((r) => r !== undefined)).toBe(true);
+	});
+});
+
+// ============= Template Integration Tests =============
+
+describe("Template Integration", () => {
+	const TEST_DIR = resolve("./tests/.template-notif");
+
+	beforeEach(() => {
+		// Create test template directory
+		mkdirSync(TEST_DIR, { recursive: true });
+	});
+
+	afterEach(() => {
+		// Cleanup
+		try {
+			rmSync(TEST_DIR, { recursive: true, force: true });
+		} catch {
+			// Ignore errors
+		}
+	});
+
+	const createTemplate = (
+		templateId: string,
+		content: string,
+		metadata?: Record<string, unknown>
+	) => {
+		const [dir, ...nameParts] = templateId.split("/");
+		const dirPath = resolve(TEST_DIR, dir);
+		mkdirSync(dirPath, { recursive: true });
+
+		let frontMatter = "";
+		if (metadata) {
+			const lines = Object.entries(metadata).map(([k, v]) => {
+				if (Array.isArray(v)) {
+					const formatted = v.map((item) => `"${item}"`).join(", ");
+					return `${k}: [${formatted}]`;
+				} else if (typeof v === "string") {
+					return `${k}: ${v}`;
+				} else {
+					return `${k}: ${JSON.stringify(v)}`;
+				}
+			});
+			frontMatter = `---\n${lines.join("\n")}\n---\n`;
+		}
+
+		const filePath = resolve(TEST_DIR, templateId + ".md");
+		writeFileSync(filePath, frontMatter + content);
+	};
+
+	test("should resolve email html TemplateRef to HTML", async () => {
+		createTemplate("emails/welcome", "## Email\nWelcome {{ name }}!");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new EmailChannelService({
+				driver: "smtp",
+				from: "noreply@example.com",
+				dryRun: true,
+			}),
+		);
+
+		const emailRef: TemplateRef = {
+			templateId: "emails/welcome",
+			data: { name: "Alice" },
+		};
+
+		const message: EmailMessage = {
+			channel: "email",
+			recipient: "alice@example.com",
+			subject: "Welcome",
+			html: emailRef,
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+
+		const metrics = service.getChannelMetrics("email");
+		expect(metrics?.sent).toBe(1);
+	});
+
+	test("should resolve email text TemplateRef to plain text", async () => {
+		createTemplate("emails/reset", "## Email\nReset link: {{ link }}");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new EmailChannelService({
+				driver: "smtp",
+				from: "noreply@example.com",
+				dryRun: true,
+			}),
+		);
+
+		const textRef: TemplateRef = {
+			templateId: "emails/reset",
+			data: { link: "https://example.com/reset?token=xyz" },
+		};
+
+		const message: EmailMessage = {
+			channel: "email",
+			recipient: "user@example.com",
+			subject: "Reset Password",
+			text: textRef,
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+	});
+
+	test("should resolve SMS message TemplateRef to text", async () => {
+		createTemplate("sms/verify", "## SMS\nCode: {{ code }}");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new SMSChannelService({ driver: "twilio", dryRun: true }),
+		);
+
+		const smsRef: TemplateRef = {
+			templateId: "sms/verify",
+			data: { code: "123456" },
+		};
+
+		const message: SMSMessage = {
+			channel: "sms",
+			recipient: "+1234567890",
+			message: smsRef,
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+	});
+
+	test("should resolve push title TemplateRef to text", async () => {
+		createTemplate("push/order", "## Push\nOrder {{ orderId }} confirmed");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new PushNotificationChannelService({
+				driver: "firebase",
+				dryRun: true,
+			}),
+		);
+
+		const titleRef: TemplateRef = {
+			templateId: "push/order",
+			data: { orderId: "ORD123" },
+		};
+
+		const message: PushNotificationMessage = {
+			channel: "push",
+			recipient: "device_token_123",
+			title: titleRef,
+			body: "Your order has been confirmed",
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+	});
+
+	test("should resolve push body TemplateRef to text", async () => {
+		createTemplate("push/delivery", "## Push\nEst. delivery: {{ date }}");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new PushNotificationChannelService({
+				driver: "firebase",
+				dryRun: true,
+			}),
+		);
+
+		const bodyRef: TemplateRef = {
+			templateId: "push/delivery",
+			data: { date: "Feb 28, 2026" },
+		};
+
+		const message: PushNotificationMessage = {
+			channel: "push",
+			recipient: "device_token_456",
+			title: "Delivery Update",
+			body: bodyRef,
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+	});
+
+	test("should use variant override when provided", async () => {
+		createTemplate("emails/notify", "## SMS\nSMS variant: {{ msg }}\n\n---\n\n## Email\nEmail variant: {{ msg }}");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new EmailChannelService({
+				driver: "smtp",
+				from: "noreply@example.com",
+				dryRun: true,
+			}),
+		);
+
+		// Force SMS variant even though channel is email
+		const htmlRef: TemplateRef = {
+			templateId: "emails/notify",
+			data: { msg: "Hello" },
+			variant: "sms", // Override!
+		};
+
+		const message: EmailMessage = {
+			channel: "email",
+			recipient: "test@example.com",
+			subject: "Test",
+			html: htmlRef,
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+	});
+
+	test("should auto-detect variant from channel", async () => {
+		createTemplate("shared/notify", "## SMS\nSMS: {{ msg }}\n\n---\n\n## Email\nEmail: {{ msg }}");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new SMSChannelService({ driver: "twilio", dryRun: true }),
+		);
+
+		const smsRef: TemplateRef = {
+			templateId: "shared/notify",
+			data: { msg: "Test message" },
+			// No variant specified - should auto-detect "sms"
+		};
+
+		const message: SMSMessage = {
+			channel: "sms",
+			recipient: "+1234567890",
+			message: smsRef,
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+	});
+
+	test("should throw when template not found", async () => {
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new EmailChannelService({
+				driver: "smtp",
+				from: "noreply@example.com",
+				dryRun: true,
+			}),
+		);
+
+		const missingRef: TemplateRef = {
+			templateId: "emails/nonexistent",
+			data: { name: "Alice" },
+		};
+
+		const message: EmailMessage = {
+			channel: "email",
+			recipient: "test@example.com",
+			subject: "Test",
+			html: missingRef,
+		};
+
+		await expect(service.send(message)).rejects.toThrow(
+			"Template not found"
+		);
+	});
+
+	test("should throw when TemplateRef used without engine", async () => {
+		const service = new NotificationService({
+			enableMetrics: true,
+			// No templateEngine configured!
+		});
+
+		service.registerChannel(
+			new EmailChannelService({
+				driver: "smtp",
+				from: "noreply@example.com",
+				dryRun: true,
+			}),
+		);
+
+		const htmlRef: TemplateRef = {
+			templateId: "emails/welcome",
+			data: { name: "Alice" },
+		};
+
+		const message: EmailMessage = {
+			channel: "email",
+			recipient: "test@example.com",
+			subject: "Welcome",
+			html: htmlRef,
+		};
+
+		await expect(service.send(message)).rejects.toThrow(
+			"TemplateRef found in field"
+		);
+	});
+
+	test("should pass through plain string fields unchanged", async () => {
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new EmailChannelService({
+				driver: "smtp",
+				from: "noreply@example.com",
+				dryRun: true,
+			}),
+		);
+
+		const message: EmailMessage = {
+			channel: "email",
+			recipient: "test@example.com",
+			subject: "Hello World",
+			html: "<p>Plain HTML string</p>",
+			text: "Plain text string",
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+	});
+
+	test("should support mixed TemplateRef and plain string fields", async () => {
+		createTemplate("emails/mixed", "## Email\nBody from template: {{ content }}");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new EmailChannelService({
+				driver: "smtp",
+				from: "noreply@example.com",
+				dryRun: true,
+			}),
+		);
+
+		const htmlRef: TemplateRef = {
+			templateId: "emails/mixed",
+			data: { content: "Important update" },
+		};
+
+		const message: EmailMessage = {
+			channel: "email",
+			recipient: "test@example.com",
+			subject: "Mixed message",
+			html: htmlRef,
+			text: "Plain text fallback", // Plain string, not TemplateRef
+		};
+
+		const messageId = await service.send(message);
+		expect(messageId).toBeDefined();
+	});
+
+	test("should update metrics after template resolution", async () => {
+		createTemplate("emails/stats", "## Email\nMetrics test: {{ test }}");
+
+		const engine = new TemplateEngine({
+			basePath: TEST_DIR,
+			cache: { enabled: true, ttl: 3600, maxSize: 100 },
+		});
+
+		const service = new NotificationService({
+			enableMetrics: true,
+			templateEngine: engine,
+		});
+
+		service.registerChannel(
+			new EmailChannelService({
+				driver: "smtp",
+				from: "noreply@example.com",
+				dryRun: true,
+			}),
+		);
+
+		const ref: TemplateRef = {
+			templateId: "emails/stats",
+			data: { test: "value" },
+		};
+
+		const message: EmailMessage = {
+			channel: "email",
+			recipient: "test@example.com",
+			subject: "Metrics test",
+			html: ref,
+		};
+
+		await service.send(message);
+
+		const metrics = service.getChannelMetrics("email");
+		expect(metrics).toBeDefined();
+		expect(metrics?.sent).toBe(1);
+		expect(metrics?.successRate).toBe(1);
 	});
 });

@@ -13,7 +13,9 @@ import type {
 	ChannelHealth,
 	ChannelMetrics,
 	NotificationServiceConfig,
+	TemplateRef,
 } from "./types";
+import { isTemplateRef } from "./types";
 
 // ============= Notification Service =============
 
@@ -97,11 +99,14 @@ export class NotificationService {
 				throw new Error(`Channel not registered: ${message.channel}`);
 			}
 
+			// Resolve template references
+			const resolvedMessage = await this._resolveTemplates(message);
+
 			// Validate message
-			service.validate(message);
+			service.validate(resolvedMessage);
 
 			// Send message
-			const messageId = await service.send(message);
+			const messageId = await service.send(resolvedMessage);
 
 			// Update metrics
 			if (this.config.enableMetrics) {
@@ -229,6 +234,69 @@ export class NotificationService {
 		}
 
 		return allMetrics;
+	}
+
+	/**
+	 * Resolve TemplateRef objects in message fields to rendered strings
+	 */
+	private async _resolveTemplates(message: NotificationMessage): Promise<NotificationMessage> {
+		const engine = this.config.templateEngine;
+		if (!engine) {
+			// If no engine, check that no TemplateRef fields exist
+			this._assertNoTemplateRefs(message);
+			return message;
+		}
+
+		const channel = message.channel;
+		const msg = { ...message } as Record<string, unknown>;
+
+		const resolveField = async (value: unknown, defaultFormat: "html" | "text"): Promise<string> => {
+			if (!isTemplateRef(value)) return value as string;
+			const fmt = value.outputFormat ?? defaultFormat;
+			const variant = value.variant ?? engine.getVariantForChannel(channel);
+			return engine.render(value.templateId, value.data, { variant, outputFormat: fmt });
+		};
+
+		// Email: resolve html (→ HTML) and text (→ text)
+		if (channel === "email") {
+			if (isTemplateRef(msg.html)) {
+				msg.html = await resolveField(msg.html, "html");
+			}
+			if (isTemplateRef(msg.text)) {
+				msg.text = await resolveField(msg.text, "text");
+			}
+		}
+		// SMS: resolve message (→ text)
+		else if (channel === "sms") {
+			if (isTemplateRef(msg.message)) {
+				msg.message = await resolveField(msg.message, "text");
+			}
+		}
+		// Push: resolve title and body (→ text)
+		else if (channel === "push") {
+			if (isTemplateRef(msg.title)) {
+				msg.title = await resolveField(msg.title, "text");
+			}
+			if (isTemplateRef(msg.body)) {
+				msg.body = await resolveField(msg.body, "text");
+			}
+		}
+
+		return msg as NotificationMessage;
+	}
+
+	/**
+	 * Assert that no TemplateRef fields exist in the message
+	 * Throws if a TemplateRef is found but no templateEngine is configured
+	 */
+	private _assertNoTemplateRefs(message: Record<string, unknown>): void {
+		for (const [key, value] of Object.entries(message)) {
+			if (isTemplateRef(value)) {
+				throw new Error(
+					`TemplateRef found in field "${key}" but no templateEngine is configured in NotificationService`,
+				);
+			}
+		}
 	}
 
 	/**
