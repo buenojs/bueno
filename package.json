@@ -45,6 +45,10 @@
       "types": "./dist/template/index.d.ts",
       "import": "./dist/template/index.js"
     },
+    "./i18n": {
+      "types": "./dist/i18n/index.d.ts",
+      "import": "./dist/i18n/index.js"
+    },
     "./cli": {
       "types": "./dist/cli/index.d.ts",
       "import": "./dist/cli/index.js"
@@ -56,7 +60,7 @@
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
     "coverage": "bun test --coverage coverage/lcov.info",
-    "build": "bun build ./src/index.ts ./src/database/index.ts ./src/schema/index.ts ./src/migrations/index.ts ./src/orm/index.ts ./src/jobs/index.ts ./src/templates/index.ts ./src/template/index.ts ./src/notification/index.ts ./src/cli/bin.ts --outdir ./dist --target bun && test -d dist/src && (mv dist/src/* dist/ && rmdir dist/src || true) || true",
+    "build": "bun build ./src/index.ts ./src/database/index.ts ./src/schema/index.ts ./src/migrations/index.ts ./src/orm/index.ts ./src/jobs/index.ts ./src/templates/index.ts ./src/template/index.ts ./src/notification/index.ts ./src/i18n/index.ts ./src/cli/bin.ts --outdir ./dist --target bun && test -d dist/src && (mv dist/src/* dist/ && rmdir dist/src || true) || true",
     "build:cli": "bun build ./src/cli/bin.ts --outdir ./dist/cli --target bun",
     "typecheck": "tsc --noEmit",
     "lint": "bunx biome check ./src",

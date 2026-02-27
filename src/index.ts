@@ -203,8 +203,28 @@ export {
 	type NotificationEvent,
 	type NotificationEventType,
 	type NotificationValidationResult,
-	type StandardSchema,
 } from "./notification";
+
+// i18n
+export {
+	I18n,
+	createI18n,
+	TranslationLoader,
+	LocaleNegotiator,
+	parseAcceptLanguage,
+	normaliseLocale,
+	i18nMiddleware,
+	getLocale,
+	getT,
+	type PluralKey,
+	type TranslationParams,
+	type TranslationFunction,
+	type LocaleMatch,
+	type I18nContext,
+	type LocaleBundle,
+	type I18nMetrics,
+	type I18nMiddlewareOptions,
+} from "./i18n";
 
 // SSG
 export {
@@ -407,6 +427,7 @@ export type {
 	FrontendConfig,
 	JobsConfig,
 	NotificationConfig,
+	I18nConfig,
 	DeepPartial,
 	UserConfig,
 	UserConfigFn,

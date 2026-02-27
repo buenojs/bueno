@@ -200,6 +200,30 @@ export interface NotificationConfig {
 	};
 }
 
+// ============= i18n Configuration =============
+
+export interface I18nConfig {
+	/** Enable i18n system */
+	enabled?: boolean;
+	/** Default locale — used as fallback when requested locale has missing keys (default: "en") */
+	defaultLocale?: string;
+	/** List of supported locale identifiers (default: ["en"]) */
+	supportedLocales?: string[];
+	/** Base directory for locale JSON files (default: "resources/i18n") */
+	basePath?: string;
+	/**
+	 * Fall back to defaultLocale when a key is missing in the requested locale.
+	 * (default: true)
+	 */
+	fallbackToDefault?: boolean;
+	/** Cookie name used to persist locale choice (default: "bueno_locale") */
+	cookieName?: string;
+	/** Cookie max-age in seconds (default: 31536000 — 1 year) */
+	cookieMaxAge?: number;
+	/** Enable file watching for hot reload in development */
+	watch?: boolean;
+}
+
 // ============= Frontend Configuration =============
 
 export interface FrontendConfig {
@@ -229,6 +253,8 @@ export interface BuenoConfig {
 	template?: TemplateConfig;
 	/** Notification configuration */
 	notification?: NotificationConfig;
+	/** i18n configuration */
+	i18n?: I18nConfig;
 	/** Logger configuration */
 	logger?: LoggerConfig;
 	/** Health check configuration */
@@ -407,6 +433,16 @@ export const DEFAULT_CONFIG: Required<BuenoConfig> = {
 			dryRun: false,
 		},
 	},
+	i18n: {
+		enabled: false,
+		defaultLocale: "en",
+		supportedLocales: ["en"],
+		basePath: "resources/i18n",
+		fallbackToDefault: true,
+		cookieName: "bueno_locale",
+		cookieMaxAge: 31536000,
+		watch: false,
+	},
 	logger: {
 		level: "info",
 		pretty: true,
@@ -529,6 +565,16 @@ export const ENV_MAPPINGS: EnvMapping[] = [
 	{ envVar: "BUENO_PUSH_DRY_RUN", configKey: "notification.push.dryRun", transform: (v) => v === "true" },
 	{ envVar: "BUENO_PUSH_SERVER_KEY", configKey: "notification.push.serverKey" },
 	{ envVar: "BUENO_PUSH_CERTIFICATE_PATH", configKey: "notification.push.certificatePath" },
+
+	// i18n
+	{ envVar: "BUENO_I18N_ENABLED", configKey: "i18n.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_I18N_DEFAULT_LOCALE", configKey: "i18n.defaultLocale" },
+	{ envVar: "BUENO_I18N_SUPPORTED_LOCALES", configKey: "i18n.supportedLocales", transform: (v) => v.split(",").map((s) => s.trim()) },
+	{ envVar: "BUENO_I18N_BASE_PATH", configKey: "i18n.basePath" },
+	{ envVar: "BUENO_I18N_FALLBACK", configKey: "i18n.fallbackToDefault", transform: (v) => v === "true" },
+	{ envVar: "BUENO_I18N_COOKIE_NAME", configKey: "i18n.cookieName" },
+	{ envVar: "BUENO_I18N_COOKIE_MAX_AGE", configKey: "i18n.cookieMaxAge", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_I18N_WATCH", configKey: "i18n.watch", transform: (v) => v === "true" },
 
 	// Logger
 	{ envVar: "LOG_LEVEL", configKey: "logger.level" },
