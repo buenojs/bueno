@@ -2,13 +2,13 @@
 
 A Bun-Native Full-Stack Framework
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/buenojs/bueno/ci.yml?branch=main)](https://github.com/buenojs/bueno/actions)
-[![Test Coverage](https://img.shields.io/codecov/c/gh/buenojs/bueno)](https://codecov.io/gh/buenojs/bueno)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/buenojs/bueno/ci.yml?branch=main&label=Tests)](https://github.com/buenojs/bueno/actions)
+[![Test Coverage](https://img.shields.io/codecov/c/gh/buenojs/bueno?label=Coverage)](https://codecov.io/gh/buenojs/bueno)
 [![npm version](https://img.shields.io/npm/v/@buenojs/bueno)](https://www.npmjs.com/package/@buenojs/bueno)
-[![License](https://img.shields.io/npm/l/@buenojs/bueno)](https://github.com/buenojs/bueno/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/buenojs/bueno/blob/main/LICENSE)
 [![Bun Version](https://img.shields.io/badge/bun-%3E%3D1.3.0-black)](https://bun.sh)
 [![Activity](https://img.shields.io/github/commit-activity/m/buenojs/bueno)](https://github.com/buenojs/bueno/graphs/commit-activity)
-[![Last Commit](https://img.shields.io/github/last-commit/buenojs/bueno)](https://github.com/buenojs/bueno/commits/main)
+[![Last Commit](https://img.shields.io/github/last-commit/buenojs/bueno/main)](https://github.com/buenojs/bueno/commits/main)
 
 ## Why Bueno?
 
