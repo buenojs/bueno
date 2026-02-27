@@ -118,6 +118,30 @@ export interface JobsConfig {
 	enableMetrics?: boolean;
 }
 
+// ============= Template Configuration =============
+
+export interface TemplateConfig {
+	/** Enable template system */
+	enabled?: boolean;
+	/** Base path to templates directory (default: 'resources/templates') */
+	basePath?: string;
+	/** Cache configuration */
+	cache?: {
+		/** Enable template caching (default: true) */
+		enabled?: boolean;
+		/** Cache TTL in seconds (default: 3600) */
+		ttl?: number;
+		/** Maximum templates in cache (default: 100) */
+		maxSize?: number;
+	};
+	/** Enable file watching for hot reload in development */
+	watch?: boolean;
+	/** Default output format: 'html' or 'text' */
+	defaultFormat?: "html" | "text";
+	/** Channel to variant mapping for auto-detection */
+	channelVariantMap?: Record<string, string>;
+}
+
 // ============= Notification Configuration =============
 
 export interface NotificationConfig {
@@ -201,6 +225,8 @@ export interface BuenoConfig {
 	cache?: CacheConfig;
 	/** Jobs configuration */
 	jobs?: JobsConfig;
+	/** Template configuration */
+	template?: TemplateConfig;
 	/** Notification configuration */
 	notification?: NotificationConfig;
 	/** Logger configuration */
@@ -335,6 +361,24 @@ export const DEFAULT_CONFIG: Required<BuenoConfig> = {
 		jobTimeout: 300000,
 		enableMetrics: true,
 	},
+	template: {
+		enabled: true,
+		basePath: "resources/templates",
+		cache: {
+			enabled: true,
+			ttl: 3600,
+			maxSize: 100,
+		},
+		watch: false,
+		defaultFormat: "html",
+		channelVariantMap: {
+			email: "email",
+			sms: "sms",
+			push: "push",
+			whatsapp: "whatsapp",
+			web: "web",
+		},
+	},
 	notification: {
 		enabled: false,
 		enableMetrics: true,
@@ -434,6 +478,15 @@ export const ENV_MAPPINGS: EnvMapping[] = [
 	{ envVar: "BUENO_JOBS_BATCH_SIZE", configKey: "jobs.batchSize", transform: (v) => parseInt(v, 10) },
 	{ envVar: "BUENO_JOBS_POLL_INTERVAL", configKey: "jobs.pollInterval", transform: (v) => parseInt(v, 10) },
 	{ envVar: "BUENO_JOBS_TIMEOUT", configKey: "jobs.jobTimeout", transform: (v) => parseInt(v, 10) },
+
+	// Template
+	{ envVar: "BUENO_TEMPLATE_ENABLED", configKey: "template.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_TEMPLATE_BASE_PATH", configKey: "template.basePath" },
+	{ envVar: "BUENO_TEMPLATE_CACHE_ENABLED", configKey: "template.cache.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_TEMPLATE_CACHE_TTL", configKey: "template.cache.ttl", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_TEMPLATE_CACHE_MAX_SIZE", configKey: "template.cache.maxSize", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_TEMPLATE_WATCH", configKey: "template.watch", transform: (v) => v === "true" },
+	{ envVar: "BUENO_TEMPLATE_DEFAULT_FORMAT", configKey: "template.defaultFormat" },
 
 	// Notification
 	{ envVar: "BUENO_NOTIFICATION_ENABLED", configKey: "notification.enabled", transform: (v) => v === "true" },

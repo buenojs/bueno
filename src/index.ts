@@ -152,6 +152,24 @@ export {
 	type JobConfigValidationResult,
 } from "./jobs";
 
+// Templates
+export {
+	TemplateEngine,
+	TemplateLoader,
+	SimpleRenderer,
+	MarkdownRenderer,
+	type Template,
+	type TemplateMetadata,
+	type TemplateData,
+	type RenderOptions,
+	type TemplateEngineConfig,
+	type TemplateEngineMetrics,
+	type IRenderer,
+	type FilterRegistry,
+	type TemplateLoaderOptions,
+	type TemplateLoadedEvent,
+} from "./templates";
+
 // Notification
 export {
 	NotificationService,

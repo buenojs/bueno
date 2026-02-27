@@ -41,6 +41,10 @@
       "types": "./dist/notification/index.d.ts",
       "import": "./dist/notification/index.js"
     },
+    "./template": {
+      "types": "./dist/template/index.d.ts",
+      "import": "./dist/template/index.js"
+    },
     "./cli": {
       "types": "./dist/cli/index.d.ts",
       "import": "./dist/cli/index.js"
@@ -51,8 +55,8 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "build": "bun build ./src/index.ts ./src/database/index.ts ./src/schema/index.ts ./src/migrations/index.ts ./src/orm/index.ts ./src/jobs/index.ts ./src/notification/index.ts ./src/cli/bin.ts --outdir ./dist --target bun && mv ./dist/cli/bin.js ./dist/cli/index.js",
-    "build:cli": "bun build ./src/cli/bin.ts --outdir ./dist/cli --target bun && mv ./dist/cli/bin.js ./dist/cli/index.js",
+    "build": "bun build ./src/index.ts ./src/database/index.ts ./src/schema/index.ts ./src/migrations/index.ts ./src/orm/index.ts ./src/jobs/index.ts ./src/templates/index.ts ./src/template/index.ts ./src/notification/index.ts ./src/cli/bin.ts --outdir ./dist --target bun && test -d dist/src && (mv dist/src/* dist/ && rmdir dist/src || true) || true",
+    "build:cli": "bun build ./src/cli/bin.ts --outdir ./dist/cli --target bun",
     "typecheck": "tsc --noEmit",
     "lint": "bunx biome check ./src",
     "cli": "bun run src/cli/bin.ts"
