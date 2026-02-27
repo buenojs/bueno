@@ -91,6 +91,62 @@ export interface TelemetryConfig {
 	sampleRate?: number;
 }
 
+// ============= Jobs Configuration =============
+
+export interface JobsConfig {
+	/** Enable background jobs */
+	enabled?: boolean;
+	/** Job queue driver type */
+	driver?: "redis" | "memory";
+	/** Redis connection URL */
+	url?: string;
+	/** Key prefix for jobs (default: 'jobs:') */
+	keyPrefix?: string;
+	/** Max concurrent jobs (default: 10) */
+	concurrency?: number;
+	/** Max retry attempts (default: 3) */
+	maxRetries?: number;
+	/** Retry delay in seconds (default: 1) */
+	retryDelay?: number;
+	/** Job batch size (default: 10) */
+	batchSize?: number;
+	/** Poll interval in milliseconds (default: 1000) */
+	pollInterval?: number;
+	/** Job timeout in milliseconds (default: 300000 / 5 minutes) */
+	jobTimeout?: number;
+	/** Enable metrics collection */
+	enableMetrics?: boolean;
+}
+
+// ============= Mailer Configuration =============
+
+export interface MailerConfig {
+	/** Enable mailer service */
+	enabled?: boolean;
+	/** Mailer driver type */
+	driver?: "smtp" | "sendgrid" | "brevo" | "resend" | "mock";
+	/** Default from email address */
+	from?: string;
+	/** Default from name */
+	fromName?: string;
+	/** SMTP configuration (if driver is 'smtp') */
+	smtp?: {
+		host: string;
+		port: number;
+		secure?: boolean;
+		username?: string;
+		password?: string;
+	};
+	/** API credentials (for sendgrid, brevo, resend) */
+	apiKey?: string;
+	/** Enable dry run mode (log instead of sending) */
+	dryRun?: boolean;
+	/** Enable metrics collection */
+	enableMetrics?: boolean;
+	/** Enable job queue integration for async sending */
+	queue?: boolean;
+}
+
 // ============= Frontend Configuration =============
 
 export interface FrontendConfig {
@@ -114,6 +170,10 @@ export interface BuenoConfig {
 	database?: DatabaseConfig;
 	/** Cache configuration */
 	cache?: CacheConfig;
+	/** Jobs configuration */
+	jobs?: JobsConfig;
+	/** Mailer configuration */
+	mailer?: MailerConfig;
 	/** Logger configuration */
 	logger?: LoggerConfig;
 	/** Health check configuration */
@@ -233,6 +293,28 @@ export const DEFAULT_CONFIG: Required<BuenoConfig> = {
 		keyPrefix: "",
 		enableMetrics: true,
 	},
+	jobs: {
+		enabled: false,
+		driver: "memory",
+		url: undefined,
+		keyPrefix: "jobs:",
+		concurrency: 10,
+		maxRetries: 3,
+		retryDelay: 1,
+		batchSize: 10,
+		pollInterval: 1000,
+		jobTimeout: 300000,
+		enableMetrics: true,
+	},
+	mailer: {
+		enabled: false,
+		driver: "mock",
+		from: "noreply@example.com",
+		fromName: "Bueno App",
+		dryRun: false,
+		enableMetrics: true,
+		queue: false,
+	},
 	logger: {
 		level: "info",
 		pretty: true,
@@ -293,6 +375,31 @@ export const ENV_MAPPINGS: EnvMapping[] = [
 	{ envVar: "BUENO_CACHE_DRIVER", configKey: "cache.driver" },
 	{ envVar: "BUENO_CACHE_TTL", configKey: "cache.ttl", transform: (v) => parseInt(v, 10) },
 	{ envVar: "BUENO_CACHE_PREFIX", configKey: "cache.keyPrefix" },
+
+	// Jobs
+	{ envVar: "BUENO_JOBS_ENABLED", configKey: "jobs.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_JOBS_DRIVER", configKey: "jobs.driver" },
+	{ envVar: "BUENO_JOBS_URL", configKey: "jobs.url" },
+	{ envVar: "BUENO_JOBS_CONCURRENCY", configKey: "jobs.concurrency", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_JOBS_MAX_RETRIES", configKey: "jobs.maxRetries", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_JOBS_RETRY_DELAY", configKey: "jobs.retryDelay", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_JOBS_BATCH_SIZE", configKey: "jobs.batchSize", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_JOBS_POLL_INTERVAL", configKey: "jobs.pollInterval", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_JOBS_TIMEOUT", configKey: "jobs.jobTimeout", transform: (v) => parseInt(v, 10) },
+
+	// Mailer
+	{ envVar: "BUENO_MAILER_ENABLED", configKey: "mailer.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_MAILER_DRIVER", configKey: "mailer.driver" },
+	{ envVar: "BUENO_MAILER_FROM", configKey: "mailer.from" },
+	{ envVar: "BUENO_MAILER_FROM_NAME", configKey: "mailer.fromName" },
+	{ envVar: "BUENO_MAILER_API_KEY", configKey: "mailer.apiKey" },
+	{ envVar: "BUENO_MAILER_DRY_RUN", configKey: "mailer.dryRun", transform: (v) => v === "true" },
+	{ envVar: "BUENO_MAILER_QUEUE", configKey: "mailer.queue", transform: (v) => v === "true" },
+	{ envVar: "BUENO_SMTP_HOST", configKey: "mailer.smtp.host" },
+	{ envVar: "BUENO_SMTP_PORT", configKey: "mailer.smtp.port", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_SMTP_USER", configKey: "mailer.smtp.username" },
+	{ envVar: "BUENO_SMTP_PASSWORD", configKey: "mailer.smtp.password" },
+	{ envVar: "BUENO_SMTP_SECURE", configKey: "mailer.smtp.secure", transform: (v) => v === "true" },
 
 	// Logger
 	{ envVar: "LOG_LEVEL", configKey: "logger.level" },

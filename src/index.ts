@@ -130,6 +130,60 @@ export {
 	type LockHandle,
 } from "./lock";
 
+// Background Jobs
+export {
+	JobQueue,
+	JobWorker,
+	createJobQueue,
+	startWorker,
+	MemoryJobQueueDriver,
+	RedisJobQueueDriver,
+	type Job,
+	type JobStatus,
+	type JobQueueConfig,
+	type QueueOptions,
+	type JobHandler,
+	type QueueMetrics,
+	type JobEvent,
+	type JobEventType,
+	type JobClaimHandle,
+	type JobQueueDriver,
+	type HandlerRegistryEntry,
+	type JobConfigValidationResult,
+} from "./jobs";
+
+// Mailer
+export {
+	MailerService,
+	createMailer,
+	BaseMailerDriver,
+	MemoryMailerDriver,
+	SmtpMailerDriver,
+	SendgridMailerDriver,
+	BrevoMailerDriver,
+	ResendMailerDriver,
+	MockMailerDriver,
+	type EmailRecipient,
+	type Recipients,
+	type MailerAttachment,
+	type MailMessage,
+	type Mailable,
+	type MailerDriver,
+	type MailerHealth,
+	type MailerOptions,
+	type MailTemplate,
+	type TemplateData,
+	type TemplateRenderOptions,
+	type TemplateRenderer,
+	type MailerEvent,
+	type MailerMetrics,
+	type Notification,
+	type NotificationChannel,
+	type MailerConfig,
+	type MailerConfigValidationResult,
+	type MailerEventType,
+} from "./mailer";
+
 // SSG
 export {
 	SSG,
@@ -329,6 +383,8 @@ export type {
 	MetricsConfig,
 	TelemetryConfig,
 	FrontendConfig,
+	JobsConfig,
+	MailerConfig as MailerConfigType,
 	DeepPartial,
 	UserConfig,
 	UserConfigFn,

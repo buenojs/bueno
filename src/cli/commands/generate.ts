@@ -34,7 +34,9 @@ type GeneratorType =
 	| 'filter'
 	| 'dto'
 	| 'middleware'
-	| 'migration';
+	| 'migration'
+	| 'job'
+	| 'job-handler';
 
 /**
  * Generator aliases
@@ -50,6 +52,8 @@ const GENERATOR_ALIASES: Record<string, GeneratorType> = {
 	d: 'dto',
 	mw: 'middleware',
 	mi: 'migration',
+	j: 'job',
+	jh: 'job-handler',
 };
 
 /**
@@ -279,6 +283,23 @@ export default createMigration('{{migrationId}}', '{{migrationName}}')
     // await db.dropTable('{{tableName}}');
   });
 `,
+		job: `export interface {{pascalCase name}}JobData {
+  // TODO: Define job data properties
+}
+
+export const {{camelCase name}} = (data: {{pascalCase name}}JobData) => ({
+  name: '{{camelCase name}}',
+  data,
+});
+`,
+		'job-handler': `import { type JobHandler } from '@buenojs/bueno/jobs';
+import type { {{pascalCase name}}JobData } from './{{kebabCase name}}.job';
+
+export const handle{{pascalCase name}}: JobHandler<{{pascalCase name}}JobData> = async (job) => {
+  const { data } = job;
+  // TODO: Implement job logic
+};
+`,
 	};
 
 	return templates[type];
@@ -288,7 +309,10 @@ export default createMigration('{{migrationId}}', '{{migrationName}}')
  * Get file extension for generator type
  */
 function getFileExtension(type: GeneratorType): string {
-	return type === 'dto' ? '.dto.ts' : '.ts';
+	if (type === 'dto') return '.dto.ts';
+	if (type === 'job') return '.job.ts';
+	if (type === 'job-handler') return '.handler.ts';
+	return '.ts';
 }
 
 /**
@@ -313,6 +337,10 @@ function getDefaultDirectory(type: GeneratorType): string {
 			return 'common/middleware';
 		case 'migration':
 			return 'database/migrations';
+		case 'job':
+			return 'modules/jobs';
+		case 'job-handler':
+			return 'modules/jobs/handlers';
 		default:
 			return '';
 	}

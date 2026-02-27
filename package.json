@@ -33,6 +33,14 @@
       "types": "./dist/orm/index.d.ts",
       "import": "./dist/orm/index.js"
     },
+    "./jobs": {
+      "types": "./dist/jobs/index.d.ts",
+      "import": "./dist/jobs/index.js"
+    },
+    "./mailer": {
+      "types": "./dist/mailer/index.d.ts",
+      "import": "./dist/mailer/index.js"
+    },
     "./cli": {
       "types": "./dist/cli/index.d.ts",
       "import": "./dist/cli/index.js"
@@ -43,7 +51,7 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
-    "build": "bun build ./src/index.ts ./src/database/index.ts ./src/schema/index.ts ./src/migrations/index.ts ./src/orm/index.ts ./src/cli/bin.ts --outdir ./dist --target bun && mv ./dist/cli/bin.js ./dist/cli/index.js",
+    "build": "bun build ./src/index.ts ./src/database/index.ts ./src/schema/index.ts ./src/migrations/index.ts ./src/orm/index.ts ./src/jobs/index.ts ./src/mailer/index.ts ./src/cli/bin.ts --outdir ./dist --target bun && mv ./dist/cli/bin.js ./dist/cli/index.js",
     "build:cli": "bun build ./src/cli/bin.ts --outdir ./dist/cli --target bun && mv ./dist/cli/bin.js ./dist/cli/index.js",
     "typecheck": "tsc --noEmit",
     "lint": "bunx biome check ./src",

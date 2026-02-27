@@ -220,6 +220,145 @@ const DEFAULT_RULES: ValidationRule[] = [
 			return { valid: true };
 		},
 	},
+	{
+		path: "jobs.driver",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (value !== "redis" && value !== "memory") {
+				return {
+					valid: false,
+					message: 'Jobs driver must be "redis" or "memory"',
+					expected: '"redis" | "memory"',
+					received: value,
+				};
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "jobs.concurrency",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (typeof value !== "number") {
+				return { valid: false, message: "Concurrency must be a number" };
+			}
+			if (value < 1) {
+				return { valid: false, message: "Concurrency must be at least 1" };
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "jobs.maxRetries",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (typeof value !== "number") {
+				return { valid: false, message: "Max retries must be a number" };
+			}
+			if (value < 0) {
+				return { valid: false, message: "Max retries must be non-negative" };
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "jobs.retryDelay",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (typeof value !== "number") {
+				return { valid: false, message: "Retry delay must be a number" };
+			}
+			if (value < 0) {
+				return { valid: false, message: "Retry delay must be non-negative" };
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "jobs.batchSize",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (typeof value !== "number") {
+				return { valid: false, message: "Batch size must be a number" };
+			}
+			if (value < 1) {
+				return { valid: false, message: "Batch size must be at least 1" };
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "jobs.pollInterval",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (typeof value !== "number") {
+				return { valid: false, message: "Poll interval must be a number" };
+			}
+			if (value < 100) {
+				return { valid: false, message: "Poll interval must be at least 100ms" };
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "jobs.jobTimeout",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (typeof value !== "number") {
+				return { valid: false, message: "Job timeout must be a number" };
+			}
+			if (value < 1000) {
+				return { valid: false, message: "Job timeout must be at least 1000ms" };
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "mailer.driver",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			const validDrivers = ["smtp", "sendgrid", "brevo", "resend", "mock"];
+			if (!validDrivers.includes(value as string)) {
+				return {
+					valid: false,
+					message: `Mailer driver must be one of: ${validDrivers.join(", ")}`,
+					expected: validDrivers.join(" | "),
+					received: value,
+				};
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "mailer.from",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (typeof value !== "string") {
+				return { valid: false, message: "From email must be a string" };
+			}
+			if (!value.includes("@")) {
+				return {
+					valid: false,
+					message: "From email must be a valid email address",
+					received: value,
+				};
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "mailer.smtp.port",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			if (typeof value !== "number") {
+				return { valid: false, message: "SMTP port must be a number" };
+			}
+			if (value < 1 || value > 65535) {
+				return { valid: false, message: "SMTP port must be between 1 and 65535" };
+			}
+			return { valid: true };
+		},
+	},
 ];
 
 /**
