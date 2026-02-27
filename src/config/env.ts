@@ -139,33 +139,128 @@ async function loadEnvFile(
  * Files are loaded in priority order, with later files overriding earlier ones
  */
 export async function loadEnvFiles(options?: {
-	/** Custom list of env files to load */
-	files?: string[];
-	/** Whether to also load NODE_ENV-specific file */
-	loadNodeEnv?: boolean;
-	/** Base directory for env files */
-	cwd?: string;
+    /** Custom list of env files to load */
+    files?: string[];
+    /** Whether to also load NODE_ENV-specific file */
+    loadNodeEnv?: boolean;
+    /** Base directory for env files */
+    cwd?: string;
 }): Promise<Record<string, string>> {
-	const cwd = options?.cwd ?? process.cwd();
-	const files = options?.files ?? [...ENV_FILE_PRIORITY];
+    const cwd = options?.cwd ?? process.cwd();
+    const files = options?.files ?? [...ENV_FILE_PRIORITY];
 
-	// Add NODE_ENV-specific file if requested
-	if (options?.loadNodeEnv !== false) {
-		const envFile = getEnvFileName();
-		if (!files.includes(envFile)) {
-			files.push(envFile);
-		}
-	}
+    // Add NODE_ENV-specific file if requested
+    if (options?.loadNodeEnv !== false) {
+        const envFile = getEnvFileName();
+        if (!files.includes(envFile)) {
+            files.push(envFile);
+        }
+    }
 
-	const result: Record<string, string> = {};
+    const result: Record<string, string> = {};
 
-	for (const file of files) {
-		const filePath = file.startsWith("/") ? file : `${cwd}/${file}`;
-		const { vars } = await loadEnvFile(filePath);
-		Object.assign(result, vars);
-	}
+    for (const file of files) {
+        const filePath = file.startsWith("/") ? file : `${cwd}/${file}`;
+        const { vars } = await loadEnvFile(filePath);
+        Object.assign(result, vars);
+    }
 
-	return result;
+    return result;
+}
+
+// ============= Environment Variable Validation =============
+
+/**
+ * Validate environment variables before loading
+ *
+ * @param envVars - Environment variables to validate
+ * @returns Validation result with transformed values or error details
+ */
+export async function validateEnvVars(envVars: Record<string, string>): Promise<ValidationResult> {
+    try {
+        const { validateEnvVars } = await import("./env-validation");
+        return validateEnvVars(envVars);
+    } catch (error) {
+        return {
+            success: false,
+            issues: [
+                {
+                    message: `Failed to validate environment variables: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                },
+            ],
+        };
+    }
+}
+
+/**
+ * Load and validate environment variables with detailed error reporting
+ *
+ * @param options - Options for loading and validating environment variables
+ * @returns Loaded environment data with validation result
+ */
+export async function loadAndValidateEnv(options?: {
+    /** Custom list of env files to load */
+    files?: string[];
+    /** Whether to also load NODE_ENV-specific file */
+    loadNodeEnv?: boolean;
+    /** Base directory for env files */
+    cwd?: string;
+    /** Whether to merge with existing Bun.env */
+    mergeWithProcess?: boolean;
+    /** Custom environment variable mappings */
+    mappings?: EnvMapping[];
+}): Promise<{ loaded: LoadedEnv; valid: boolean; errors?: string }> {
+    try {
+        // Load environment variables from files
+        const fileVars = await loadEnvFiles(options);
+
+        // Validate the environment variables
+        const validationResult = await validateEnvVars(fileVars);
+
+        // Merge with Bun.env if requested
+        const raw: Record<string, string> =
+            options?.mergeWithProcess !== false
+                ? { ...fileVars, ...Object.fromEntries(Object.entries(Bun.env).filter(([, v]) => v !== undefined) as [string, string][]) }
+                : fileVars;
+
+        // Transform to config
+        const config = envToConfig(raw, options?.mappings);
+
+        // Track sources
+        const sources = new Map<string, EnvSourceInfo>();
+        for (const [name, value] of Object.entries(raw)) {
+            sources.set(name, {
+                name,
+                value,
+                source: fileVars[name] !== undefined ? ".env file" : "process",
+            });
+        }
+
+        // Set loaded vars to Bun.env
+        for (const [key, value] of Object.entries(fileVars)) {
+            if (Bun.env[key] === undefined) {
+                Bun.env[key] = value;
+            }
+        }
+
+        const loaded: LoadedEnv = { raw, config, sources };
+
+        if (!validationResult.success) {
+            return {
+                loaded,
+                valid: false,
+                errors: validationResult.issues.map((issue) => issue.message).join('\n'),
+            };
+        }
+
+        return { loaded, valid: true };
+    } catch (error) {
+        return {
+            loaded: { raw: {}, config: {}, sources: new Map() },
+            valid: false,
+            errors: `Failed to load and validate environment variables: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        };
+    }
 }
 
 /**
@@ -222,47 +317,27 @@ export function envToConfig(
  * Load environment variables and transform to configuration
  */
 export async function loadEnv(options?: {
-	/** Custom list of env files to load */
-	files?: string[];
-	/** Whether to load NODE_ENV-specific file */
-	loadNodeEnv?: boolean;
-	/** Base directory for env files */
-	cwd?: string;
-	/** Whether to merge with existing Bun.env */
-	mergeWithProcess?: boolean;
-	/** Custom environment variable mappings */
-	mappings?: EnvMapping[];
+    /** Custom list of env files to load */
+    files?: string[];
+    /** Whether to load NODE_ENV-specific file */
+    loadNodeEnv?: boolean;
+    /** Base directory for env files */
+    cwd?: string;
+    /** Whether to merge with existing Bun.env */
+    mergeWithProcess?: boolean;
+    /** Custom environment variable mappings */
+    mappings?: EnvMapping[];
 }): Promise<LoadedEnv> {
-	// Load from .env files
-	const fileVars = await loadEnvFiles(options);
+    // Load and validate environment variables
+    const result = await loadAndValidateEnv(options);
 
-	// Merge with Bun.env if requested
-	const raw: Record<string, string> =
-		options?.mergeWithProcess !== false
-			? { ...fileVars, ...Object.fromEntries(Object.entries(Bun.env).filter(([, v]) => v !== undefined) as [string, string][]) }
-			: fileVars;
+    if (!result.valid) {
+        console.error('Environment variable validation failed:');
+        console.error(result.errors);
+        throw new Error('Environment variable validation failed. Check the error messages above.');
+    }
 
-	// Transform to config
-	const config = envToConfig(raw, options?.mappings);
-
-	// Track sources
-	const sources = new Map<string, EnvSourceInfo>();
-	for (const [name, value] of Object.entries(raw)) {
-		sources.set(name, {
-			name,
-			value,
-			source: fileVars[name] !== undefined ? ".env file" : "process",
-		});
-	}
-
-	// Set loaded vars to Bun.env
-	for (const [key, value] of Object.entries(fileVars)) {
-		if (Bun.env[key] === undefined) {
-			Bun.env[key] = value;
-		}
-	}
-
-	return { raw, config, sources };
+    return result.loaded;
 }
 
 /**

@@ -265,12 +265,102 @@ export function isStandardSchema(value: unknown): value is StandardSchema {
  * Assert that a schema implements Standard Schema
  */
 export function assertStandardSchema(
-	schema: unknown,
-	name = "Schema",
+    schema: unknown,
+    name = "Schema",
 ): asserts schema is StandardSchema {
-	if (!isStandardSchema(schema)) {
-		throw new Error(
-				`${name} must implement Standard Schema interface. Supported: Zod 4+, Valibot v1+, ArkType, Typia 7+`,
-			);
-	}
+    if (!isStandardSchema(schema)) {
+        throw new Error(
+            `${name} must implement Standard Schema interface. Supported: Zod 4+, Valibot v1+, ArkType, Typia 7+`,
+        );
+    }
+}
+
+// ============= Environment Variable Validation =============
+
+/**
+ * Validate environment variables against a schema
+ *
+ * @param schema - Validation schema for environment variables
+ * @param envVars - Environment variables to validate
+ * @returns Validation result with transformed values or error details
+ */
+export async function validateEnv<T>(
+    schema: StandardSchema<unknown, T>,
+    envVars: Record<string, string>,
+): Promise<ValidationResult<T>> {
+    try {
+        // Validate the environment variables
+        const result = await validate(schema, envVars);
+
+        if (!result.success) {
+            // Format error messages with context
+            const formattedIssues = result.issues.map((issue) => {
+                const path = issue.path?.join('.') || 'root';
+                return {
+                    ...issue,
+                    message: `Environment variable validation failed for ${path}: ${issue.message}`,
+                };
+            });
+
+            return {
+                success: false,
+                issues: formattedIssues,
+            };
+        }
+
+        return result;
+    } catch (error) {
+        return {
+            success: false,
+            issues: [
+                {
+                    message: `Environment variable validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                },
+            ],
+        };
+    }
+}
+
+/**
+ * Validate environment variables with detailed error reporting
+ *
+ * @param schema - Validation schema for environment variables
+ * @param envVars - Environment variables to validate
+ * @returns Validation result with transformed values or detailed error information
+ */
+export function validateEnvSync<T>(
+    schema: StandardSchema<unknown, T>,
+    envVars: Record<string, string>,
+): ValidationResult<T> {
+    try {
+        // Validate the environment variables
+        const result = validateSync(schema, envVars);
+
+        if (!result.success) {
+            // Format error messages with context
+            const formattedIssues = result.issues.map((issue) => {
+                const path = issue.path?.join('.') || 'root';
+                return {
+                    ...issue,
+                    message: `Environment variable validation failed for ${path}: ${issue.message}`,
+                };
+            });
+
+            return {
+                success: false,
+                issues: formattedIssues,
+            };
+        }
+
+        return result;
+    } catch (error) {
+        return {
+            success: false,
+            issues: [
+                {
+                    message: `Environment variable validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                },
+            ],
+        };
+    }
 }

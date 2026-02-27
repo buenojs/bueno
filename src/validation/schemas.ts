@@ -232,12 +232,152 @@ export const Fields = {
    * Custom validator function
    */
   custom: (validate: (value: unknown) => boolean, message = "Validation failed") => {
-    return (value: unknown) => {
-      if (validate(value)) {
-        return { valid: true, value };
-      }
-      return { valid: false, error: message };
-    };
+      return (value: unknown) => {
+          if (validate(value)) {
+              return { valid: true, value };
+          }
+          return { valid: false, error: message };
+      };
+  },
+  
+  /**
+   * Environment variable validators
+   */
+  env: {
+      /**
+       * Required environment variable validator
+       */
+      required: (options: { optional?: boolean } = {}) => {
+          return (value: unknown) => {
+              if (options.optional && (value === undefined || value === null)) {
+                  return { valid: true, value: undefined };
+              }
+  
+              if (value === undefined || value === null || value === "") {
+                  return { valid: false, error: "This environment variable is required" };
+              }
+  
+              return { valid: true, value };
+          };
+      },
+  
+      /**
+       * Port number validator (1-65535)
+       */
+      port: (options: { optional?: boolean } = {}) => {
+          return (value: unknown) => {
+              if (options.optional && (value === undefined || value === null)) {
+                  return { valid: true, value: undefined };
+              }
+  
+              const num = Number(value);
+              if (isNaN(num) || num < 1 || num > 65535) {
+                  return { valid: false, error: "Must be a valid port number (1-65535)" };
+              }
+  
+              return { valid: true, value: num };
+          };
+      },
+  
+      /**
+       * URL validator
+       */
+      url: (options: { optional?: boolean } = {}) => {
+          return (value: unknown) => {
+              if (options.optional && (value === undefined || value === null)) {
+                  return { valid: true, value: undefined };
+              }
+  
+              if (typeof value !== "string") {
+                  return { valid: false, error: "Must be a string" };
+              }
+  
+              try {
+                  new URL(value);
+                  return { valid: true, value };
+              } catch {
+                  return { valid: false, error: "Must be a valid URL" };
+              }
+          };
+      },
+  
+      /**
+       * Database URL validator
+       */
+      databaseUrl: (options: { optional?: boolean } = {}) => {
+          return (value: unknown) => {
+              if (options.optional && (value === undefined || value === null)) {
+                  return { valid: true, value: undefined };
+              }
+  
+              if (typeof value !== "string") {
+                  return { valid: false, error: "Must be a string" };
+              }
+  
+              try {
+                  const url = new URL(value);
+                  const validSchemes = ["postgresql", "mysql", "sqlite", "mongodb"];
+                  if (!validSchemes.includes(url.protocol.replace(/:$/, ""))) {
+                      return { valid: false, error: `Must be a valid database URL (postgresql://, mysql://, sqlite://, mongodb://)` };
+                  }
+                  return { valid: true, value };
+              } catch {
+                  return { valid: false, error: "Must be a valid database URL" };
+              }
+          };
+      },
+  
+      /**
+       * Boolean validator
+       */
+      boolean: (options: { optional?: boolean } = {}) => {
+          return (value: unknown) => {
+              if (options.optional && (value === undefined || value === null)) {
+                  return { valid: true, value: undefined };
+              }
+  
+              if (typeof value !== "boolean" && value !== "true" && value !== "false") {
+                  return { valid: false, error: "Must be a boolean (true/false)" };
+              }
+  
+              return { valid: true, value: value === "true" || value === true };
+          };
+      },
+  
+      /**
+       * Number validator
+       */
+      number: (options: {
+          min?: number;
+          max?: number;
+          optional?: boolean;
+          integer?: boolean;
+      } = {}) => {
+          return (value: unknown) => {
+              if (options.optional && (value === undefined || value === null)) {
+                  return { valid: true, value: undefined };
+              }
+  
+              const num = Number(value);
+              if (isNaN(num)) {
+                  return { valid: false, error: "Must be a number" };
+              }
+  
+              if (options.integer && !Number.isInteger(num)) {
+                  return { valid: false, error: "Must be an integer" };
+              }
+  
+              if (options.min !== undefined && num < options.min) {
+                  return { valid: false, error: `Must be at least ${options.min}` };
+              }
+  
+              if (options.max !== undefined && num > options.max) {
+                  return { valid: false, error: `Must be at most ${options.max}` };
+              }
+  
+              return { valid: true, value: num };
+          };
+      },
   },
 };
 
@@ -318,5 +458,46 @@ export class Schema {
  * Alias for Schema.object() for convenience
  */
 export function schema<T extends SchemaDefinition>(definition: T): Schema {
-  return Schema.object(definition);
+    return Schema.object(definition);
 }
+
+// ============= Environment Variable Schemas =============
+
+/**
+ * Standard environment variable schema for Bueno Framework
+ */
+export const envSchema = Schema.object({
+    // Required variables
+    NODE_ENV: Fields.env.required(),
+    PORT: Fields.env.port(),
+    HOST: Fields.string({ optional: true }),
+
+    // Database
+    DATABASE_URL: Fields.env.databaseUrl({ optional: true }),
+    DATABASE_POOL_SIZE: Fields.env.number({ min: 1, max: 100, optional: true }),
+
+    // Cache
+    REDIS_URL: Fields.env.url({ optional: true }),
+    CACHE_DRIVER: Fields.enum(["memory", "redis", "none"], { optional: true }),
+    CACHE_TTL: Fields.env.number({ min: 1, optional: true }),
+
+    // Logging
+    LOG_LEVEL: Fields.enum(["error", "warn", "info", "debug", "trace"], { optional: true }),
+    LOG_PRETTY: Fields.env.boolean({ optional: true }),
+
+    // Health
+    HEALTH_ENABLED: Fields.env.boolean({ optional: true }),
+
+    // Metrics
+    METRICS_ENABLED: Fields.env.boolean({ optional: true }),
+
+    // Telemetry
+    TELEMETRY_ENABLED: Fields.env.boolean({ optional: true }),
+    TELEMETRY_SERVICE_NAME: Fields.string({ optional: true }),
+    TELEMETRY_ENDPOINT: Fields.env.url({ optional: true }),
+
+    // Frontend
+    FRONTEND_DEV_SERVER: Fields.env.boolean({ optional: true }),
+    FRONTEND_HMR: Fields.env.boolean({ optional: true }),
+    FRONTEND_PORT: Fields.env.port({ optional: true }),
+});
