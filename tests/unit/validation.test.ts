@@ -13,35 +13,29 @@ import {
   assertStandardSchema
 } from '../../src/validation';
 import { Context } from '../../src/context';
-import { z } from 'zod';
+import { Schema, Fields } from '../../src/validation/schemas';
 import type { StandardSchema, StandardResult } from '../../src/types';
 
-// Typia support - conditionally import if available
-// Note: Typia requires TypeScript transformation to work properly
-// In a real project using Typia, you would use:
-// import typia from 'typia';
-// const TypiaUserSchema = typia.createValidate<IUser>();
-
-// User schema for testing
-const UserSchema = z.object({
-  name: z.string().min(1),
-  email: z.string().email(),
-  age: z.number().int().positive().optional(),
+// Built-in schema for testing (zero-dependency)
+const UserSchema = Schema.object({
+  name: Fields.string({ min: 1 }),
+  email: Fields.string({ email: true }),
+  age: Fields.number({ positive: true, optional: true }),
 });
 
-const IdSchema = z.object({
-  id: z.coerce.number().int().positive(),
+const IdSchema = Schema.object({
+  id: Fields.number({ integer: true, positive: true }),
 });
 
-const QuerySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().default(10),
-  search: z.string().optional(),
+const QuerySchema = Schema.object({
+  page: Fields.number({ integer: true, positive: true, default: 1 }),
+  limit: Fields.number({ integer: true, positive: true, default: 10 }),
+  search: Fields.string({ optional: true }),
 });
 
-const HeadersSchema = z.object({
-  authorization: z.string().startsWith('Bearer '),
-  'content-type': z.string().optional(),
+const HeadersSchema = Schema.object({
+  authorization: Fields.string({ pattern: /^Bearer / }),
+  'content-type': Fields.string({ optional: true }),
 });
 
 // Helper to create a valid Standard Schema for testing
@@ -355,9 +349,9 @@ describe('Validation', () => {
       });
       const context = new Context(request, {});
 
-      const allHeadersSchema = z.object({
-        authorization: z.string(),
-        'x-custom-header': z.string(),
+      const allHeadersSchema = Schema.object({
+        authorization: Fields.string(),
+        'x-custom-header': Fields.string(),
       });
 
       const result = validateHeaders(context, allHeadersSchema);

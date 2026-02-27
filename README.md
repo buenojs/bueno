@@ -15,6 +15,7 @@ A Bun-Native Full-Stack Framework
 Bueno is a **Bun-native** full-stack framework designed from the ground up to leverage Bun's exceptional performance and modern JavaScript capabilities. Bueno embraces Bun's APIs, resulting in:
 
 - **Blazing Fast Performance**: Built on Bun's native HTTP server and optimized runtime
+- **Zero Dependencies**: True zero-dependency framework with built-in validation, ORM, caching, and jobs
 - **Zero Configuration**: Sensible defaults that work out of the box
 - **Full-Stack Integration**: Seamless frontend and backend development
 - **Type Safety**: End-to-end TypeScript with full type inference
@@ -430,28 +431,144 @@ await schema.createTable('users', (table) => {
 
 ### Validation
 
-First-class support for popular validation libraries.
+Bueno includes a **zero-dependency** built-in validation system for common use cases, with optional support for external libraries like Zod, Valibot, and ArkType via the Standard Schema adapter.
+
+#### Built-in Validation (No Dependencies)
 
 ```typescript
-import { validate } from '@buenojs/bueno/validation';
-import { z } from 'zod';        // Zod
-import * as v from 'valibot';  // Valibot
-import { type } from 'arktype'; // ArkType
+import { Schema, Fields, validate, validateBody } from '@buenojs/bueno/validation';
 
-// Zod schema
+// Define schema with built-in validators
+const UserSchema = Schema.object({
+  name: Fields.string({ min: 1, max: 100 }),
+  email: Fields.string({ email: true }),
+  age: Fields.number({ positive: true, optional: true }),
+  role: Fields.enum(['admin', 'user', 'guest']),
+});
+
+// Validate in route
+router.post('/users', async (ctx) => {
+  const result = await validateBody(ctx, UserSchema);
+
+  if (!result.success) {
+    return ctx.status(400).json({
+      error: 'Validation failed',
+      issues: result.issues
+    });
+  }
+
+  const user = result.data; // Fully typed!
+});
+```
+
+#### Built-in Field Validators
+
+```typescript
+import { Fields } from '@buenojs/bueno/validation';
+
+Fields.string({
+  min: 1,           // Minimum length
+  max: 255,         // Maximum length
+  pattern: /regex/, // Regex validation
+  email: true,      // Email format
+  url: true,        // URL format
+  uuid: true,       // UUID format
+  optional: true,   // Allow undefined/null
+})
+
+Fields.number({
+  min: 0,           // Minimum value
+  max: 100,         // Maximum value
+  integer: true,    // Must be integer
+  positive: true,   // Must be > 0
+  optional: true,   // Allow undefined/null
+})
+
+Fields.boolean({ optional: true })
+
+Fields.array({
+  min: 1,           // Minimum items
+  max: 10,          // Maximum items
+  itemValidator: Fields.string(), // Validate each item
+  optional: true,
+})
+
+Fields.enum(['admin', 'user'], { optional: true })
+
+Fields.custom(
+  (value) => typeof value === 'string' && value.length > 0,
+  'Custom validation message'
+)
+```
+
+#### Middleware Validation
+
+```typescript
+import { createValidator } from '@buenojs/bueno/validation';
+
+const validateUserInput = createValidator({
+  body: UserSchema,
+  query: QuerySchema,
+  params: ParamsSchema,
+  headers: HeadersSchema,
+});
+
+router.post('/users/:id', validateUserInput, async (ctx) => {
+  const user = ctx.get('validatedBody');
+  const params = ctx.get('validatedParams');
+  // All validated and typed!
+});
+```
+
+#### Optional: Use External Validators (Zod, Valibot, ArkType)
+
+Bueno supports **any Standard Schema-compatible library**. Install your preferred validator and use it with Bueno's validation functions:
+
+```bash
+# Install your chosen validator (optional)
+bun add zod
+# or
+bun add valibot
+# or
+bun add arktype
+```
+
+```typescript
+import { validate, validateBody } from '@buenojs/bueno/validation';
+import { z } from 'zod'; // Optional, use any Standard Schema library
+
+// Use Zod schema (or Valibot, ArkType, Typia)
 const UserSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   age: z.number().int().positive().optional(),
 });
 
-// Validate in route
+// Works seamlessly with Bueno validators
 router.post('/users', async (ctx) => {
-  const body = await ctx.body();
-  const user = validate(body, UserSchema);
-  // user is fully typed!
+  const result = await validateBody(ctx, UserSchema);
+
+  if (!result.success) {
+    return ctx.status(400).json({
+      error: 'Validation failed',
+      issues: result.issues
+    });
+  }
+
+  const user = result.data;
 });
 ```
+
+#### Supported External Libraries
+
+| Library | Minimum Version | Status |
+|---------|-----------------|--------|
+| Zod | 4.0+ | ✅ Supported |
+| Valibot | 1.0+ | ✅ Supported |
+| ArkType | 2.0+ | ✅ Supported |
+| Typia | 7.0+ | ✅ Supported |
+
+All libraries using the **Standard Schema** interface are supported automatically.
 
 ### Security
 
@@ -843,14 +960,17 @@ Bueno combines the best ideas from popular frameworks while being optimized for 
 | Feature | Bueno | Hono | Express | NestJS | Next.js |
 |---------|-------|------|---------|--------|---------|
 | **Runtime** | Bun | Multi | Node | Node | Node |
+| **Zero Dependencies** | ✅ | ✅ | ❌ | ❌ | ❌ |
 | **Router** | ✅ | ✅ | ✅ | ✅ | ✅ |
 | **DI Container** | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **Decorators** | ✅ | ❌ | ❌ | ✅ | ❌ |
+| **Built-in Validation** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Built-in ORM** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Built-in Caching** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Built-in Jobs** | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **SSR** | ✅ | ❌ | ❌ | ❌ | ✅ |
 | **SSG** | ✅ | ❌ | ❌ | ❌ | ✅ |
-| **Database** | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **WebSocket** | ✅ | ✅ | Plugin | ✅ | ❌ |
-| **Validation** | ✅ | ✅ | Plugin | ✅ | ❌ |
 | **CLI** | ✅ | ❌ | ❌ | ✅ | ✅ |
 
 **Migration Notes:**

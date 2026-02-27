@@ -1,5 +1,4 @@
 import { describe, test, expect, beforeAll, afterAll } from 'bun:test';
-import { z } from 'zod';
 import {
   Router,
   Context,
@@ -11,6 +10,7 @@ import {
   Database,
   createServer,
 } from '../../src';
+import { Schema, Fields } from '../../src/validation/schemas';
 
 // ============= Integration Tests =============
 
@@ -107,9 +107,9 @@ describe('Integration Tests', () => {
 
   describe('Validation Integration', () => {
     test('should validate request body', async () => {
-      const schema = z.object({
-        email: z.string().email(),
-        age: z.number().min(0),
+      const schema = Schema.object({
+        email: Fields.string({ email: true }),
+        age: Fields.number({ min: 0 }),
       });
 
       const validator = createValidator({ body: schema });
