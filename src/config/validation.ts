@@ -314,14 +314,14 @@ const DEFAULT_RULES: ValidationRule[] = [
 		},
 	},
 	{
-		path: "mailer.driver",
+		path: "notification.email.driver",
 		validate: (value) => {
 			if (value === undefined) return { valid: true };
-			const validDrivers = ["smtp", "sendgrid", "brevo", "resend", "mock"];
+			const validDrivers = ["smtp", "sendgrid", "brevo", "resend"];
 			if (!validDrivers.includes(value as string)) {
 				return {
 					valid: false,
-					message: `Mailer driver must be one of: ${validDrivers.join(", ")}`,
+					message: `Email driver must be one of: ${validDrivers.join(", ")}`,
 					expected: validDrivers.join(" | "),
 					received: value,
 				};
@@ -330,7 +330,7 @@ const DEFAULT_RULES: ValidationRule[] = [
 		},
 	},
 	{
-		path: "mailer.from",
+		path: "notification.email.from",
 		validate: (value) => {
 			if (value === undefined) return { valid: true };
 			if (typeof value !== "string") {
@@ -347,7 +347,7 @@ const DEFAULT_RULES: ValidationRule[] = [
 		},
 	},
 	{
-		path: "mailer.smtp.port",
+		path: "notification.email.smtp.port",
 		validate: (value) => {
 			if (value === undefined) return { valid: true };
 			if (typeof value !== "number") {
@@ -355,6 +355,54 @@ const DEFAULT_RULES: ValidationRule[] = [
 			}
 			if (value < 1 || value > 65535) {
 				return { valid: false, message: "SMTP port must be between 1 and 65535" };
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "notification.sms.driver",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			const validDrivers = ["twilio", "aws-sns", "custom"];
+			if (!validDrivers.includes(value as string)) {
+				return {
+					valid: false,
+					message: `SMS driver must be one of: ${validDrivers.join(", ")}`,
+					expected: validDrivers.join(" | "),
+					received: value,
+				};
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "notification.whatsapp.driver",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			const validDrivers = ["twilio", "custom"];
+			if (!validDrivers.includes(value as string)) {
+				return {
+					valid: false,
+					message: `WhatsApp driver must be one of: ${validDrivers.join(", ")}`,
+					expected: validDrivers.join(" | "),
+					received: value,
+				};
+			}
+			return { valid: true };
+		},
+	},
+	{
+		path: "notification.push.driver",
+		validate: (value) => {
+			if (value === undefined) return { valid: true };
+			const validDrivers = ["firebase", "apns", "custom"];
+			if (!validDrivers.includes(value as string)) {
+				return {
+					valid: false,
+					message: `Push driver must be one of: ${validDrivers.join(", ")}`,
+					expected: validDrivers.join(" | "),
+					received: value,
+				};
 			}
 			return { valid: true };
 		},

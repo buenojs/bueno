@@ -118,33 +118,62 @@ export interface JobsConfig {
 	enableMetrics?: boolean;
 }
 
-// ============= Mailer Configuration =============
+// ============= Notification Configuration =============
 
-export interface MailerConfig {
-	/** Enable mailer service */
+export interface NotificationConfig {
+	/** Enable notification service */
 	enabled?: boolean;
-	/** Mailer driver type */
-	driver?: "smtp" | "sendgrid" | "brevo" | "resend" | "mock";
-	/** Default from email address */
-	from?: string;
-	/** Default from name */
-	fromName?: string;
-	/** SMTP configuration (if driver is 'smtp') */
-	smtp?: {
-		host: string;
-		port: number;
-		secure?: boolean;
-		username?: string;
-		password?: string;
-	};
-	/** API credentials (for sendgrid, brevo, resend) */
-	apiKey?: string;
-	/** Enable dry run mode (log instead of sending) */
-	dryRun?: boolean;
 	/** Enable metrics collection */
 	enableMetrics?: boolean;
+	/** Default channel for sending */
+	defaultChannel?: string;
 	/** Enable job queue integration for async sending */
 	queue?: boolean;
+	/** Email channel configuration */
+	email?: {
+		enabled?: boolean;
+		driver?: "smtp" | "sendgrid" | "brevo" | "resend";
+		from?: string;
+		fromName?: string;
+		dryRun?: boolean;
+		smtp?: {
+			host?: string;
+			port?: number;
+			secure?: boolean;
+			username?: string;
+			password?: string;
+		};
+		apiKey?: string;
+	};
+	/** SMS channel configuration */
+	sms?: {
+		enabled?: boolean;
+		driver?: "twilio" | "aws-sns" | "custom";
+		dryRun?: boolean;
+		accountSid?: string;
+		authToken?: string;
+		fromNumber?: string;
+		apiKey?: string;
+	};
+	/** WhatsApp channel configuration */
+	whatsapp?: {
+		enabled?: boolean;
+		driver?: "twilio" | "custom";
+		dryRun?: boolean;
+		accountSid?: string;
+		authToken?: string;
+		businessPhoneNumber?: string;
+		apiKey?: string;
+	};
+	/** Push notification channel configuration */
+	push?: {
+		enabled?: boolean;
+		driver?: "firebase" | "apns" | "custom";
+		dryRun?: boolean;
+		serverKey?: string;
+		certificatePath?: string;
+		apiKey?: string;
+	};
 }
 
 // ============= Frontend Configuration =============
@@ -172,8 +201,8 @@ export interface BuenoConfig {
 	cache?: CacheConfig;
 	/** Jobs configuration */
 	jobs?: JobsConfig;
-	/** Mailer configuration */
-	mailer?: MailerConfig;
+	/** Notification configuration */
+	notification?: NotificationConfig;
 	/** Logger configuration */
 	logger?: LoggerConfig;
 	/** Health check configuration */
@@ -306,14 +335,33 @@ export const DEFAULT_CONFIG: Required<BuenoConfig> = {
 		jobTimeout: 300000,
 		enableMetrics: true,
 	},
-	mailer: {
+	notification: {
 		enabled: false,
-		driver: "mock",
-		from: "noreply@example.com",
-		fromName: "Bueno App",
-		dryRun: false,
 		enableMetrics: true,
 		queue: false,
+		defaultChannel: "email",
+		email: {
+			enabled: true,
+			driver: "smtp",
+			from: "noreply@example.com",
+			fromName: "Bueno App",
+			dryRun: false,
+		},
+		sms: {
+			enabled: false,
+			driver: "twilio",
+			dryRun: false,
+		},
+		whatsapp: {
+			enabled: false,
+			driver: "twilio",
+			dryRun: false,
+		},
+		push: {
+			enabled: false,
+			driver: "firebase",
+			dryRun: false,
+		},
 	},
 	logger: {
 		level: "info",
@@ -387,19 +435,47 @@ export const ENV_MAPPINGS: EnvMapping[] = [
 	{ envVar: "BUENO_JOBS_POLL_INTERVAL", configKey: "jobs.pollInterval", transform: (v) => parseInt(v, 10) },
 	{ envVar: "BUENO_JOBS_TIMEOUT", configKey: "jobs.jobTimeout", transform: (v) => parseInt(v, 10) },
 
-	// Mailer
-	{ envVar: "BUENO_MAILER_ENABLED", configKey: "mailer.enabled", transform: (v) => v === "true" },
-	{ envVar: "BUENO_MAILER_DRIVER", configKey: "mailer.driver" },
-	{ envVar: "BUENO_MAILER_FROM", configKey: "mailer.from" },
-	{ envVar: "BUENO_MAILER_FROM_NAME", configKey: "mailer.fromName" },
-	{ envVar: "BUENO_MAILER_API_KEY", configKey: "mailer.apiKey" },
-	{ envVar: "BUENO_MAILER_DRY_RUN", configKey: "mailer.dryRun", transform: (v) => v === "true" },
-	{ envVar: "BUENO_MAILER_QUEUE", configKey: "mailer.queue", transform: (v) => v === "true" },
-	{ envVar: "BUENO_SMTP_HOST", configKey: "mailer.smtp.host" },
-	{ envVar: "BUENO_SMTP_PORT", configKey: "mailer.smtp.port", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_SMTP_USER", configKey: "mailer.smtp.username" },
-	{ envVar: "BUENO_SMTP_PASSWORD", configKey: "mailer.smtp.password" },
-	{ envVar: "BUENO_SMTP_SECURE", configKey: "mailer.smtp.secure", transform: (v) => v === "true" },
+	// Notification
+	{ envVar: "BUENO_NOTIFICATION_ENABLED", configKey: "notification.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_NOTIFICATION_METRICS", configKey: "notification.enableMetrics", transform: (v) => v === "true" },
+	{ envVar: "BUENO_NOTIFICATION_QUEUE", configKey: "notification.queue", transform: (v) => v === "true" },
+	{ envVar: "BUENO_NOTIFICATION_DEFAULT", configKey: "notification.defaultChannel" },
+
+	// Email Channel
+	{ envVar: "BUENO_EMAIL_ENABLED", configKey: "notification.email.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_EMAIL_DRIVER", configKey: "notification.email.driver" },
+	{ envVar: "BUENO_EMAIL_FROM", configKey: "notification.email.from" },
+	{ envVar: "BUENO_EMAIL_FROM_NAME", configKey: "notification.email.fromName" },
+	{ envVar: "BUENO_EMAIL_API_KEY", configKey: "notification.email.apiKey" },
+	{ envVar: "BUENO_EMAIL_DRY_RUN", configKey: "notification.email.dryRun", transform: (v) => v === "true" },
+	{ envVar: "BUENO_SMTP_HOST", configKey: "notification.email.smtp.host" },
+	{ envVar: "BUENO_SMTP_PORT", configKey: "notification.email.smtp.port", transform: (v) => parseInt(v, 10) },
+	{ envVar: "BUENO_SMTP_USER", configKey: "notification.email.smtp.username" },
+	{ envVar: "BUENO_SMTP_PASSWORD", configKey: "notification.email.smtp.password" },
+	{ envVar: "BUENO_SMTP_SECURE", configKey: "notification.email.smtp.secure", transform: (v) => v === "true" },
+
+	// SMS Channel
+	{ envVar: "BUENO_SMS_ENABLED", configKey: "notification.sms.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_SMS_DRIVER", configKey: "notification.sms.driver" },
+	{ envVar: "BUENO_SMS_DRY_RUN", configKey: "notification.sms.dryRun", transform: (v) => v === "true" },
+	{ envVar: "BUENO_SMS_ACCOUNT_SID", configKey: "notification.sms.accountSid" },
+	{ envVar: "BUENO_SMS_AUTH_TOKEN", configKey: "notification.sms.authToken" },
+	{ envVar: "BUENO_SMS_FROM_NUMBER", configKey: "notification.sms.fromNumber" },
+
+	// WhatsApp Channel
+	{ envVar: "BUENO_WHATSAPP_ENABLED", configKey: "notification.whatsapp.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_WHATSAPP_DRIVER", configKey: "notification.whatsapp.driver" },
+	{ envVar: "BUENO_WHATSAPP_DRY_RUN", configKey: "notification.whatsapp.dryRun", transform: (v) => v === "true" },
+	{ envVar: "BUENO_WHATSAPP_ACCOUNT_SID", configKey: "notification.whatsapp.accountSid" },
+	{ envVar: "BUENO_WHATSAPP_AUTH_TOKEN", configKey: "notification.whatsapp.authToken" },
+	{ envVar: "BUENO_WHATSAPP_BUSINESS_PHONE", configKey: "notification.whatsapp.businessPhoneNumber" },
+
+	// Push Channel
+	{ envVar: "BUENO_PUSH_ENABLED", configKey: "notification.push.enabled", transform: (v) => v === "true" },
+	{ envVar: "BUENO_PUSH_DRIVER", configKey: "notification.push.driver" },
+	{ envVar: "BUENO_PUSH_DRY_RUN", configKey: "notification.push.dryRun", transform: (v) => v === "true" },
+	{ envVar: "BUENO_PUSH_SERVER_KEY", configKey: "notification.push.serverKey" },
+	{ envVar: "BUENO_PUSH_CERTIFICATE_PATH", configKey: "notification.push.certificatePath" },
 
 	// Logger
 	{ envVar: "LOG_LEVEL", configKey: "logger.level" },
