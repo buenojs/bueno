@@ -45,6 +45,10 @@
       "types": "./dist/template/index.d.ts",
       "import": "./dist/template/index.js"
     },
+    "./openapi": {
+      "types": "./dist/openapi/index.d.ts",
+      "import": "./dist/openapi/index.js"
+    },
     "./i18n": {
       "types": "./dist/i18n/index.d.ts",
       "import": "./dist/i18n/index.js"
@@ -136,7 +140,7 @@
     "test:watch": "bun test --watch",
     "test:coverage": "bun test --coverage",
     "coverage": "bun test --coverage coverage/lcov.info",
-    "build": "bun build ./src/index.ts ./src/database/index.ts ./src/schema/index.ts ./src/migrations/index.ts ./src/orm/index.ts ./src/jobs/index.ts ./src/templates/index.ts ./src/template/index.ts ./src/notification/index.ts ./src/i18n/index.ts ./src/cli/bin.ts ./src/frontend/index.ts ./src/router/index.ts ./src/middleware/index.ts ./src/modules/index.ts ./src/telemetry/index.ts ./src/lock/index.ts ./src/health/index.ts ./src/logger/index.ts ./src/metrics/index.ts ./src/rpc/index.ts ./src/context/index.ts ./src/container/index.ts ./src/testing/index.ts ./src/types/index.ts --outdir ./dist --target bun && test -d dist/src && (mv dist/src/* dist/ && rmdir dist/src || true) || true",
+    "build": "rm -rf dist && bun build ./src/index.ts ./src/database/index.ts ./src/schema/index.ts ./src/migrations/index.ts ./src/orm/index.ts ./src/jobs/index.ts ./src/templates/index.ts ./src/template/index.ts ./src/openapi/index.ts ./src/notification/index.ts ./src/i18n/index.ts ./src/cli/bin.ts ./src/frontend/index.ts ./src/router/index.ts ./src/middleware/index.ts ./src/modules/index.ts ./src/telemetry/index.ts ./src/lock/index.ts ./src/health/index.ts ./src/logger/index.ts ./src/metrics/index.ts ./src/rpc/index.ts ./src/context/index.ts ./src/container/index.ts ./src/testing/index.ts ./src/types/index.ts --outdir ./dist --target bun && test -d dist/src && (cp -r dist/src/* dist/ && rm -rf dist/src) || true",
     "build:cli": "bun build ./src/cli/bin.ts ./src/frontend/index.ts ./src/router/index.ts ./src/middleware/index.ts ./src/modules/index.ts --outdir ./dist/cli --target bun",
     "typecheck": "tsc --noEmit",
     "lint": "bunx biome check ./src",

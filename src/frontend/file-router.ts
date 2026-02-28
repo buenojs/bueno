@@ -336,9 +336,7 @@ export class FileRouter {
 				handlers[method] = module[method];
 				methodMap[method](
 					route.path,
-					this.createApiHandler(route, method) as import(
-						"../types",
-					).RouteHandler,
+					this.createApiHandler(route, method) as RouteHandler,
 				);
 			}
 		}
