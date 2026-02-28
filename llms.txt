@@ -1,0 +1,231 @@
+# Bueno Framework - LLM Context File
+
+## Project Overview
+Bueno is a **Bun-native full-stack framework** designed from the ground up to leverage Bun's exceptional performance and modern JavaScript capabilities. It provides a complete ecosystem for building web applications with zero dependencies and zero configuration.
+
+- **Version**: 0.8.5
+- **Type**: Bun-native full-stack framework
+- **Repository**: https://github.com/buenojs/bueno
+- **NPM Package**: @buenojs/bueno
+
+## Key Features
+Bueno includes a comprehensive set of features out of the box:
+
+### Core Features
+- **HTTP & Routing**: Powerful and intuitive routing system with full HTTP method support
+- **Dependency Injection**: Built-in IoC container inspired by NestJS
+- **Middleware**: Comprehensive middleware system with built-in utilities and custom support
+- **Modules System**: NestJS-inspired modular architecture with decorators
+- **Database**: Multi-database support with migrations and schema builder
+- **Validation**: Zero-dependency built-in validation system with external library support (Zod, Valibot, ArkType)
+- **Security**: Comprehensive security features including JWT, CSRF, RBAC, and API key authentication
+- **RPC Client**: Type-safe API client generation for frontend-backend communication
+- **Caching & Sessions**: Redis-backed caching and session management
+- **Distributed Locking**: Redis or in-memory lock system for distributed operations
+- **Static Site Generation (SSG)**: Markdown-supported static site generation
+- **Storage**: S3-compatible storage and secrets management
+- **WebSocket**: Real-time communication support
+- **Logging**: Flexible logging with multiple transports
+- **Health Checks**: Built-in health check endpoints
+- **Testing**: Comprehensive testing utilities for unit and integration tests
+- **Background Jobs**: Job queue system with Redis and memory drivers
+- **Notifications**: Multi-channel notification system (email, SMS, WhatsApp, push notifications)
+- **Observability**: Structured error tracking with support for custom reporters (Sentry, Bugsnag, Datadog)
+- **Metrics**: Runtime metrics collection (memory, CPU, event loop lag) with Prometheus format export
+- **i18n**: Internationalization support with translation loading and locale negotiation
+- **OpenAPI**: Automatic OpenAPI documentation generation
+
+### Frontend Support
+- **React**: Full support with SSR and hydration
+- **Vue**: Server-side rendering with Vue 3
+- **Svelte**: SvelteKit-like experience
+- **Solid**: SolidJS with SSR
+- **Features**: SSR, SSG, ISR, Islands architecture, file-based routing, HMR
+
+## GraphQL Library Status
+The GraphQL library is currently a **work in progress**. All other features are available in version 0.8.5. The GraphQL implementation includes:
+
+- Decorator-based schema definition (@Resolver, @Query, @Mutation, @ObjectType, @Field, etc.)
+- Full DI integration (guards, interceptors work on resolvers)
+- Pluggable engine (built-in lightweight engine or graphql-js/Yoga via adapter)
+- Subscriptions via WebSocket (graphql-transport-ws protocol)
+- GraphiQL playground
+- Unified types: one class for both GraphQL and REST/OpenAPI (opt-in)
+
+## Architecture Overview
+
+### Project Structure
+```
+my-bueno-app/
+├── server/                  # Backend application
+│   ├── main.ts             # Entry point
+│   ├── modules/            # Feature modules
+│   ├── common/             # Shared utilities
+│   ├── config/             # Configuration
+│   └── database/           # Database files
+├── client/                 # Frontend application
+│   ├── pages/              # File-based routes
+│   ├── components/         # UI components
+│   ├── layouts/            # Page layouts
+│   └── main.tsx            # Entry point
+├── shared/                 # Shared types and utilities
+├── tests/                  # Test files
+├── bueno.config.ts         # Framework configuration
+└── package.json
+```
+
+### Core Modules
+- `src/index.ts`: Main entry point
+- `src/cli/`: CLI commands and project generation
+- `src/database/`: Database connection, query builder, and schema management
+- `src/modules/`: Modular architecture system
+- `src/frontend/`: Frontend framework support and rendering
+- `src/middleware/`: Middleware system and built-in middleware
+- `src/validation/`: Validation system
+- `src/security/`: Security features
+- `src/rpc/`: RPC client generation
+- `src/cache/`: Caching and session management
+- `src/lock/`: Distributed locking
+- `src/ssg/`: Static site generation
+- `src/storage/`: Storage system
+- `src/websocket/`: WebSocket support
+- `src/logger/`: Logging system
+- `src/health/`: Health check system
+- `src/testing/`: Testing utilities
+- `src/jobs/`: Background job queue system
+- `src/notification/`: Multi-channel notification system
+- `src/observability/`: Error tracking and observability
+- `src/metrics/`: Runtime metrics collection
+- `src/i18n/`: Internationalization support
+- `src/openapi/`: OpenAPI documentation generation
+- `src/graphql/`: GraphQL support (work in progress)
+
+## Development Setup
+
+### Prerequisites
+- Bun runtime (version 1.3.0 or higher)
+
+### Installation
+```bash
+# Clone the repository
+git clone https://github.com/buenojs/bueno.git
+cd bueno
+
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+
+# Start development server
+bun dev
+```
+
+### Build
+```bash
+# Build for production
+bun build
+
+# Build only CLI
+bun run build:cli
+
+# Type checking
+bun run typecheck
+
+# Linting
+bun run lint
+```
+
+## CLI Commands
+Bueno provides a comprehensive CLI for project management:
+
+### Project Creation
+```bash
+bueno new my-app              # Create new project
+bueno new my-api --template api  # Create API-only project
+```
+
+### Development
+```bash
+bueno dev                     # Start development server
+bueno build                   # Build for production
+bueno start                   # Start production server
+```
+
+### Code Generation
+```bash
+bueno generate controller UserController  # Generate HTTP controller
+bueno generate service AuthService       # Generate injectable service
+bueno generate module AuthModule         # Generate feature module
+bueno generate migration add_users_table # Generate database migration
+```
+
+### Database Management
+```bash
+bueno migration up            # Run pending migrations
+bueno migration down          # Rollback migrations
+bueno migration status        # Show migration status
+```
+
+### Help
+```bash
+bueno help                    # Display help information
+```
+
+## Testing
+Bueno uses Bun's built-in test runner:
+
+```typescript
+import { AppTester, mock, assertions } from '@buenojs/bueno/testing';
+import { describe, it, expect, beforeEach } from 'bun:test';
+
+describe('UserController', () => {
+  let tester: AppTester;
+  
+  beforeEach(async () => {
+    tester = await AppTester.create(AppModule);
+  });
+  
+  it('should create user', async () => {
+    const response = await tester
+      .post('/users')
+      .body({ name: 'John', email: 'john@example.com' })
+      .execute();
+    
+    expect(response.status).toBe(201);
+  });
+});
+```
+
+## Documentation
+- **Main Documentation**: https://bueno.github.io
+- **GitHub Repository**: https://github.com/buenojs/bueno
+- **NPM Package**: https://www.npmjs.com/package/@buenojs/bueno
+
+## Contribution Guidelines
+Contributions are welcome! Please follow these guidelines:
+
+1. Fork the repository
+2. Create a new branch
+3. Make your changes
+4. Write tests for your changes
+5. Run existing tests to ensure no regression
+6. Submit a pull request
+
+## Key Files for LLM Context
+- `package.json`: Project metadata and scripts
+- `README.md`: Comprehensive documentation
+- `architecture.md`: System architecture overview
+- `src/index.ts`: Main framework entry point
+- `src/cli/bin.ts`: CLI entry point
+- `src/database/index.ts`: Database module
+- `src/modules/index.ts`: Modules system
+- `src/frontend/index.ts`: Frontend framework support
+- `src/validation/index.ts`: Validation system
+
+## Technologies Used
+- **Runtime**: Bun
+- **Language**: TypeScript
+- **HTTP Server**: Bun's native HTTP server
+- **Testing**: Bun's built-in test runner
+- **Linting**: Biome

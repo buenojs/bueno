@@ -427,7 +427,7 @@ Example from [`getMainTemplate()`](src/cli/commands/new.ts:144):
 function getMainTemplate(config: ProjectConfig): string {
   if (config.template === 'minimal') {
     // Simple router-based approach
-    return `import { createServer } from 'bueno';
+    return `import { createServer } from '@buenojs/bueno';
 const app = createServer();
 app.router.get('/', () => {
   return { message: 'Hello, Bueno!' };
@@ -435,7 +435,7 @@ app.router.get('/', () => {
 await app.listen(3000);`;
   }
   // Full framework approach with decorators
-  return `import { createApp, Module, Controller, Get, Injectable } from 'bueno';
+  return `import { createApp, Module, Controller, Get, Injectable } from '@buenojs/bueno';
 // ... full module structure with @Controller, @Injectable, etc.
 await createApp(AppModule).listen(3000);`;
 }
@@ -486,7 +486,7 @@ export class UsersModule {}
 
 **Migration File Template:**
 ```typescript
-import { createMigration, type MigrationRunner } from 'bueno';
+import { createMigration, type MigrationRunner } from '@buenojs/bueno';
 
 export default createMigration('{{migrationId}}', '{{migrationName}}')
   .up(async (db: MigrationRunner) => {

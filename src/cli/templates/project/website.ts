@@ -18,7 +18,7 @@ export function websiteTemplate(config: ProjectConfig): ProjectTemplateResult {
  * Uses Bueno's SSG module to generate static HTML from markdown content
  */
 
-import { SSG, createSSG, type SiteConfig, type LayoutContext } from 'bueno';
+import { SSG, createSSG, type SiteConfig, type LayoutContext } from '@buenojs/bueno';
 
 // Site configuration
 const siteConfig: Partial<SiteConfig> = {

@@ -225,6 +225,133 @@ bueno generate --help
 
 ## Core Features
 
+### Background Jobs
+Job queue system with Redis and memory drivers.
+
+```typescript
+import { JobQueue, createJobQueue, startWorker } from '@buenojs/bueno/jobs';
+
+// Create a job queue
+const queue = createJobQueue({
+  driver: 'redis',
+  redisUrl: 'redis://localhost:6379',
+});
+
+// Define a job handler
+queue.registerHandler('send-email', async (job) => {
+  const { to, subject, body } = job.data;
+  await emailService.send(to, subject, body);
+  return { success: true };
+});
+
+// Start a worker
+startWorker(queue, { concurrency: 5 });
+
+// Add a job to the queue
+await queue.add('send-email', {
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  body: 'Thank you for joining our platform.',
+});
+```
+
+### Notifications
+Multi-channel notification system with support for email, SMS, WhatsApp, and push notifications.
+
+```typescript
+import { NotificationService, createNotificationService, EmailChannelService } from '@buenojs/bueno/notification';
+
+// Create notification service
+const notificationService = createNotificationService({
+  channels: [
+    new EmailChannelService({
+      smtp: {
+        host: 'smtp.gmail.com',
+        port: 587,
+        auth: {
+          user: 'your-email@gmail.com',
+          pass: 'your-password',
+        },
+      },
+    }),
+  ],
+});
+
+// Send a notification
+await notificationService.send({
+  to: 'user@example.com',
+  subject: 'Welcome!',
+  body: 'Thank you for joining our platform.',
+  channel: 'email',
+});
+```
+
+### Observability
+Structured error tracking and observability integration.
+
+```typescript
+import { createApp } from '@buenojs/bueno';
+import { ObservabilityModule } from '@buenojs/bueno/observability';
+
+const app = createApp(AppModule);
+
+// Wire observability with custom reporter (e.g., Sentry)
+const obs = ObservabilityModule.setup(app, {
+  reporter: new MyReporter(),
+  breadcrumbsSize: 20,
+  ignoreStatusCodes: [404, 401],
+  tags: { environment: 'production' },
+});
+
+await app.listen(3000);
+```
+
+### Metrics
+Runtime metrics collection for memory, CPU, and event loop lag.
+
+```typescript
+import { MetricsCollector, createMetricsCollector, toPrometheusFormat } from '@buenojs/bueno/metrics';
+
+// Create metrics collector
+const collector = createMetricsCollector({
+  maxHistorySize: 100,
+  measureEventLoopLag: true,
+});
+
+// Collect metrics periodically
+collector.startPeriodicCollection(5000);
+
+// Get metrics
+const metrics = collector.getLatest();
+console.log(toPrometheusFormat(metrics));
+```
+
+### i18n
+Internationalization support with translation loading and locale negotiation.
+
+```typescript
+import { I18n, createI18n, i18nMiddleware } from '@buenojs/bueno/i18n';
+
+// Create i18n instance
+const i18n = createI18n({
+  defaultLocale: 'en',
+  locales: ['en', 'fr', 'es'],
+  translations: {
+    en: {
+      welcome: 'Welcome!',
+      goodbye: 'Goodbye!',
+    },
+    fr: {
+      welcome: 'Bienvenue!',
+      goodbye: 'Au revoir!',
+    },
+  },
+});
+
+// Use middleware
+server.use(i18nMiddleware(i18n));
+```
+
 ### HTTP & Routing
 
 Bueno provides a powerful and intuitive routing system with full HTTP method support.
@@ -1002,7 +1129,7 @@ bun dev
 
 ## Links
 
-- **Documentation**: [https://buenojs.dev](https://buenojs.dev)
+- **Documentation**: [https://buenojs.dev](https://bueno.github.io)
 - **GitHub**: [https://github.com/buenojs/bueno](https://github.com/buenojs/bueno)
 - **Issues**: [https://github.com/buenojs/bueno/issues](https://github.com/buenojs/bueno/issues)
 - **npm**: [https://www.npmjs.com/package/@buenojs/bueno](https://www.npmjs.com/package/@buenojs/bueno)
