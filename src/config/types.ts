@@ -78,6 +78,17 @@ export interface MetricsConfig {
 	maxHistorySize?: number;
 }
 
+// ============= Observability Configuration =============
+
+export interface ObservabilityConfig {
+	/** Enable the observability integration layer */
+	enabled?: boolean;
+	/** Maximum breadcrumb ring buffer size (default: 20) */
+	breadcrumbsSize?: number;
+	/** HTTP status codes to suppress from error reporting (e.g. [404, 401]) */
+	ignoreStatusCodes?: number[];
+}
+
 // ============= Telemetry Configuration =============
 
 export interface TelemetryConfig {
@@ -263,6 +274,8 @@ export interface BuenoConfig {
 	metrics?: MetricsConfig;
 	/** Telemetry configuration */
 	telemetry?: TelemetryConfig;
+	/** Observability / error tracking configuration */
+	observability?: ObservabilityConfig;
 	/** Frontend configuration */
 	frontend?: FrontendConfig;
 }
@@ -790,6 +803,28 @@ export const ENV_MAPPINGS: EnvMapping[] = [
 	{ envVar: "BUENO_SERVICE_NAME", configKey: "telemetry.serviceName" },
 	{ envVar: "BUENO_OTEL_ENDPOINT", configKey: "telemetry.endpoint" },
 	{ envVar: "OTEL_EXPORTER_OTLP_ENDPOINT", configKey: "telemetry.endpoint" },
+
+	// Observability
+	{
+		envVar: "BUENO_OBSERVABILITY_ENABLED",
+		configKey: "observability.enabled",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_OBSERVABILITY_BREADCRUMBS_SIZE",
+		configKey: "observability.breadcrumbsSize",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_OBSERVABILITY_IGNORE_STATUS_CODES",
+		configKey: "observability.ignoreStatusCodes",
+		transform: (v) =>
+			v
+				.split(",")
+				.map((s) => s.trim())
+				.filter(Boolean)
+				.map((s) => Number.parseInt(s, 10)),
+	},
 
 	// Frontend
 	{

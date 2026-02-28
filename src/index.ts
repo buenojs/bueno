@@ -396,6 +396,28 @@ export {
 	type CacheLike,
 } from "./health";
 
+// Observability
+export {
+	ObservabilityModule,
+	ObservabilityService,
+	ObservabilityInterceptor,
+	BreadcrumbCollector,
+	httpBreadcrumb,
+	logBreadcrumb,
+	extractTraceContext,
+	generateTraceId,
+	generateSpanId,
+	buildTraceparent,
+	type BreadcrumbEntry,
+	type ErrorEvent,
+	type ErrorRequestContext,
+	type ErrorUserContext,
+	type MessageEvent,
+	type ErrorReporter,
+	type ObservabilityOptions,
+	type ObservabilityConfig,
+} from "./observability";
+
 // Types
 export type {
 	HTTPMethod,
