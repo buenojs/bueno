@@ -356,6 +356,8 @@ export class Application {
 		new Map();
 	private moduleLoader: ModuleLoader;
 	private loadedLazyModules = new Set<Constructor>();
+	// biome-ignore lint/suspicious/noExplicitAny: WebSocket data type is user-defined
+	private websocketHandler: Bun.WebSocketHandler<any> | null = null;
 
 	constructor(moduleClass: Constructor) {
 		this.container = new Container();

@@ -246,6 +246,25 @@ export interface FrontendConfig {
 	port?: number;
 }
 
+// ============= GraphQL Configuration =============
+
+export interface GraphQLConfig {
+	/** Enable GraphQL support (default: false) */
+	enabled?: boolean;
+	/** HTTP path for GraphQL endpoint (default: '/graphql') */
+	path?: string;
+	/** Enable GraphiQL playground (default: auto — true with adapter, false with built-in) */
+	playground?: boolean;
+	/** Enable SDL introspection endpoint at GET <path>/schema (default: true) */
+	introspection?: boolean;
+	/** Maximum query complexity score (default: 1000) */
+	complexityLimit?: number;
+	/** Maximum query depth (default: 10) */
+	maxDepth?: number;
+	/** Enable WebSocket subscriptions (default: false) */
+	subscriptions?: boolean;
+}
+
 // ============= Main Configuration Interface =============
 
 /**
@@ -278,6 +297,8 @@ export interface BuenoConfig {
 	observability?: ObservabilityConfig;
 	/** Frontend configuration */
 	frontend?: FrontendConfig;
+	/** GraphQL configuration */
+	graphql?: GraphQLConfig;
 }
 
 // ============= Configuration Manager Options =============
