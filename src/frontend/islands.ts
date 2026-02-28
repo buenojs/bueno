@@ -8,16 +8,16 @@
  * - State serialization for islands
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
 import type {
+	FrontendFramework,
 	IslandConfig,
 	IslandDefinition,
+	IslandHydrationScript,
 	IslandHydrationStrategy,
 	IslandRegistry,
 	IslandRenderResult,
 	IslandState,
-	IslandHydrationScript,
-	FrontendFramework,
 	SSRElement,
 } from "./types.js";
 
@@ -74,7 +74,7 @@ export class IslandManager {
 	 * Register multiple islands
 	 */
 	registerAll(definitions: IslandDefinition[]): string[] {
-		return definitions.map(def => this.register(def));
+		return definitions.map((def) => this.register(def));
 	}
 
 	/**
@@ -104,7 +104,7 @@ export class IslandManager {
 	renderIsland(
 		componentName: string,
 		props: Record<string, unknown> = {},
-		options: Partial<IslandConfig> = {}
+		options: Partial<IslandConfig> = {},
 	): IslandRenderResult {
 		const id = options.id || `island-${++this.islandCounter}`;
 		const strategy = options.strategy || "lazy";
@@ -139,7 +139,8 @@ export class IslandManager {
 			.join(" ");
 
 		// Generate placeholder or SSR content
-		const placeholder = options.placeholder || this.generatePlaceholder(componentName, props);
+		const placeholder =
+			options.placeholder || this.generatePlaceholder(componentName, props);
 
 		const html = `<div ${attrString}>${placeholder}</div>`;
 
@@ -160,7 +161,7 @@ export class IslandManager {
 		componentName: string,
 		ssrContent: string,
 		props: Record<string, unknown> = {},
-		options: Partial<IslandConfig> = {}
+		options: Partial<IslandConfig> = {},
 	): IslandRenderResult {
 		const id = options.id || `island-${++this.islandCounter}`;
 		const strategy = options.strategy || "lazy";
@@ -196,7 +197,9 @@ export class IslandManager {
 	/**
 	 * Find island by component name
 	 */
-	private findIslandByComponent(componentName: string): IslandDefinition | undefined {
+	private findIslandByComponent(
+		componentName: string,
+	): IslandDefinition | undefined {
 		for (const island of this.registry.values()) {
 			if (island.component === componentName) {
 				return island;
@@ -210,7 +213,7 @@ export class IslandManager {
 	 */
 	private generatePlaceholder(
 		componentName: string,
-		props: Record<string, unknown>
+		props: Record<string, unknown>,
 	): string {
 		// Generate a simple placeholder based on component type
 		if (props.children && typeof props.children === "string") {
@@ -229,7 +232,7 @@ export class IslandManager {
 			.replace(/&/g, "&")
 			.replace(/</g, "<")
 			.replace(/>/g, ">")
-			.replace(/"/g, "\"")
+			.replace(/"/g, '"')
 			.replace(/'/g, "'");
 	}
 
@@ -240,7 +243,7 @@ export class IslandManager {
 		const islands = this.getAllIslands();
 		const framework = this.framework;
 
-		const islandData = islands.map(island => ({
+		const islandData = islands.map((island) => ({
 			id: island.id,
 			component: island.component,
 			entry: island.entry,
@@ -417,7 +420,9 @@ hydrator.init();
 /**
  * Create an island manager
  */
-export function createIslandManager(framework: FrontendFramework): IslandManager {
+export function createIslandManager(
+	framework: FrontendFramework,
+): IslandManager {
 	return new IslandManager(framework);
 }
 
@@ -429,7 +434,7 @@ export function createIslandManager(framework: FrontendFramework): IslandManager
 export function defineIsland(
 	component: string,
 	entry: string,
-	options: Partial<IslandDefinition> = {}
+	options: Partial<IslandDefinition> = {},
 ): IslandDefinition {
 	return {
 		id: options.id || `island-${component}`,
@@ -467,7 +472,9 @@ export function getIslandData(element: ElementLike): IslandState | null {
 		id: element.getAttribute(ISLAND_ID) || "",
 		component: element.getAttribute(ISLAND_COMPONENT) || "",
 		props: JSON.parse(element.getAttribute(ISLAND_PROPS) || "{}"),
-		strategy: (element.getAttribute(ISLAND_STRATEGY) as IslandHydrationStrategy) || "lazy",
+		strategy:
+			(element.getAttribute(ISLAND_STRATEGY) as IslandHydrationStrategy) ||
+			"lazy",
 		hydrated: false,
 	};
 }
@@ -479,7 +486,7 @@ export function getIslandAttributes(
 	id: string,
 	component: string,
 	props: Record<string, unknown>,
-	strategy: IslandHydrationStrategy = "lazy"
+	strategy: IslandHydrationStrategy = "lazy",
 ): Record<string, string> {
 	return {
 		[ISLAND_MARKER]: "true",
@@ -498,7 +505,7 @@ export function createIslandElement(
 	component: string,
 	props: Record<string, unknown>,
 	strategy: IslandHydrationStrategy = "lazy",
-	children?: SSRElement[]
+	children?: SSRElement[],
 ): SSRElement {
 	return {
 		tag: "div",
@@ -512,14 +519,21 @@ export function createIslandElement(
  */
 export function parseIslandsFromHTML(html: string): IslandState[] {
 	const islands: IslandState[] = [];
-	const regex = /data-island-id="([^"]+)"[^>]*data-island-component="([^"]+)"[^>]*data-island-props="([^"]+)"[^>]*data-island-strategy="([^"]+)"/g;
+	const regex =
+		/data-island-id="([^"]+)"[^>]*data-island-component="([^"]+)"[^>]*data-island-props="([^"]+)"[^>]*data-island-strategy="([^"]+)"/g;
 
 	let match;
 	while ((match = regex.exec(html)) !== null) {
 		islands.push({
 			id: match[1],
 			component: match[2],
-			props: JSON.parse(match[3].replace(/"/g, '"').replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>')),
+			props: JSON.parse(
+				match[3]
+					.replace(/"/g, '"')
+					.replace(/&/g, "&")
+					.replace(/</g, "<")
+					.replace(/>/g, ">"),
+			),
 			strategy: match[4] as IslandHydrationStrategy,
 			hydrated: false,
 		});
@@ -531,7 +545,9 @@ export function parseIslandsFromHTML(html: string): IslandState[] {
 /**
  * Get hydration priority
  */
-export function getHydrationPriority(strategy: IslandHydrationStrategy): number {
+export function getHydrationPriority(
+	strategy: IslandHydrationStrategy,
+): number {
 	const priorities: Record<IslandHydrationStrategy, number> = {
 		eager: 1,
 		visible: 2,
@@ -545,8 +561,11 @@ export function getHydrationPriority(strategy: IslandHydrationStrategy): number 
 /**
  * Sort islands by hydration priority
  */
-export function sortIslandsByPriority(islands: IslandDefinition[]): IslandDefinition[] {
+export function sortIslandsByPriority(
+	islands: IslandDefinition[],
+): IslandDefinition[] {
 	return [...islands].sort(
-		(a, b) => getHydrationPriority(a.strategy) - getHydrationPriority(b.strategy)
+		(a, b) =>
+			getHydrationPriority(a.strategy) - getHydrationPriority(b.strategy),
 	);
 }

@@ -7,12 +7,15 @@
 import type { Model } from "../model";
 import { Relationship } from "./base";
 
-export class BelongsTo<TRelated extends Model> extends Relationship<any, TRelated> {
+export class BelongsTo<TRelated extends Model> extends Relationship<
+	any,
+	TRelated
+> {
 	constructor(
 		parentModel: Model,
-		relatedClass: { new(): TRelated } & typeof Model,
+		relatedClass: { new (): TRelated } & typeof Model,
 		foreignKey: string,
-		ownerKey: string = "id",
+		ownerKey = "id",
 	) {
 		// Pass ownerKey as localKey so addConstraints() (called inside super())
 		// can access it via this.localKey before ownerKey is assigned as a field.

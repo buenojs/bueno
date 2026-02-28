@@ -8,16 +8,21 @@
  */
 
 import type {
+	FrameworkSSRRenderer,
 	SSRContext,
 	SSRElement,
 	SSRPage,
-	FrameworkSSRRenderer,
 } from "../types.js";
 
 // Svelte types (dynamically imported)
 interface SvelteComponent {
 	render(props?: Record<string, unknown>): SvelteRenderResult;
-	$$render(result: string, props: Record<string, unknown>, bindings: unknown, context: unknown): string;
+	$$render(
+		result: string,
+		props: Record<string, unknown>,
+		bindings: unknown,
+		context: unknown,
+	): string;
 }
 
 interface SvelteRenderResult {
@@ -99,7 +104,7 @@ export class SvelteSSRRenderer implements FrameworkSSRRenderer {
 			this.initialized = true;
 		} catch (error) {
 			throw new Error(
-				"Svelte is not installed. Install it with: bun add svelte"
+				"Svelte is not installed. Install it with: bun add svelte",
 			);
 		}
 	}
@@ -107,7 +112,10 @@ export class SvelteSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Render a component to HTML string
 	 */
-	async renderToString(component: unknown, context: SSRContext): Promise<string> {
+	async renderToString(
+		component: unknown,
+		context: SSRContext,
+	): Promise<string> {
 		await this.init();
 
 		resetHead();
@@ -146,7 +154,8 @@ export class SvelteSSRRenderer implements FrameworkSSRRenderer {
 
 			throw new Error("Invalid Svelte component");
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			throw new Error(`Svelte renderToString failed: ${errorMessage}`);
 		}
 	}
@@ -154,7 +163,10 @@ export class SvelteSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Render a component to a stream
 	 */
-	renderToStream(component: unknown, context: SSRContext): ReadableStream<Uint8Array> {
+	renderToStream(
+		component: unknown,
+		context: SSRContext,
+	): ReadableStream<Uint8Array> {
 		const encoder = new TextEncoder();
 
 		return new ReadableStream<Uint8Array>({
@@ -177,8 +189,11 @@ export class SvelteSSRRenderer implements FrameworkSSRRenderer {
 
 					controller.close();
 				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error";
-					controller.error(new Error(`Svelte renderToStream failed: ${errorMessage}`));
+					const errorMessage =
+						error instanceof Error ? error.message : "Unknown error";
+					controller.error(
+						new Error(`Svelte renderToStream failed: ${errorMessage}`),
+					);
 				}
 			},
 		});
@@ -272,7 +287,7 @@ export class SvelteSSRRenderer implements FrameworkSSRRenderer {
 	 */
 	async renderWithCSS(
 		component: unknown,
-		context: SSRContext
+		context: SSRContext,
 	): Promise<{
 		html: string;
 		head: string;
@@ -349,7 +364,11 @@ export class SvelteHead {
 
 	setTitle(title: string): this {
 		this.title = title;
-		addHeadElement({ tag: "title", attrs: {}, children: [{ tag: "#text", attrs: {}, innerHTML: title }] });
+		addHeadElement({
+			tag: "title",
+			attrs: {},
+			children: [{ tag: "#text", attrs: {}, innerHTML: title }],
+		});
 		return this;
 	}
 
@@ -438,7 +457,22 @@ export function ssrElementToString(element: SSRElement): string {
 	}
 
 	// Self-closing tags
-	const voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"];
+	const voidElements = [
+		"area",
+		"base",
+		"br",
+		"col",
+		"embed",
+		"hr",
+		"img",
+		"input",
+		"link",
+		"meta",
+		"param",
+		"source",
+		"track",
+		"wbr",
+	];
 	if (voidElements.includes(element.tag)) {
 		return attrs ? `<${element.tag} ${attrs}>` : `<${element.tag}>`;
 	}
@@ -462,7 +496,7 @@ function escapeHtml(str: string): string {
  * Load a Svelte component from file path
  */
 export async function loadSvelteComponent(
-	filePath: string
+	filePath: string,
 ): Promise<SvelteComponentConstructor> {
 	try {
 		// Dynamic import of the compiled Svelte component
@@ -478,7 +512,7 @@ export async function loadSvelteComponent(
  */
 export function createSvelteSSRContext(
 	request: Request,
-	initialState: Record<string, unknown> = {}
+	initialState: Record<string, unknown> = {},
 ): SSRContext {
 	const url = new URL(request.url);
 

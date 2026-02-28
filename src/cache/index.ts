@@ -385,7 +385,8 @@ export class Cache {
 
 		if (latency !== undefined) {
 			this.totalLatency += latency;
-			this.metrics.avgLatency = this.totalLatency / this.metrics.totalOperations;
+			this.metrics.avgLatency =
+				this.totalLatency / this.metrics.totalOperations;
 		}
 
 		if (error) {

@@ -162,7 +162,9 @@ function buildSetFragment(data: Record<string, unknown>): {
 /**
  * Detect operation type from SQL string
  */
-function detectOperationType(sql: string): "query" | "insert" | "update" | "delete" | "other" {
+function detectOperationType(
+	sql: string,
+): "query" | "insert" | "update" | "delete" | "other" {
 	const normalizedSql = sql.trim().toUpperCase();
 	if (normalizedSql.startsWith("SELECT")) return "query";
 	if (normalizedSql.startsWith("INSERT")) return "insert";
@@ -195,7 +197,8 @@ export class Database {
 	};
 
 	// Event listeners
-	private eventListeners: Map<QueryEventType, Set<QueryEventListener>> = new Map();
+	private eventListeners: Map<QueryEventType, Set<QueryEventListener>> =
+		new Map();
 
 	constructor(config: DatabaseConfig | string) {
 		this.config = typeof config === "string" ? { url: config } : config;
@@ -252,7 +255,8 @@ export class Database {
 
 		this.metrics.totalOperations++;
 		this.metrics.totalLatency += latency;
-		this.metrics.avgLatency = this.metrics.totalLatency / this.metrics.totalOperations;
+		this.metrics.avgLatency =
+			this.metrics.totalLatency / this.metrics.totalOperations;
 
 		if (latency > this.slowQueryThreshold) {
 			this.metrics.slowQueries++;
@@ -930,7 +934,6 @@ export async function createConnection(
 	return db;
 }
 
-
 // ============= SQL Helpers =============
 
 /**
@@ -954,4 +957,3 @@ export function buildInClause(values: unknown[]): {
 		params: values,
 	};
 }
-

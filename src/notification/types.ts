@@ -11,7 +11,12 @@
 /**
  * Supported notification channels
  */
-export type NotificationChannel = "email" | "sms" | "whatsapp" | "push" | string;
+export type NotificationChannel =
+	| "email"
+	| "sms"
+	| "whatsapp"
+	| "push"
+	| string;
 
 /**
  * Base notification message interface
@@ -58,7 +63,10 @@ export interface EmailRecipient {
 	email: string;
 }
 
-export type EmailRecipients = string | EmailRecipient | (string | EmailRecipient)[];
+export type EmailRecipients =
+	| string
+	| EmailRecipient
+	| (string | EmailRecipient)[];
 
 export interface EmailAttachment {
 	filename: string;
@@ -144,12 +152,17 @@ export interface Notifiable {
 	 * Can return single message or array of messages for multi-channel
 	 * @returns NotificationMessage or Promise<NotificationMessage>
 	 */
-	build(channel?: NotificationChannel): NotificationMessage | Promise<NotificationMessage>;
+	build(
+		channel?: NotificationChannel,
+	): NotificationMessage | Promise<NotificationMessage>;
 
 	/**
 	 * Optional: Build multiple channel notifications at once
 	 */
-	buildAll?(): Record<NotificationChannel, NotificationMessage | Promise<NotificationMessage>>;
+	buildAll?(): Record<
+		NotificationChannel,
+		NotificationMessage | Promise<NotificationMessage>
+	>;
 }
 
 // ============= Channel Service Types =============
@@ -167,7 +180,9 @@ export interface ChannelHealth {
 /**
  * Base interface for all channel services
  */
-export interface ChannelService<T extends NotificationMessage = NotificationMessage> {
+export interface ChannelService<
+	T extends NotificationMessage = NotificationMessage,
+> {
 	/** Channel name/identifier */
 	readonly name: NotificationChannel;
 

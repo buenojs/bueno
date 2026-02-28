@@ -4,14 +4,14 @@
  * Provides animated spinners and progress indicators
  */
 
-import { colors, isColorEnabled } from './console';
+import { colors, isColorEnabled } from "./console";
 
-const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 const SPINNER_INTERVAL = 80;
 
 export interface SpinnerOptions {
 	text?: string;
-	color?: 'red' | 'green' | 'yellow' | 'blue' | 'magenta' | 'cyan' | 'white';
+	color?: "red" | "green" | "yellow" | "blue" | "magenta" | "cyan" | "white";
 }
 
 export class Spinner {
@@ -23,8 +23,8 @@ export class Spinner {
 	private stream = process.stdout;
 
 	constructor(options: SpinnerOptions = {}) {
-		this.text = options.text ?? '';
-		this.color = options.color ?? 'cyan';
+		this.text = options.text ?? "";
+		this.color = options.color ?? "cyan";
 	}
 
 	/**
@@ -38,7 +38,7 @@ export class Spinner {
 		this.frameIndex = 0;
 
 		// Hide cursor
-		this.stream.write('\x1b[?25l');
+		this.stream.write("\x1b[?25l");
 
 		this.interval = setInterval(() => {
 			this.render();
@@ -62,28 +62,28 @@ export class Spinner {
 	 * Stop the spinner with success
 	 */
 	success(text?: string): this {
-		return this.stop(colors.green('✓'), text);
+		return this.stop(colors.green("✓"), text);
 	}
 
 	/**
 	 * Stop the spinner with error
 	 */
 	error(text?: string): this {
-		return this.stop(colors.red('✗'), text);
+		return this.stop(colors.red("✗"), text);
 	}
 
 	/**
 	 * Stop the spinner with warning
 	 */
 	warn(text?: string): this {
-		return this.stop(colors.yellow('⚠'), text);
+		return this.stop(colors.yellow("⚠"), text);
 	}
 
 	/**
 	 * Stop the spinner with info
 	 */
 	info(text?: string): this {
-		return this.stop(colors.cyan('ℹ'), text);
+		return this.stop(colors.cyan("ℹ"), text);
 	}
 
 	/**
@@ -100,7 +100,7 @@ export class Spinner {
 		}
 
 		// Clear the line
-		this.stream.write('\r\x1b[K');
+		this.stream.write("\r\x1b[K");
 
 		// Write final message
 		const finalText = text ?? this.text;
@@ -111,7 +111,7 @@ export class Spinner {
 		}
 
 		// Show cursor
-		this.stream.write('\x1b[?25h');
+		this.stream.write("\x1b[?25h");
 
 		return this;
 	}
@@ -122,7 +122,7 @@ export class Spinner {
 	clear(): this {
 		if (!this.isSpinning) return this;
 
-		this.stream.write('\r\x1b[K');
+		this.stream.write("\r\x1b[K");
 		return this;
 	}
 
@@ -132,7 +132,7 @@ export class Spinner {
 	private render(): void {
 		if (!isColorEnabled()) {
 			// Without colors, just show dots
-			const dots = '.'.repeat((this.frameIndex % 3) + 1);
+			const dots = ".".repeat((this.frameIndex % 3) + 1);
 			this.stream.write(`\r${this.text}${dots}   `);
 			this.frameIndex++;
 			return;
@@ -149,7 +149,10 @@ export class Spinner {
 /**
  * Create and start a spinner
  */
-export function spinner(text: string, options?: Omit<SpinnerOptions, 'text'>): Spinner {
+export function spinner(
+	text: string,
+	options?: Omit<SpinnerOptions, "text">,
+): Spinner {
 	return new Spinner({ text, ...options }).start();
 }
 
@@ -176,9 +179,9 @@ export class ProgressBar {
 	constructor(options: ProgressBarOptions) {
 		this.total = options.total;
 		this.width = options.width ?? 40;
-		this.text = options.text ?? '';
-		this.completeChar = options.completeChar ?? '█';
-		this.incompleteChar = options.incompleteChar ?? '░';
+		this.text = options.text ?? "";
+		this.completeChar = options.completeChar ?? "█";
+		this.incompleteChar = options.incompleteChar ?? "░";
 	}
 
 	/**
@@ -212,7 +215,7 @@ export class ProgressBar {
 	complete(): this {
 		this.current = this.total;
 		this.render();
-		this.stream.write('\n');
+		this.stream.write("\n");
 		return this;
 	}
 

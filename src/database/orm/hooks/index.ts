@@ -18,7 +18,9 @@ export type ModelHookName =
 	| "restoring"
 	| "restored";
 
-export type ModelHookCallback<M> = (model: M) => void | Promise<void> | boolean | Promise<boolean>;
+export type ModelHookCallback<M> = (
+	model: M,
+) => void | Promise<void> | boolean | Promise<boolean>;
 
 /**
  * Model hook registry for a specific model class
@@ -75,7 +77,9 @@ export abstract class Model {
 	/**
 	 * Get or create the hook registry for this model class
 	 */
-	private static getHookRegistry(modelName: string): Map<ModelHookName, Function[]> {
+	private static getHookRegistry(
+		modelName: string,
+	): Map<ModelHookName, Function[]> {
 		if (!Model.hookRegistry.has(modelName)) {
 			Model.hookRegistry.set(modelName, new Map<ModelHookName, Function[]>());
 		}
@@ -86,7 +90,7 @@ export abstract class Model {
 	 * Register a hook callback on the model class
 	 */
 	static on<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		hookName: ModelHookName,
 		callback: ModelHookCallback<M>,
 	): void {
@@ -101,7 +105,7 @@ export abstract class Model {
 	 * Get all callbacks for a hook
 	 */
 	static getHookCallbacks<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		hookName: ModelHookName,
 	): ModelHookCallback<M>[] {
 		const registry = Model.getHookRegistry(this.name);

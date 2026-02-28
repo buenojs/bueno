@@ -287,7 +287,17 @@ export class Context<V extends ContextVariables = ContextVariables> {
 	/**
 	 * Create a new Response with current state
 	 */
-	newResponse(body: Blob | ArrayBuffer | FormData | URLSearchParams | ReadableStream<unknown> | string | null, options?: ResponseInit): Response {
+	newResponse(
+		body:
+			| Blob
+			| ArrayBuffer
+			| FormData
+			| URLSearchParams
+			| ReadableStream<unknown>
+			| string
+			| null,
+		options?: ResponseInit,
+	): Response {
 		return new Response(body, {
 			status: this._response.status,
 			headers: this._response.headers,

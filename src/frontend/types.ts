@@ -10,12 +10,12 @@
 /**
  * Supported frontend frameworks
  */
-export type FrontendFramework = 'react' | 'vue' | 'svelte' | 'solid';
+export type FrontendFramework = "react" | "vue" | "svelte" | "solid";
 
 /**
  * Framework detection mode
  */
-export type FrameworkDetectionMode = FrontendFramework | 'auto';
+export type FrameworkDetectionMode = FrontendFramework | "auto";
 
 // ============= Dev Server Configuration =============
 
@@ -75,7 +75,8 @@ export interface DevServerConfig {
 /**
  * Partial configuration for creating a dev server
  */
-export type PartialDevServerConfig = Partial<DevServerConfig> & Pick<DevServerConfig, 'rootDir'>;
+export type PartialDevServerConfig = Partial<DevServerConfig> &
+	Pick<DevServerConfig, "rootDir">;
 
 // ============= Server State Types =============
 
@@ -197,7 +198,7 @@ export interface FrameworkDetectionResult {
 	/**
 	 * Source of detection ('package.json' or 'config')
 	 */
-	source: 'package.json' | 'config';
+	source: "package.json" | "config";
 }
 
 // ============= Build/Transform Types =============
@@ -254,7 +255,7 @@ export interface TransformOptions {
  */
 export type DevServerMiddleware = (
 	request: Request,
-	next: () => Promise<Response>
+	next: () => Promise<Response>,
 ) => Response | Promise<Response>;
 
 // ============= Event Types =============
@@ -263,12 +264,12 @@ export type DevServerMiddleware = (
  * Dev server event types
  */
 export type DevServerEvent =
-	| { type: 'start'; port: number; hostname: string }
-	| { type: 'stop'; reason?: string }
-	| { type: 'request'; method: string; path: string; duration: number }
-	| { type: 'error'; error: Error }
-	| { type: 'file-change'; path: string }
-	| { type: 'framework-detected'; framework: FrontendFramework };
+	| { type: "start"; port: number; hostname: string }
+	| { type: "stop"; reason?: string }
+	| { type: "request"; method: string; path: string; duration: number }
+	| { type: "error"; error: Error }
+	| { type: "file-change"; path: string }
+	| { type: "framework-detected"; framework: FrontendFramework };
 
 /**
  * Dev server event listener
@@ -356,7 +357,7 @@ export interface HMRUpdate {
 	/**
 	 * Type of update
 	 */
-	type: 'update' | 'reload' | 'error';
+	type: "update" | "reload" | "error";
 
 	/**
 	 * Unique identifier for this update
@@ -467,18 +468,18 @@ export interface HMRModuleUpdate {
  * HMR client message types
  */
 export type HMRClientMessage =
-	| { type: 'subscribe'; fileId: string }
-	| { type: 'unsubscribe'; fileId: string }
-	| { type: 'ping' }
-	| { type: 'module-accepted'; moduleId: string; dependencies: string[] };
+	| { type: "subscribe"; fileId: string }
+	| { type: "unsubscribe"; fileId: string }
+	| { type: "ping" }
+	| { type: "module-accepted"; moduleId: string; dependencies: string[] };
 
 /**
  * HMR server message types
  */
 export type HMRServerMessage =
 	| HMRUpdate
-	| { type: 'pong' }
-	| { type: 'connected'; clientId: string };
+	| { type: "pong" }
+	| { type: "connected"; clientId: string };
 
 /**
  * File change event information
@@ -492,7 +493,7 @@ export interface FileChangeEvent {
 	/**
 	 * Type of change
 	 */
-	event: 'create' | 'update' | 'delete';
+	event: "create" | "update" | "delete";
 
 	/**
 	 * Timestamp of the change
@@ -505,7 +506,14 @@ export interface FileChangeEvent {
 /**
  * Console message types that can be captured
  */
-export type ConsoleMessageType = 'log' | 'info' | 'warn' | 'error' | 'debug' | 'trace' | 'table';
+export type ConsoleMessageType =
+	| "log"
+	| "info"
+	| "warn"
+	| "error"
+	| "debug"
+	| "trace"
+	| "table";
 
 /**
  * Console message captured from the browser
@@ -619,7 +627,7 @@ export interface ConsoleClientMessage {
 	/**
 	 * Message type identifier
 	 */
-	type: 'console';
+	type: "console";
 
 	/**
 	 * Console method called (log, warn, error, etc.)
@@ -666,8 +674,8 @@ export interface ConsoleClientMessage {
  * Server message for console stream
  */
 export type ConsoleServerMessage =
-	| { type: 'connected'; clientId: string }
-	| { type: 'pong' };
+	| { type: "connected"; clientId: string }
+	| { type: "pong" };
 
 // ============= Bundler Types =============
 
@@ -694,17 +702,17 @@ export interface BuildPlugin {
 /**
  * Source map generation options
  */
-export type SourcemapOption = 'linked' | 'external' | 'none';
+export type SourcemapOption = "linked" | "external" | "none";
 
 /**
  * Build target environment
  */
-export type BuildTarget = 'browser' | 'node' | 'bun';
+export type BuildTarget = "browser" | "node" | "bun";
 
 /**
  * Output module format
  */
-export type OutputFormat = 'esm' | 'cjs' | 'iife';
+export type OutputFormat = "esm" | "cjs" | "iife";
 
 /**
  * Bundler configuration options
@@ -727,7 +735,7 @@ export interface BundlerConfig {
 	 * 'auto' will detect from package.json
 	 * @default 'auto'
 	 */
-	framework: FrontendFramework | 'auto';
+	framework: FrontendFramework | "auto";
 
 	/**
 	 * Minify output
@@ -801,13 +809,14 @@ export interface BundlerConfig {
 	/**
 	 * Environment mode
 	 */
-	mode?: 'development' | 'production';
+	mode?: "development" | "production";
 }
 
 /**
  * Partial bundler configuration
  */
-export type PartialBundlerConfig = Partial<BundlerConfig> & Pick<BundlerConfig, 'entryPoints'>;
+export type PartialBundlerConfig = Partial<BundlerConfig> &
+	Pick<BundlerConfig, "entryPoints">;
 
 /**
  * Build output file information
@@ -821,7 +830,7 @@ export interface BuildOutput {
 	/**
 	 * Type of output file
 	 */
-	type: 'js' | 'css' | 'asset';
+	type: "js" | "css" | "asset";
 
 	/**
 	 * File size in bytes
@@ -956,7 +965,7 @@ export interface FrameworkBuildConfig {
 	/**
 	 * JSX runtime to use
 	 */
-	jsxRuntime: 'automatic' | 'classic';
+	jsxRuntime: "automatic" | "classic";
 
 	/**
 	 * JSX import source for automatic runtime
@@ -991,7 +1000,10 @@ export interface FrameworkBuildConfig {
 	/**
 	 * Additional loader configurations
 	 */
-	loaders?: Record<string, 'js' | 'jsx' | 'ts' | 'tsx' | 'css' | 'file' | 'dataurl' | 'text'>;
+	loaders?: Record<
+		string,
+		"js" | "jsx" | "ts" | "tsx" | "css" | "file" | "dataurl" | "text"
+	>;
 }
 
 /**
@@ -1006,15 +1018,18 @@ export interface BuildManifest {
 	/**
 	 * All output files
 	 */
-	files: Record<string, {
-		type: 'js' | 'css' | 'asset';
-		size: number;
-		hash?: string;
-		imports?: string[];
-		dynamicImports?: string[];
-	}>;
+	files: Record<
+		string,
+		{
+			type: "js" | "css" | "asset";
+			size: number;
+			hash?: string;
+			imports?: string[];
+			dynamicImports?: string[];
+		}
+	>;
 
-		/**
+	/**
 	 * CSS files for each entry point
 	 */
 	css: Record<string, string[]>;
@@ -1298,13 +1313,19 @@ export interface SSRConfig {
 	/**
 	 * Custom HTML template function
 	 */
-	templateFn?: (ctx: SSRContext, content: string, head: string, body: string) => string;
+	templateFn?: (
+		ctx: SSRContext,
+		content: string,
+		head: string,
+		body: string,
+	) => string;
 }
 
 /**
  * Partial SSR configuration
  */
-export type PartialSSRConfig = Partial<SSRConfig> & Pick<SSRConfig, 'entry' | 'clientEntry' | 'clientManifest' | 'framework'>;
+export type PartialSSRConfig = Partial<SSRConfig> &
+	Pick<SSRConfig, "entry" | "clientEntry" | "clientManifest" | "framework">;
 
 /**
  * Framework-specific SSR renderer
@@ -1318,7 +1339,10 @@ export interface FrameworkSSRRenderer {
 	/**
 	 * Render a component to a stream
 	 */
-	renderToStream(component: unknown, context: SSRContext): ReadableStream<Uint8Array>;
+	renderToStream(
+		component: unknown,
+		context: SSRContext,
+	): ReadableStream<Uint8Array>;
 
 	/**
 	 * Get head elements from component
@@ -1428,12 +1452,12 @@ export interface PreloadLink {
 	/**
 	 * Link rel type
 	 */
-	rel: 'preload' | 'prefetch' | 'modulepreload';
+	rel: "preload" | "prefetch" | "modulepreload";
 
 	/**
 	 * As attribute
 	 */
-	as?: 'script' | 'style' | 'font' | 'image' | 'fetch';
+	as?: "script" | "style" | "font" | "image" | "fetch";
 
 	/**
 	 * Additional attributes
@@ -1616,7 +1640,7 @@ export interface ISRStats {
 /**
  * Island hydration strategy
  */
-export type IslandHydrationStrategy = 'eager' | 'lazy' | 'visible' | 'idle';
+export type IslandHydrationStrategy = "eager" | "lazy" | "visible" | "idle";
 
 /**
  * Island configuration options
@@ -1769,14 +1793,14 @@ export interface IslandHydrationScript {
 	/**
 	 * Script type
 	 */
-	type: 'module' | 'text/javascript';
+	type: "module" | "text/javascript";
 }
 // ============= File-based Routing Types =============
 
 /**
  * Route type
  */
-export type RouteType = 'page' | 'api' | 'layout';
+export type RouteType = "page" | "api" | "layout";
 
 /**
  * Route definition from file
@@ -1853,7 +1877,7 @@ export type RouteHandler = (request: Request) => Response | Promise<Response>;
  */
 export type RouteMiddleware = (
 	request: Request,
-	next: () => Promise<Response>
+	next: () => Promise<Response>,
 ) => Response | Promise<Response>;
 
 /**
@@ -1996,7 +2020,7 @@ export interface LayoutProps {
  */
 export type LayoutRenderer = (
 	props: LayoutProps,
-	context: SSRContext
+	context: SSRContext,
 ) => Promise<string | LayoutRenderResult> | string | LayoutRenderResult;
 
 /**
@@ -2005,7 +2029,7 @@ export type LayoutRenderer = (
 export type LayoutMiddleware = (
 	props: LayoutProps,
 	context: SSRContext,
-	next: () => Promise<string>
+	next: () => Promise<string>,
 ) => Promise<string> | string;
 
 /**
@@ -2090,7 +2114,14 @@ export interface LayoutSegment {
 /**
  * HTTP methods supported by API routes
  */
-export type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+export type HTTPMethod =
+	| "GET"
+	| "POST"
+	| "PUT"
+	| "PATCH"
+	| "DELETE"
+	| "HEAD"
+	| "OPTIONS";
 
 /**
  * API route definition
@@ -2130,7 +2161,9 @@ export interface APIRouteDefinition {
 /**
  * API route handler function
  */
-export type APIRouteHandler = (ctx: APIContext) => APIResponse | Promise<APIResponse>;
+export type APIRouteHandler = (
+	ctx: APIContext,
+) => APIResponse | Promise<APIResponse>;
 
 /**
  * API response type
@@ -2142,7 +2175,7 @@ export type APIResponse = Response | string | Record<string, unknown> | null;
  */
 export type APIMiddleware = (
 	ctx: APIContext,
-	next: () => Promise<Response>
+	next: () => Promise<Response>,
 ) => Response | Promise<Response>;
 
 /**
@@ -2237,7 +2270,9 @@ export interface APIRouteModule {
 	/**
 	 * Default export (config or handler)
 	 */
-	default?: APIRouteHandler | { handler: APIRouteHandler; config?: APIRouteConfig };
+	default?:
+		| APIRouteHandler
+		| { handler: APIRouteHandler; config?: APIRouteConfig };
 }
 
 /**

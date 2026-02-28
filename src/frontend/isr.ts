@@ -8,18 +8,18 @@
  * - Distributed cache support via Bun.redis
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
+import { type SSRRenderer, createSSRContext } from "./ssr.js";
 import type {
-	ISRConfig,
-	PartialISRConfig,
 	ISRCacheEntry,
+	ISRConfig,
 	ISRPageConfig,
 	ISRRevalidationResult,
 	ISRStats,
+	PartialISRConfig,
 	SSRRenderOptions,
 } from "./types.js";
-import { SSRRenderer, createSSRContext } from "./ssr.js";
-import type { SSRContext, RenderResult } from "./types.js";
+import type { RenderResult, SSRContext } from "./types.js";
 
 // ============= Constants =============
 
@@ -31,7 +31,7 @@ const DEFAULT_STALE_WHILE_REVALIDATE = 60; // 1 minute
 
 /**
  * ISR Manager handles incremental static regeneration
- * 
+ *
  * Features:
  * - Time-based revalidation with configurable TTL
  * - Stale-while-revalidate for instant responses
@@ -42,7 +42,8 @@ export class ISRManager {
 	private config: ISRConfig;
 	private logger: Logger;
 	private cache: Map<string, ISRCacheEntry> = new Map();
-	private pendingRegenerations: Map<string, Promise<ISRRevalidationResult>> = new Map();
+	private pendingRegenerations: Map<string, Promise<ISRRevalidationResult>> =
+		new Map();
 	private ssrRenderer: SSRRenderer | null = null;
 	private stats = {
 		hits: 0,
@@ -67,7 +68,8 @@ export class ISRManager {
 		return {
 			cacheDir: config.cacheDir ?? DEFAULT_CACHE_DIR,
 			defaultRevalidate: config.defaultRevalidate ?? DEFAULT_REVALIDATE,
-			staleWhileRevalidate: config.staleWhileRevalidate ?? DEFAULT_STALE_WHILE_REVALIDATE,
+			staleWhileRevalidate:
+				config.staleWhileRevalidate ?? DEFAULT_STALE_WHILE_REVALIDATE,
 			maxCacheSize: config.maxCacheSize ?? 1000,
 			redis: config.redis,
 			redisKeyPrefix: config.redisKeyPrefix ?? "bueno:isr:",
@@ -88,7 +90,7 @@ export class ISRManager {
 	async getPage(
 		url: string,
 		request: Request,
-		pageConfig?: ISRPageConfig
+		pageConfig?: ISRPageConfig,
 	): Promise<RenderResult> {
 		if (!this.config.enabled) {
 			return this.renderPage(url, request);
@@ -100,8 +102,10 @@ export class ISRManager {
 		if (entry) {
 			const now = Date.now();
 			const age = (now - entry.timestamp) / 1000;
-			const revalidate = pageConfig?.revalidate ?? this.config.defaultRevalidate;
-			const staleWhileRevalidate = pageConfig?.staleWhileRevalidate ?? this.config.staleWhileRevalidate;
+			const revalidate =
+				pageConfig?.revalidate ?? this.config.defaultRevalidate;
+			const staleWhileRevalidate =
+				pageConfig?.staleWhileRevalidate ?? this.config.staleWhileRevalidate;
 
 			// Cache hit - check if stale
 			if (age < revalidate) {
@@ -114,7 +118,9 @@ export class ISRManager {
 			// Stale but within stale-while-revalidate window
 			if (age < revalidate + staleWhileRevalidate) {
 				this.stats.staleHits++;
-				this.logger.debug(`Cache hit (stale): ${url}, revalidating in background`);
+				this.logger.debug(
+					`Cache hit (stale): ${url}, revalidating in background`,
+				);
 
 				// Trigger background revalidation
 				this.triggerBackgroundRevalidation(url, request, pageConfig);
@@ -137,7 +143,10 @@ export class ISRManager {
 	/**
 	 * Render a page using SSR
 	 */
-	private async renderPage(url: string, request: Request): Promise<RenderResult> {
+	private async renderPage(
+		url: string,
+		request: Request,
+	): Promise<RenderResult> {
 		if (!this.ssrRenderer) {
 			throw new Error("SSR renderer not configured");
 		}
@@ -159,7 +168,7 @@ export class ISRManager {
 	private triggerBackgroundRevalidation(
 		url: string,
 		request: Request,
-		pageConfig?: ISRPageConfig
+		pageConfig?: ISRPageConfig,
 	): void {
 		const cacheKey = this.getCacheKey(url);
 
@@ -168,10 +177,11 @@ export class ISRManager {
 			return;
 		}
 
-		const promise = this.revalidatePage(url, request, pageConfig)
-			.finally(() => {
+		const promise = this.revalidatePage(url, request, pageConfig).finally(
+			() => {
 				this.pendingRegenerations.delete(cacheKey);
-			});
+			},
+		);
 
 		this.pendingRegenerations.set(cacheKey, promise);
 	}
@@ -182,7 +192,7 @@ export class ISRManager {
 	async revalidatePage(
 		url: string,
 		request: Request,
-		pageConfig?: ISRPageConfig
+		pageConfig?: ISRPageConfig,
 	): Promise<ISRRevalidationResult> {
 		const cacheKey = this.getCacheKey(url);
 		const startTime = Date.now();
@@ -205,7 +215,8 @@ export class ISRManager {
 			};
 		} catch (error) {
 			const duration = Date.now() - startTime;
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			this.logger.error(`Revalidation failed: ${url}`, error);
 
 			return {
@@ -258,7 +269,9 @@ export class ISRManager {
 		// Invalidate Redis cache if available
 		if (this.config.redis) {
 			try {
-				const keys = await this.config.redis.keys(`${this.config.redisKeyPrefix}*`);
+				const keys = await this.config.redis.keys(
+					`${this.config.redisKeyPrefix}*`,
+				);
 				for (const key of keys) {
 					const cacheKey = key.replace(this.config.redisKeyPrefix, "");
 					if (regex.test(cacheKey)) {
@@ -284,7 +297,9 @@ export class ISRManager {
 
 		if (this.config.redis) {
 			try {
-				const keys = await this.config.redis.keys(`${this.config.redisKeyPrefix}*`);
+				const keys = await this.config.redis.keys(
+					`${this.config.redisKeyPrefix}*`,
+				);
 				if (keys.length > 0) {
 					await this.config.redis.del(...keys);
 				}
@@ -309,7 +324,9 @@ export class ISRManager {
 		// Check Redis if available
 		if (this.config.redis) {
 			try {
-				const data = await this.config.redis.get(`${this.config.redisKeyPrefix}${key}`);
+				const data = await this.config.redis.get(
+					`${this.config.redisKeyPrefix}${key}`,
+				);
 				if (data) {
 					const entry = JSON.parse(data) as ISRCacheEntry;
 					// Cache locally for faster access
@@ -330,7 +347,7 @@ export class ISRManager {
 	private async setCacheEntry(
 		key: string,
 		result: RenderResult,
-		pageConfig?: ISRPageConfig
+		pageConfig?: ISRPageConfig,
 	): Promise<void> {
 		const entry: ISRCacheEntry = {
 			result,
@@ -354,7 +371,7 @@ export class ISRManager {
 				await this.config.redis.set(
 					`${this.config.redisKeyPrefix}${key}`,
 					JSON.stringify(entry),
-					{ EX: ttl }
+					{ EX: ttl },
 				);
 			} catch (error) {
 				this.logger.error("Failed to set Redis cache entry", error);
@@ -366,10 +383,14 @@ export class ISRManager {
 	 * Evict oldest entries when cache is full
 	 */
 	private evictOldestEntries(): void {
-		const entries = Array.from(this.cache.entries())
-			.sort((a, b) => a[1].timestamp - b[1].timestamp);
+		const entries = Array.from(this.cache.entries()).sort(
+			(a, b) => a[1].timestamp - b[1].timestamp,
+		);
 
-		const toEvict = entries.slice(0, Math.floor(this.config.maxCacheSize * 0.1));
+		const toEvict = entries.slice(
+			0,
+			Math.floor(this.config.maxCacheSize * 0.1),
+		);
 		for (const [key] of toEvict) {
 			this.cache.delete(key);
 		}
@@ -398,9 +419,10 @@ export class ISRManager {
 			...this.stats,
 			cacheSize: this.cache.size,
 			pendingRevalidations: this.pendingRegenerations.size,
-			hitRate: this.stats.hits + this.stats.misses > 0
-				? this.stats.hits / (this.stats.hits + this.stats.misses)
-				: 0,
+			hitRate:
+				this.stats.hits + this.stats.misses > 0
+					? this.stats.hits / (this.stats.hits + this.stats.misses)
+					: 0,
 		};
 	}
 
@@ -517,15 +539,15 @@ export function parseRevalidateHeader(header: string): {
 	revalidate: number;
 	staleWhileRevalidate: number;
 } {
-	const parts = header.split(",").map(p => p.trim());
+	const parts = header.split(",").map((p) => p.trim());
 	let revalidate = DEFAULT_REVALIDATE;
 	let staleWhileRevalidate = DEFAULT_STALE_WHILE_REVALIDATE;
 
 	for (const part of parts) {
 		if (part.includes("stale-while-revalidate=")) {
-			staleWhileRevalidate = parseInt(part.split("=")[1], 10);
+			staleWhileRevalidate = Number.parseInt(part.split("=")[1], 10);
 		} else {
-			revalidate = parseInt(part, 10);
+			revalidate = Number.parseInt(part, 10);
 		}
 	}
 
@@ -537,7 +559,7 @@ export function parseRevalidateHeader(header: string): {
  */
 export function generateCacheControlHeader(
 	revalidate: number,
-	staleWhileRevalidate: number
+	staleWhileRevalidate: number,
 ): string {
 	return `public, max-age=0, s-maxage=${revalidate}, stale-while-revalidate=${staleWhileRevalidate}`;
 }
@@ -548,7 +570,7 @@ export function generateCacheControlHeader(
 export function shouldRegenerate(
 	entry: ISRCacheEntry,
 	revalidate: number,
-	staleWhileRevalidate: number
+	staleWhileRevalidate: number,
 ): boolean {
 	const age = (Date.now() - entry.timestamp) / 1000;
 	return age > revalidate && age <= revalidate + staleWhileRevalidate;

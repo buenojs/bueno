@@ -4,29 +4,33 @@
  * Display help information for commands
  */
 
-import { defineCommand } from './index';
-import { generateGlobalHelpText, generateHelpText, hasFlag } from '../core/args';
-import { cliConsole } from '../core/console';
-import { registry } from './index';
+import {
+	generateGlobalHelpText,
+	generateHelpText,
+	hasFlag,
+} from "../core/args";
+import { cliConsole } from "../core/console";
+import { defineCommand } from "./index";
+import { registry } from "./index";
 
 defineCommand(
 	{
-		name: 'help',
-		description: 'Show help information for commands',
+		name: "help",
+		description: "Show help information for commands",
 		positionals: [
 			{
-				name: 'command',
+				name: "command",
 				required: false,
-				description: 'Command to show help for',
+				description: "Command to show help for",
 			},
 		],
 		options: [
 			{
-				name: 'all',
-				alias: 'a',
-				type: 'boolean',
+				name: "all",
+				alias: "a",
+				type: "boolean",
 				default: false,
-				description: 'Show help for all commands',
+				description: "Show help for all commands",
 			},
 		],
 	},
@@ -39,13 +43,13 @@ defineCommand(
 			if (cmd) {
 				cliConsole.log(generateHelpText(cmd.definition));
 			}
-		} else if (hasFlag(args, 'all')) {
+		} else if (hasFlag(args, "all")) {
 			// Show detailed help for all commands
-			cliConsole.log('\nBueno CLI - Available Commands\n');
+			cliConsole.log("\nBueno CLI - Available Commands\n");
 
 			for (const cmd of registry.getAll()) {
 				cliConsole.log(generateHelpText(cmd));
-				cliConsole.log('---');
+				cliConsole.log("---");
 			}
 		} else {
 			// Show global help

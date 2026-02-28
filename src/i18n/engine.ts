@@ -10,10 +10,10 @@ import { LocaleNegotiator } from "./negotiator";
 import type {
 	I18nConfig,
 	I18nMetrics,
+	PluralKey,
 	ResolvedI18nConfig,
 	TranslationFunction,
 	TranslationParams,
-	PluralKey,
 } from "./types";
 
 // ============= Defaults =============
@@ -49,12 +49,17 @@ const DEFAULT_I18N_CONFIG: ResolvedI18nConfig = {
  * @param base Base key name (without _zero/_one/_other suffix)
  * @returns The resolved plural key to use
  */
-function selectPluralKey(count: number, availableKeys: Set<string>, base: string): string {
-	const candidates: PluralKey[] = count === 0
-		? ["zero", "other"]
-		: count === 1
-			? ["one", "other"]
-			: ["other"];
+function selectPluralKey(
+	count: number,
+	availableKeys: Set<string>,
+	base: string,
+): string {
+	const candidates: PluralKey[] =
+		count === 0
+			? ["zero", "other"]
+			: count === 1
+				? ["one", "other"]
+				: ["other"];
 
 	for (const form of candidates) {
 		const candidate = `${base}_${form}`;
@@ -122,9 +127,11 @@ export class I18n {
 	constructor(config: I18nConfig = {}) {
 		this.config = {
 			defaultLocale: config.defaultLocale ?? DEFAULT_I18N_CONFIG.defaultLocale,
-			supportedLocales: config.supportedLocales ?? DEFAULT_I18N_CONFIG.supportedLocales,
+			supportedLocales:
+				config.supportedLocales ?? DEFAULT_I18N_CONFIG.supportedLocales,
 			basePath: config.basePath ?? DEFAULT_I18N_CONFIG.basePath,
-			fallbackToDefault: config.fallbackToDefault ?? DEFAULT_I18N_CONFIG.fallbackToDefault,
+			fallbackToDefault:
+				config.fallbackToDefault ?? DEFAULT_I18N_CONFIG.fallbackToDefault,
 			cookieName: config.cookieName ?? DEFAULT_I18N_CONFIG.cookieName,
 			cookieMaxAge: config.cookieMaxAge ?? DEFAULT_I18N_CONFIG.cookieMaxAge,
 		};
@@ -132,7 +139,7 @@ export class I18n {
 		this.loader = new TranslationLoader(this.config);
 		this.negotiator = new LocaleNegotiator(
 			this.config.supportedLocales,
-			this.config.defaultLocale
+			this.config.defaultLocale,
 		);
 	}
 
@@ -197,7 +204,10 @@ export class I18n {
 	t(locale: string, key: string, params?: TranslationParams): string {
 		this.metrics.totalLookups++;
 
-		const hasCount = params !== undefined && "count" in params && typeof params.count === "number";
+		const hasCount =
+			params !== undefined &&
+			"count" in params &&
+			typeof params.count === "number";
 
 		// Attempt resolution in given locale
 		const result = this._resolve(locale, key, params, hasCount);
@@ -207,12 +217,12 @@ export class I18n {
 		}
 
 		// Fallback to default locale
-		if (
-			this.config.fallbackToDefault &&
-			locale !== this.config.defaultLocale
-		) {
+		if (this.config.fallbackToDefault && locale !== this.config.defaultLocale) {
 			const fallbackResult = this._resolve(
-				this.config.defaultLocale, key, params, hasCount
+				this.config.defaultLocale,
+				key,
+				params,
+				hasCount,
 			);
 			if (fallbackResult !== null) {
 				this.metrics.fallbacks++;
@@ -261,7 +271,7 @@ export class I18n {
 		locale: string,
 		key: string,
 		params: TranslationParams | undefined,
-		hasCount: boolean
+		hasCount: boolean,
 	): string | null {
 		const bundle = this.loader.load(locale);
 		const translations = bundle.translations;

@@ -73,7 +73,10 @@ export interface HealthMiddlewareOptions {
 	/** Whether to expose metrics in response (default: true) */
 	exposeMetrics?: boolean;
 	/** Initial health checks to register */
-	checks?: Record<string, HealthCheckFn | { fn: HealthCheckFn; options?: CheckOptions }>;
+	checks?: Record<
+		string,
+		HealthCheckFn | { fn: HealthCheckFn; options?: CheckOptions }
+	>;
 	/** Custom version string (default: from package.json) */
 	version?: string;
 }
@@ -164,7 +167,10 @@ export class HealthCheckManager {
 				check.fn(),
 				new Promise<never>((_, reject) =>
 					setTimeout(
-						() => reject(new Error(`Check timed out after ${check.options.timeout}ms`)),
+						() =>
+							reject(
+								new Error(`Check timed out after ${check.options.timeout}ms`),
+							),
 						check.options.timeout,
 					),
 				),
@@ -286,9 +292,10 @@ export class HealthCheckManager {
 /**
  * Create health check middleware
  */
-export function createHealthMiddleware(
-	options: HealthMiddlewareOptions = {},
-): { middleware: Middleware; manager: HealthCheckManager } {
+export function createHealthMiddleware(options: HealthMiddlewareOptions = {}): {
+	middleware: Middleware;
+	manager: HealthCheckManager;
+} {
 	const {
 		healthPath = "/health",
 		readyPath = "/ready",
@@ -367,7 +374,9 @@ export function createDatabaseCheck(
 				return {
 					status: isHealthy ? "healthy" : "unhealthy",
 					latency: Date.now() - start,
-					message: isHealthy ? "Database connection OK" : "Database health check failed",
+					message: isHealthy
+						? "Database connection OK"
+						: "Database health check failed",
 				};
 			}
 
@@ -399,7 +408,8 @@ export function createDatabaseCheck(
 			return {
 				status: "unhealthy",
 				latency: Date.now() - start,
-				message: error instanceof Error ? error.message : "Database check failed",
+				message:
+					error instanceof Error ? error.message : "Database check failed",
 			};
 		}
 	};
@@ -424,7 +434,9 @@ export function createCacheCheck(
 				return {
 					status: isHealthy ? "healthy" : "unhealthy",
 					latency: Date.now() - start,
-					message: isHealthy ? "Cache connection OK" : "Cache health check failed",
+					message: isHealthy
+						? "Cache connection OK"
+						: "Cache health check failed",
 				};
 			}
 

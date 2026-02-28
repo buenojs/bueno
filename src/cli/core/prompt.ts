@@ -5,8 +5,8 @@
  * Falls back to simple input for non-TTY environments
  */
 
-import * as readline from 'readline';
-import { colors } from './console';
+import * as readline from "readline";
+import { colors } from "./console";
 
 export interface PromptOptions {
 	default?: string;
@@ -55,11 +55,11 @@ export async function prompt(
 ): Promise<string> {
 	const defaultValue = options.default;
 	const promptText = defaultValue
-		? `${colors.cyan('?')} ${message} ${colors.dim(`(${defaultValue})`)}: `
-		: `${colors.cyan('?')} ${message}: `;
+		? `${colors.cyan("?")} ${message} ${colors.dim(`(${defaultValue})`)}: `
+		: `${colors.cyan("?")} ${message}: `;
 
 	if (!isInteractive()) {
-		return defaultValue ?? '';
+		return defaultValue ?? "";
 	}
 
 	return new Promise((resolve) => {
@@ -68,13 +68,14 @@ export async function prompt(
 		rl.question(promptText, (answer) => {
 			rl.close();
 
-			const value = answer.trim() || defaultValue || '';
+			const value = answer.trim() || defaultValue || "";
 
 			if (options.validate) {
 				const result = options.validate(value);
 				if (result !== true) {
-					const errorMsg = typeof result === 'string' ? result : 'Invalid value';
-					process.stdout.write(`${colors.red('✗')} ${errorMsg}\n`);
+					const errorMsg =
+						typeof result === "string" ? result : "Invalid value";
+					process.stdout.write(`${colors.red("✗")} ${errorMsg}\n`);
 					// Re-prompt on validation failure
 					prompt(message, options).then(resolve);
 					return;
@@ -94,22 +95,24 @@ export async function confirm(
 	options: ConfirmOptions = {},
 ): Promise<boolean> {
 	const defaultValue = options.default ?? false;
-	const hint = defaultValue ? 'Y/n' : 'y/N';
+	const hint = defaultValue ? "Y/n" : "y/N";
 
 	if (!isInteractive()) {
 		return defaultValue;
 	}
 
 	const answer = await prompt(`${message} ${colors.dim(`(${hint})`)}`, {
-		default: defaultValue ? 'y' : 'n',
+		default: defaultValue ? "y" : "n",
 		validate: (value) => {
 			if (!value) return true;
-			return ['y', 'yes', 'n', 'no'].includes(value.toLowerCase()) ||
-				'Please enter y or n';
+			return (
+				["y", "yes", "n", "no"].includes(value.toLowerCase()) ||
+				"Please enter y or n"
+			);
 		},
 	});
 
-	return ['y', 'yes'].includes(answer.toLowerCase());
+	return ["y", "yes"].includes(answer.toLowerCase());
 }
 
 /**
@@ -121,7 +124,7 @@ export async function select<T extends string>(
 	options: SelectOptions<T> = {},
 ): Promise<T> {
 	if (!isInteractive()) {
-		return options.default ?? choices[0]?.value as T;
+		return options.default ?? (choices[0]?.value as T);
 	}
 
 	const pageSize = options.pageSize ?? 10;
@@ -134,7 +137,7 @@ export async function select<T extends string>(
 
 	return new Promise((resolve) => {
 		// Hide cursor
-		process.stdout.write('\x1b[?25l');
+		process.stdout.write("\x1b[?25l");
 
 		const render = () => {
 			// Clear previous output
@@ -142,7 +145,7 @@ export async function select<T extends string>(
 			process.stdout.write(`\x1b[${lines + 1}A\x1b[0J`);
 
 			// Render prompt
-			process.stdout.write(`${colors.cyan('?')} ${message}\n`);
+			process.stdout.write(`${colors.cyan("?")} ${message}\n`);
 
 			// Render choices
 			const start = Math.max(0, selectedIndex - pageSize + 1);
@@ -153,7 +156,7 @@ export async function select<T extends string>(
 				if (!choice) continue;
 
 				const isSelected = i === selectedIndex;
-				const prefix = isSelected ? `${colors.cyan('❯')} ` : '  ';
+				const prefix = isSelected ? `${colors.cyan("❯")} ` : "  ";
 				const name = choice.name ?? choice.value;
 				const text = choice.disabled
 					? colors.dim(`${name} (disabled)`)
@@ -166,37 +169,37 @@ export async function select<T extends string>(
 		};
 
 		// Initial render
-		process.stdout.write(`${colors.cyan('?')} ${message}\n`);
+		process.stdout.write(`${colors.cyan("?")} ${message}\n`);
 		render();
 
 		// Handle key input
 		const stdin = process.stdin;
 		stdin.setRawMode(true);
 		stdin.resume();
-		stdin.setEncoding('utf8');
+		stdin.setEncoding("utf8");
 
 		const cleanup = () => {
 			stdin.setRawMode(false);
 			stdin.pause();
-			stdin.removeListener('data', handler);
+			stdin.removeListener("data", handler);
 			// Show cursor
-			process.stdout.write('\x1b[?25h');
+			process.stdout.write("\x1b[?25h");
 		};
 
 		const handler = (key: string) => {
-			if (key === '\u001b[A' || key === 'k') {
+			if (key === "\u001b[A" || key === "k") {
 				// Up
 				do {
 					selectedIndex = (selectedIndex - 1 + choices.length) % choices.length;
 				} while (choices[selectedIndex]?.disabled);
 				render();
-			} else if (key === '\u001b[B' || key === 'j') {
+			} else if (key === "\u001b[B" || key === "j") {
 				// Down
 				do {
 					selectedIndex = (selectedIndex + 1) % choices.length;
 				} while (choices[selectedIndex]?.disabled);
 				render();
-			} else if (key === '\r' || key === '\n') {
+			} else if (key === "\r" || key === "\n") {
 				// Enter
 				cleanup();
 				const selected = choices[selectedIndex];
@@ -205,19 +208,19 @@ export async function select<T extends string>(
 						`\x1b[${Math.min(choices.length, pageSize) + 1}A\x1b[0J`,
 					);
 					process.stdout.write(
-						`${colors.cyan('?')} ${message} ${colors.cyan(selected.name ?? selected.value)}\n`,
+						`${colors.cyan("?")} ${message} ${colors.cyan(selected.name ?? selected.value)}\n`,
 					);
 					resolve(selected.value);
 				}
-			} else if (key === '\u001b' || key === '\u0003') {
+			} else if (key === "\u001b" || key === "\u0003") {
 				// Escape or Ctrl+C
 				cleanup();
-				process.stdout.write('\n');
+				process.stdout.write("\n");
 				process.exit(130);
 			}
 		};
 
-		stdin.on('data', handler);
+		stdin.on("data", handler);
 	});
 }
 
@@ -239,7 +242,7 @@ export async function multiSelect<T extends string>(
 
 	return new Promise((resolve) => {
 		// Hide cursor
-		process.stdout.write('\x1b[?25l');
+		process.stdout.write("\x1b[?25l");
 
 		const render = () => {
 			// Clear previous output
@@ -247,7 +250,7 @@ export async function multiSelect<T extends string>(
 			process.stdout.write(`\x1b[${lines + 1}A\x1b[0J`);
 
 			// Render prompt
-			process.stdout.write(`${colors.cyan('?')} ${message}\n`);
+			process.stdout.write(`${colors.cyan("?")} ${message}\n`);
 
 			// Render choices
 			const start = Math.max(0, currentIndex - pageSize + 1);
@@ -259,8 +262,8 @@ export async function multiSelect<T extends string>(
 
 				const isCurrent = i === currentIndex;
 				const isSelected = selected.has(choice.value);
-				const checkbox = isSelected ? `${colors.green('◉')}` : '○';
-				const prefix = isCurrent ? `${colors.cyan('❯')} ` : '  ';
+				const checkbox = isSelected ? `${colors.green("◉")}` : "○";
+				const prefix = isCurrent ? `${colors.cyan("❯")} ` : "  ";
 				const name = choice.name ?? choice.value;
 				const text = choice.disabled
 					? colors.dim(`${name} (disabled)`)
@@ -273,37 +276,37 @@ export async function multiSelect<T extends string>(
 		};
 
 		// Initial render
-		process.stdout.write(`${colors.cyan('?')} ${message}\n`);
+		process.stdout.write(`${colors.cyan("?")} ${message}\n`);
 		render();
 
 		// Handle key input
 		const stdin = process.stdin;
 		stdin.setRawMode(true);
 		stdin.resume();
-		stdin.setEncoding('utf8');
+		stdin.setEncoding("utf8");
 
 		const cleanup = () => {
 			stdin.setRawMode(false);
 			stdin.pause();
-			stdin.removeListener('data', handler);
+			stdin.removeListener("data", handler);
 			// Show cursor
-			process.stdout.write('\x1b[?25h');
+			process.stdout.write("\x1b[?25h");
 		};
 
 		const handler = (key: string) => {
-			if (key === '\u001b[A' || key === 'k') {
+			if (key === "\u001b[A" || key === "k") {
 				// Up
 				do {
 					currentIndex = (currentIndex - 1 + choices.length) % choices.length;
 				} while (choices[currentIndex]?.disabled);
 				render();
-			} else if (key === '\u001b[B' || key === 'j') {
+			} else if (key === "\u001b[B" || key === "j") {
 				// Down
 				do {
 					currentIndex = (currentIndex + 1) % choices.length;
 				} while (choices[currentIndex]?.disabled);
 				render();
-			} else if (key === ' ' || key === 'x') {
+			} else if (key === " " || key === "x") {
 				// Toggle selection
 				const choice = choices[currentIndex];
 				if (choice && !choice.disabled) {
@@ -318,7 +321,7 @@ export async function multiSelect<T extends string>(
 					}
 					render();
 				}
-			} else if (key === '\r' || key === '\n') {
+			} else if (key === "\r" || key === "\n") {
 				// Enter
 				cleanup();
 				const result = Array.from(selected);
@@ -327,20 +330,20 @@ export async function multiSelect<T extends string>(
 				);
 				const names = result
 					.map((v) => choices.find((c) => c.value === v)?.name ?? v)
-					.join(', ');
+					.join(", ");
 				process.stdout.write(
-					`${colors.cyan('?')} ${message} ${colors.cyan(names || 'none')}\n`,
+					`${colors.cyan("?")} ${message} ${colors.cyan(names || "none")}\n`,
 				);
 				resolve(result);
-			} else if (key === '\u001b' || key === '\u0003') {
+			} else if (key === "\u001b" || key === "\u0003") {
 				// Escape or Ctrl+C
 				cleanup();
-				process.stdout.write('\n');
+				process.stdout.write("\n");
 				process.exit(130);
 			}
 		};
 
-		stdin.on('data', handler);
+		stdin.on("data", handler);
 	});
 }
 
@@ -355,8 +358,8 @@ export async function number(
 		...options,
 		validate: (v) => {
 			if (!v && options.default) return true;
-			const num = parseFloat(v);
-			if (isNaN(num)) return 'Please enter a valid number';
+			const num = Number.parseFloat(v);
+			if (isNaN(num)) return "Please enter a valid number";
 			if (options.min !== undefined && num < options.min) {
 				return `Value must be at least ${options.min}`;
 			}
@@ -370,7 +373,7 @@ export async function number(
 		},
 	});
 
-	return parseFloat(value || options.default || '0');
+	return Number.parseFloat(value || options.default || "0");
 }
 
 /**
@@ -378,47 +381,47 @@ export async function number(
  */
 export async function password(
 	message: string,
-	options: Omit<PromptOptions, 'default'> = {},
+	options: Omit<PromptOptions, "default"> = {},
 ): Promise<string> {
 	if (!isInteractive()) {
-		return '';
+		return "";
 	}
 
 	return new Promise((resolve) => {
 		const stdin = process.stdin;
 		const stdout = process.stdout;
 
-		stdout.write(`${colors.cyan('?')} ${message}: `);
+		stdout.write(`${colors.cyan("?")} ${message}: `);
 
-		let value = '';
+		let value = "";
 
 		stdin.setRawMode(true);
 		stdin.resume();
-		stdin.setEncoding('utf8');
+		stdin.setEncoding("utf8");
 
 		const cleanup = () => {
 			stdin.setRawMode(false);
 			stdin.pause();
-			stdin.removeListener('data', handler);
+			stdin.removeListener("data", handler);
 		};
 
 		const handler = (key: string) => {
-			if (key === '\r' || key === '\n') {
+			if (key === "\r" || key === "\n") {
 				cleanup();
-				stdout.write('\n');
+				stdout.write("\n");
 				resolve(value);
-			} else if (key === '\u0003') {
+			} else if (key === "\u0003") {
 				cleanup();
-				stdout.write('\n');
+				stdout.write("\n");
 				process.exit(130);
-			} else if (key === '\u007f' || key === '\b') {
+			} else if (key === "\u007f" || key === "\b") {
 				// Backspace
 				value = value.slice(0, -1);
-			} else if (key[0] !== '\x1b') {
+			} else if (key[0] !== "\x1b") {
 				value += key;
 			}
 		};
 
-		stdin.on('data', handler);
+		stdin.on("data", handler);
 	});
 }

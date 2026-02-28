@@ -5,9 +5,9 @@
  * and reduced memory usage for large applications.
  */
 
-import type { Container, Token, Provider } from "../container";
-import { Injectable } from "./metadata";
+import type { Container, Provider, Token } from "../container";
 import { Inject } from "./index";
+import { Injectable } from "./metadata";
 
 // ============= Types =============
 
@@ -166,7 +166,9 @@ export function LazyModule(loader: ModuleLoaderFn): ClassDecorator {
 /**
  * Token for the ModuleLoader service
  */
-export const MODULE_LOADER_TOKEN = Symbol.for("ModuleLoader") as Token<ModuleLoader>;
+export const MODULE_LOADER_TOKEN = Symbol.for(
+	"ModuleLoader",
+) as Token<ModuleLoader>;
 
 /**
  * Options for loading lazy modules
@@ -200,9 +202,7 @@ export class ModuleLoader {
 	private container: Container;
 	private loadedModules = new Set<Constructor>();
 	private moduleLoaders = new Map<Constructor, LazyModuleLoaderImpl>();
-	private onModuleLoadCallback?: (
-		moduleClass: Constructor,
-	) => Promise<void>;
+	private onModuleLoadCallback?: (moduleClass: Constructor) => Promise<void>;
 
 	constructor(container: Container) {
 		this.container = container;
@@ -230,9 +230,7 @@ export class ModuleLoader {
 	): Promise<void> {
 		// Normalize to Constructor if it's a token
 		const moduleClass =
-			typeof moduleToken === "function"
-				? (moduleToken as Constructor)
-				: null;
+			typeof moduleToken === "function" ? (moduleToken as Constructor) : null;
 
 		if (!moduleClass) {
 			throw new Error("Module token must be a class constructor");
@@ -385,9 +383,7 @@ export function createLazyLoader(
 		const module = await importFn();
 		const moduleClass = module[exportName] as Constructor;
 		if (!moduleClass) {
-			throw new Error(
-				`Export "${exportName}" not found in lazy loaded module`,
-			);
+			throw new Error(`Export "${exportName}" not found in lazy loaded module`);
 		}
 		return moduleClass;
 	};
@@ -396,9 +392,7 @@ export function createLazyLoader(
 /**
  * Check if all lazy modules in a list are loaded
  */
-export function areAllLazyModulesLoaded(
-	modules: Constructor[],
-): boolean {
+export function areAllLazyModulesLoaded(modules: Constructor[]): boolean {
 	return modules.every((module) => {
 		const metadata = getLazyMetadata(module);
 		return !metadata || metadata.loaded;
@@ -408,9 +402,7 @@ export function areAllLazyModulesLoaded(
 /**
  * Get list of unloaded lazy modules
  */
-export function getUnloadedLazyModules(
-	modules: Constructor[],
-): Constructor[] {
+export function getUnloadedLazyModules(modules: Constructor[]): Constructor[] {
 	return modules.filter((module) => {
 		const metadata = getLazyMetadata(module);
 		return metadata && !metadata.loaded;

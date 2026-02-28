@@ -598,7 +598,9 @@ export class TestCache {
 /**
  * Create a new TestCache instance, optionally with initial data
  */
-export async function createTestCache(initialData?: Record<string, unknown>): Promise<TestCache> {
+export async function createTestCache(
+	initialData?: Record<string, unknown>,
+): Promise<TestCache> {
 	const cache = new TestCache();
 	if (initialData) {
 		await cache.setMany(initialData);
@@ -748,7 +750,10 @@ export class TestDatabase {
 	/**
 	 * Execute a SQL query and return results
 	 */
-	async query<T = unknown>(sqlString: string, params: unknown[] = []): Promise<T[]> {
+	async query<T = unknown>(
+		sqlString: string,
+		params: unknown[] = [],
+	): Promise<T[]> {
 		this.ensureConnection();
 
 		this._operations.push({
@@ -768,7 +773,10 @@ export class TestDatabase {
 	/**
 	 * Execute a query and return a single row
 	 */
-	async queryOne<T = unknown>(sqlString: string, params: unknown[] = []): Promise<T | null> {
+	async queryOne<T = unknown>(
+		sqlString: string,
+		params: unknown[] = [],
+	): Promise<T | null> {
 		const results = await this.query<T>(sqlString, params);
 		return results.length > 0 ? results[0] : null;
 	}
@@ -776,7 +784,14 @@ export class TestDatabase {
 	/**
 	 * Execute a statement (INSERT, UPDATE, DELETE)
 	 */
-	async execute(sqlString: string, params: unknown[] = []): Promise<{ rows: unknown[]; rowCount: number; insertId?: number | string }> {
+	async execute(
+		sqlString: string,
+		params: unknown[] = [],
+	): Promise<{
+		rows: unknown[];
+		rowCount: number;
+		insertId?: number | string;
+	}> {
 		this.ensureConnection();
 
 		this._operations.push({
@@ -907,7 +922,10 @@ export class TestDatabase {
 	/**
 	 * Create a table from column definitions
 	 */
-	async createTable(name: string, columns: Record<string, string>): Promise<void> {
+	async createTable(
+		name: string,
+		columns: Record<string, string>,
+	): Promise<void> {
 		const columnDefs = Object.entries(columns)
 			.map(([colName, def]) => `${colName} ${def}`)
 			.join(", ");
@@ -941,14 +959,27 @@ export class TestDatabase {
 	/**
 	 * Get table info
 	 */
-	async getTableInfo(table: string): Promise<{ cid: number; name: string; type: string; notnull: number; dflt_value: unknown; pk: number }[]> {
+	async getTableInfo(table: string): Promise<
+		{
+			cid: number;
+			name: string;
+			type: string;
+			notnull: number;
+			dflt_value: unknown;
+			pk: number;
+		}[]
+	> {
 		return this.query(`PRAGMA table_info(${table})`);
 	}
 
 	/**
 	 * Count rows in a table
 	 */
-	async count(table: string, where?: string, params: unknown[] = []): Promise<number> {
+	async count(
+		table: string,
+		where?: string,
+		params: unknown[] = [],
+	): Promise<number> {
 		const sql = where
 			? `SELECT COUNT(*) as count FROM ${table} WHERE ${where}`
 			: `SELECT COUNT(*) as count FROM ${table}`;
@@ -960,7 +991,11 @@ export class TestDatabase {
 	/**
 	 * Check if a row exists
 	 */
-	async exists(table: string, where: string, params: unknown[] = []): Promise<boolean> {
+	async exists(
+		table: string,
+		where: string,
+		params: unknown[] = [],
+	): Promise<boolean> {
 		const count = await this.count(table, where, params);
 		return count > 0;
 	}
@@ -985,7 +1020,9 @@ export class TestDatabase {
 /**
  * Create a new TestDatabase instance, optionally with schema and seed data
  */
-export async function createTestDatabase(options: TestDatabaseOptions = {}): Promise<TestDatabase> {
+export async function createTestDatabase(
+	options: TestDatabaseOptions = {},
+): Promise<TestDatabase> {
 	const db = new TestDatabase();
 	await db.connect();
 
@@ -1059,7 +1096,10 @@ export async function assertTableNotHasRow(
 /**
  * Assert table exists in database
  */
-export async function assertTableExists(db: TestDatabase, table: string): Promise<void> {
+export async function assertTableExists(
+	db: TestDatabase,
+	table: string,
+): Promise<void> {
 	const tables = await db.getTables();
 	if (!tables.includes(table)) {
 		throw new Error(
@@ -1071,7 +1111,10 @@ export async function assertTableExists(db: TestDatabase, table: string): Promis
 /**
  * Assert table does not exist in database
  */
-export async function assertTableNotExists(db: TestDatabase, table: string): Promise<void> {
+export async function assertTableNotExists(
+	db: TestDatabase,
+	table: string,
+): Promise<void> {
 	const tables = await db.getTables();
 	if (tables.includes(table)) {
 		throw new Error(`Expected table "${table}" to NOT exist`);
@@ -1106,15 +1149,32 @@ export async function assertTableValue<T = unknown>(
 }
 // ============= Test Storage =============
 
-import { mkdir, rm, readdir, stat as fsStat, copyFile, rename, unlink } from "node:fs/promises";
-import { join, resolve, relative } from "node:path";
+import {
+	copyFile,
+	stat as fsStat,
+	mkdir,
+	readdir,
+	rename,
+	rm,
+	unlink,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
+import { join, relative, resolve } from "node:path";
 
 /**
  * Storage operation record for testing
  */
 export interface StorageOperation {
-	type: "write" | "read" | "delete" | "exists" | "list" | "stat" | "copy" | "move" | "clear";
+	type:
+		| "write"
+		| "read"
+		| "delete"
+		| "exists"
+		| "list"
+		| "stat"
+		| "copy"
+		| "move"
+		| "clear";
 	path?: string;
 	src?: string;
 	dest?: string;
@@ -1179,10 +1239,13 @@ export class TestStorage {
 	 * @param path - Relative path within storage
 	 * @param content - String or binary content
 	 */
-	async write(path: string, content: string | Uint8Array | ArrayBuffer): Promise<void> {
+	async write(
+		path: string,
+		content: string | Uint8Array | ArrayBuffer,
+	): Promise<void> {
 		await this.ensureInitialized();
 		const fullPath = this.resolvePath(path);
-		
+
 		// Ensure parent directory exists
 		const parentDir = fullPath.substring(0, fullPath.lastIndexOf("/"));
 		if (parentDir) {
@@ -1192,7 +1255,7 @@ export class TestStorage {
 		// Write content using Bun.file()
 		const file = Bun.file(fullPath);
 		const writer = file.writer();
-		
+
 		if (typeof content === "string") {
 			writer.write(content);
 		} else if (content instanceof Uint8Array) {
@@ -1200,12 +1263,13 @@ export class TestStorage {
 		} else if (content instanceof ArrayBuffer) {
 			writer.write(new Uint8Array(content));
 		}
-		
+
 		await writer.end();
 
-		const size = typeof content === "string" 
-			? new TextEncoder().encode(content).length 
-			: content.byteLength;
+		const size =
+			typeof content === "string"
+				? new TextEncoder().encode(content).length
+				: content.byteLength;
 
 		this._operations.push({
 			type: "write",
@@ -1437,7 +1501,7 @@ export class TestStorage {
 	 */
 	async clear(): Promise<void> {
 		await this.ensureInitialized();
-		
+
 		try {
 			const files = await this.list();
 			for (const file of files) {
@@ -1505,8 +1569,11 @@ export class TestStorage {
  * Create a new TestStorage instance
  * @param options - Optional configuration
  */
-export async function createTestStorage(options: TestStorageOptions = {}): Promise<TestStorage> {
-	const basePath = options.basePath ?? await createTempDir("bueno-test-storage-");
+export async function createTestStorage(
+	options: TestStorageOptions = {},
+): Promise<TestStorage> {
+	const basePath =
+		options.basePath ?? (await createTempDir("bueno-test-storage-"));
 	const storage = new TestStorage(basePath);
 	await storage.init();
 	return storage;
@@ -1527,7 +1594,10 @@ async function createTempDir(prefix: string): Promise<string> {
 /**
  * Assert that a file exists in storage
  */
-export async function assertFileExists(storage: TestStorage, path: string): Promise<void> {
+export async function assertFileExists(
+	storage: TestStorage,
+	path: string,
+): Promise<void> {
 	const exists = await storage.exists(path);
 	if (!exists) {
 		const files = await storage.list();
@@ -1540,7 +1610,10 @@ export async function assertFileExists(storage: TestStorage, path: string): Prom
 /**
  * Assert that a file does not exist in storage
  */
-export async function assertFileNotExists(storage: TestStorage, path: string): Promise<void> {
+export async function assertFileNotExists(
+	storage: TestStorage,
+	path: string,
+): Promise<void> {
 	const exists = await storage.exists(path);
 	if (exists) {
 		throw new Error(`Expected file "${path}" to NOT exist`);

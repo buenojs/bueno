@@ -7,13 +7,13 @@
 
 import type { Database } from "../index";
 import {
-	QueryCompiler,
-	type SqlDialect,
-	type QueryState,
-	type WhereClause,
-	type OrderClause,
-	type JoinClause,
 	type CompiledQuery,
+	type JoinClause,
+	type OrderClause,
+	QueryCompiler,
+	type QueryState,
+	type SqlDialect,
+	type WhereClause,
 } from "./compiler";
 
 export interface PaginationResult<T> {
@@ -28,7 +28,9 @@ export interface PaginationResult<T> {
  * Standalone ORM Query Builder
  * Generic over the row type T returned by queries
  */
-export class OrmQueryBuilder<T extends Record<string, unknown> = Record<string, unknown>> {
+export class OrmQueryBuilder<
+	T extends Record<string, unknown> = Record<string, unknown>,
+> {
 	protected state: QueryState;
 	protected compiler: QueryCompiler;
 	protected db: Database;
@@ -95,11 +97,7 @@ export class OrmQueryBuilder<T extends Record<string, unknown> = Record<string, 
 
 	// ============= WHERE =============
 
-	where(
-		column: string,
-		operatorOrValue: unknown,
-		value?: unknown,
-	): this {
+	where(column: string, operatorOrValue: unknown, value?: unknown): this {
 		const [operator, val] =
 			value === undefined
 				? ["=", operatorOrValue]
@@ -114,11 +112,7 @@ export class OrmQueryBuilder<T extends Record<string, unknown> = Record<string, 
 		return this;
 	}
 
-	orWhere(
-		column: string,
-		operatorOrValue: unknown,
-		value?: unknown,
-	): this {
+	orWhere(column: string, operatorOrValue: unknown, value?: unknown): this {
 		const [operator, val] =
 			value === undefined
 				? ["=", operatorOrValue]
@@ -192,7 +186,11 @@ export class OrmQueryBuilder<T extends Record<string, unknown> = Record<string, 
 
 	// ============= JOIN =============
 
-	join(table: string, on: string, type: "INNER" | "LEFT" | "RIGHT" = "INNER"): this {
+	join(
+		table: string,
+		on: string,
+		type: "INNER" | "LEFT" | "RIGHT" = "INNER",
+	): this {
 		this.state.joins.push({ type, table, on });
 		return this;
 	}
@@ -346,10 +344,7 @@ export class OrmQueryBuilder<T extends Record<string, unknown> = Record<string, 
 	/**
 	 * Paginate results
 	 */
-	async paginate(
-		page: number,
-		limit: number,
-	): Promise<PaginationResult<T>> {
+	async paginate(page: number, limit: number): Promise<PaginationResult<T>> {
 		const offset = (page - 1) * limit;
 		const [data, total] = await Promise.all([
 			this.clone().offset(offset).limit(limit).get(),
@@ -376,7 +371,9 @@ export class OrmQueryBuilder<T extends Record<string, unknown> = Record<string, 
 
 		if (this.db.getDriver() === "postgresql") {
 			const rows = await this.db.raw<Record<string, unknown>>(sql, params);
-			return (this.rowTransformer ? this.rowTransformer(rows[0]) : rows[0]) as T;
+			return (
+				this.rowTransformer ? this.rowTransformer(rows[0]) : rows[0]
+			) as T;
 		}
 
 		// SQLite / MySQL
@@ -453,9 +450,8 @@ export class OrmQueryBuilder<T extends Record<string, unknown> = Record<string, 
 /**
  * Factory function to create a query builder
  */
-export function query<T extends Record<string, unknown> = Record<string, unknown>>(
-	db: Database,
-	table: string,
-): OrmQueryBuilder<T> {
+export function query<
+	T extends Record<string, unknown> = Record<string, unknown>,
+>(db: Database, table: string): OrmQueryBuilder<T> {
 	return new OrmQueryBuilder<T>(db, table);
 }

@@ -104,7 +104,9 @@ export function isOnApplicationBootstrap(
 /**
  * Check if an instance implements OnModuleDestroy
  */
-export function isOnModuleDestroy(instance: unknown): instance is OnModuleDestroy {
+export function isOnModuleDestroy(
+	instance: unknown,
+): instance is OnModuleDestroy {
 	return (
 		typeof instance === "object" &&
 		instance !== null &&
@@ -123,8 +125,8 @@ export function isBeforeApplicationShutdown(
 		typeof instance === "object" &&
 		instance !== null &&
 		"beforeApplicationShutdown" in instance &&
-		typeof (instance as BeforeApplicationShutdown)
-			.beforeApplicationShutdown === "function"
+		typeof (instance as BeforeApplicationShutdown).beforeApplicationShutdown ===
+			"function"
 	);
 }
 
@@ -146,7 +148,9 @@ export function isOnApplicationShutdown(
 /**
  * Check if an instance implements OnBeforeRequest
  */
-export function isOnBeforeRequest(instance: unknown): instance is OnBeforeRequest {
+export function isOnBeforeRequest(
+	instance: unknown,
+): instance is OnBeforeRequest {
 	return (
 		typeof instance === "object" &&
 		instance !== null &&
@@ -158,7 +162,9 @@ export function isOnBeforeRequest(instance: unknown): instance is OnBeforeReques
 /**
  * Check if an instance implements OnAfterRequest
  */
-export function isOnAfterRequest(instance: unknown): instance is OnAfterRequest {
+export function isOnAfterRequest(
+	instance: unknown,
+): instance is OnAfterRequest {
 	return (
 		typeof instance === "object" &&
 		instance !== null &&
@@ -170,7 +176,9 @@ export function isOnAfterRequest(instance: unknown): instance is OnAfterRequest 
 /**
  * Check if an instance implements OnRequestError
  */
-export function isOnRequestError(instance: unknown): instance is OnRequestError {
+export function isOnRequestError(
+	instance: unknown,
+): instance is OnRequestError {
 	return (
 		typeof instance === "object" &&
 		instance !== null &&

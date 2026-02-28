@@ -261,11 +261,7 @@ export interface JobQueueDriver {
 	/**
 	 * Schedule a job for retry
 	 */
-	scheduleRetry(
-		jobId: string,
-		delayMs: number,
-		error: string,
-	): Promise<void>;
+	scheduleRetry(jobId: string, delayMs: number, error: string): Promise<void>;
 
 	/**
 	 * Get a job by ID

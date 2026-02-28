@@ -6,17 +6,17 @@
  * Supports graceful shutdown and exponential backoff polling.
  */
 
+import { MemoryJobQueueDriver } from "./drivers/memory";
+import { RedisJobQueueDriver } from "./drivers/redis";
 import type {
+	HandlerRegistryEntry,
 	Job,
+	JobEvent,
 	JobEventType,
 	JobHandler,
 	JobQueueConfig,
 	JobQueueDriver,
-	HandlerRegistryEntry,
-	JobEvent,
 } from "./types";
-import { MemoryJobQueueDriver } from "./drivers/memory";
-import { RedisJobQueueDriver } from "./drivers/redis";
 
 // ============= Job Worker Class =============
 
@@ -24,18 +24,16 @@ export class JobWorker {
 	private driver: JobQueueDriver;
 	private handlers: Map<string, JobHandler<unknown>> = new Map();
 	private handlerRegistry: HandlerRegistryEntry[] = [];
-	private eventListeners: Map<
-		JobEventType,
-		Set<(event: JobEvent) => void>
-	> = new Map();
+	private eventListeners: Map<JobEventType, Set<(event: JobEvent) => void>> =
+		new Map();
 	private isRunning = false;
 	private pollInterval: number;
 	private concurrency: number;
 	private jobTimeout: number;
-	private maxBackoffDelay: number = 30000; // 30 seconds max backoff
-	private currentBackoff: number = 0;
+	private maxBackoffDelay = 30000; // 30 seconds max backoff
+	private currentBackoff = 0;
 	private inFlightJobs = new Set<string>();
-	private shutdownTimeout: number = 10000; // 10 seconds to drain
+	private shutdownTimeout = 10000; // 10 seconds to drain
 
 	constructor(config: JobQueueConfig = {}) {
 		// Instantiate appropriate driver
@@ -194,10 +192,7 @@ export class JobWorker {
 				const availableSlots = this.concurrency - this.inFlightJobs.size;
 
 				if (availableSlots > 0) {
-					const jobs = await this.driver.claim(
-						availableSlots,
-						this.jobTimeout,
-					);
+					const jobs = await this.driver.claim(availableSlots, this.jobTimeout);
 
 					if (jobs.length > 0) {
 						// Reset backoff on successful claim
@@ -250,9 +245,7 @@ export class JobWorker {
 			const handler = this.findHandler(job.name);
 
 			if (!handler) {
-				console.warn(
-					`[JobWorker] No handler found for job type: ${job.name}`,
-				);
+				console.warn(`[JobWorker] No handler found for job type: ${job.name}`);
 				await this.driver.complete(job.id);
 				return;
 			}
@@ -262,12 +255,7 @@ export class JobWorker {
 			// Execute handler with timeout
 			const timeoutPromise = new Promise((_, reject) =>
 				setTimeout(
-					() =>
-						reject(
-							new Error(
-								`Job timeout after ${this.jobTimeout}ms`,
-							),
-						),
+					() => reject(new Error(`Job timeout after ${this.jobTimeout}ms`)),
 					this.jobTimeout,
 				),
 			);
@@ -279,21 +267,13 @@ export class JobWorker {
 			this._emitEvent("completed", job);
 			await this.driver.complete(job.id);
 		} catch (error) {
-			const errorMsg =
-				error instanceof Error ? error.message : String(error);
-			const stackTrace =
-				error instanceof Error ? error.stack : undefined;
+			const errorMsg = error instanceof Error ? error.message : String(error);
+			const stackTrace = error instanceof Error ? error.stack : undefined;
 
 			// Determine if we should retry
-			if (
-				job.attempts <
-				job.maxRetries
-			) {
+			if (job.attempts < job.maxRetries) {
 				// Exponential backoff: 1s, 2s, 4s, 8s, etc. (capped at 1 hour)
-				const delaySeconds = Math.min(
-					Math.pow(2, job.attempts),
-					3600,
-				);
+				const delaySeconds = Math.min(Math.pow(2, job.attempts), 3600);
 				const delayMs = delaySeconds * 1000;
 
 				this._emitEvent("retried", job);

@@ -8,31 +8,31 @@
  * Generator types available
  */
 export type GeneratorType =
-	| 'controller'
-	| 'service'
-	| 'module'
-	| 'guard'
-	| 'interceptor'
-	| 'pipe'
-	| 'filter'
-	| 'dto'
-	| 'middleware'
-	| 'migration';
+	| "controller"
+	| "service"
+	| "module"
+	| "guard"
+	| "interceptor"
+	| "pipe"
+	| "filter"
+	| "dto"
+	| "middleware"
+	| "migration";
 
 /**
  * Generator aliases
  */
 export const GENERATOR_ALIASES: Record<string, GeneratorType> = {
-	c: 'controller',
-	s: 'service',
-	m: 'module',
-	gu: 'guard',
-	i: 'interceptor',
-	p: 'pipe',
-	f: 'filter',
-	d: 'dto',
-	mw: 'middleware',
-	mi: 'migration',
+	c: "controller",
+	s: "service",
+	m: "module",
+	gu: "guard",
+	i: "interceptor",
+	p: "pipe",
+	f: "filter",
+	d: "dto",
+	mw: "middleware",
+	mi: "migration",
 };
 
 /**

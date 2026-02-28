@@ -6,10 +6,13 @@
 
 /**
  * Get Dockerfile template
- * 
+ *
  * Multi-stage build using oven/bun image for production
  */
-export function getDockerfileTemplate(projectName: string, database?: string): string {
+export function getDockerfileTemplate(
+	projectName: string,
+	database?: string,
+): string {
 	return `# ${projectName} - Production Dockerfile
 # Multi-stage build for optimized production image
 
@@ -82,7 +85,7 @@ CMD ["bun", "run", "dist/main.js"]
 
 /**
  * Get .dockerignore template
- * 
+ *
  * Patterns to exclude from Docker build context
  */
 export function getDockerignoreTemplate(): string {
@@ -145,16 +148,19 @@ tsconfig.json
 
 /**
  * Get docker-compose.yml template
- * 
+ *
  * Local development setup with optional database services
  */
-export function getDockerComposeTemplate(projectName: string, database?: string): string {
-	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-	
-	let databaseServices = '';
-	let dependsOn = '';
+export function getDockerComposeTemplate(
+	projectName: string,
+	database?: string,
+): string {
+	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
 
-	if (database === 'postgresql') {
+	let databaseServices = "";
+	let dependsOn = "";
+
+	if (database === "postgresql") {
 		databaseServices = `
   # PostgreSQL Database
   postgres:
@@ -183,7 +189,7 @@ export function getDockerComposeTemplate(projectName: string, database?: string)
       postgres:
         condition: service_healthy
 `;
-	} else if (database === 'mysql') {
+	} else if (database === "mysql") {
 		databaseServices = `
   # MySQL Database
   mysql:
@@ -215,25 +221,27 @@ export function getDockerComposeTemplate(projectName: string, database?: string)
 `;
 	}
 
-	const volumes = database === 'postgresql' 
-		? `\nvolumes:
+	const volumes =
+		database === "postgresql"
+			? `\nvolumes:
   postgres_data:
     driver: local
 `
-		: database === 'mysql'
-		? `\nvolumes:
+			: database === "mysql"
+				? `\nvolumes:
   mysql_data:
     driver: local
 `
-		: '';
+				: "";
 
-	const databaseEnv = database === 'postgresql'
-		? `      DATABASE_URL: postgresql://\${POSTGRES_USER:-postgres}:\${POSTGRES_PASSWORD:-postgres}@postgres:5432/\${POSTGRES_DB:-${kebabName}}
+	const databaseEnv =
+		database === "postgresql"
+			? `      DATABASE_URL: postgresql://\${POSTGRES_USER:-postgres}:\${POSTGRES_PASSWORD:-postgres}@postgres:5432/\${POSTGRES_DB:-${kebabName}}
 `
-		: database === 'mysql'
-		? `      DATABASE_URL: mysql://\${MYSQL_USER:-mysql}:\${MYSQL_PASSWORD:-mysql}@mysql:3306/\${MYSQL_DATABASE:-${kebabName}}
+			: database === "mysql"
+				? `      DATABASE_URL: mysql://\${MYSQL_USER:-mysql}:\${MYSQL_PASSWORD:-mysql}@mysql:3306/\${MYSQL_DATABASE:-${kebabName}}
 `
-		: '';
+				: "";
 
 	return `# ${projectName} - Docker Compose for Local Development
 # Usage: docker-compose up -d
@@ -268,15 +276,18 @@ ${volumes}
 
 /**
  * Get Docker environment variables template
- * 
+ *
  * Environment variables for Docker Compose
  */
-export function getDockerEnvTemplate(projectName: string, database?: string): string {
-	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-	
-	let dbEnv = '';
-	
-	if (database === 'postgresql') {
+export function getDockerEnvTemplate(
+	projectName: string,
+	database?: string,
+): string {
+	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+
+	let dbEnv = "";
+
+	if (database === "postgresql") {
 		dbEnv = `
 # PostgreSQL Configuration
 POSTGRES_USER=postgres
@@ -285,7 +296,7 @@ POSTGRES_DB=${kebabName}
 POSTGRES_PORT=5432
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/${kebabName}
 `;
-	} else if (database === 'mysql') {
+	} else if (database === "mysql") {
 		dbEnv = `
 # MySQL Configuration
 MYSQL_ROOT_PASSWORD=root

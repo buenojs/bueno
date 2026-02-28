@@ -5,19 +5,19 @@
  * Supports both Redis and in-memory drivers.
  */
 
+import { MemoryJobQueueDriver } from "./drivers/memory";
+import { RedisJobQueueDriver } from "./drivers/redis";
 import type {
+	HandlerRegistryEntry,
 	Job,
+	JobEvent,
 	JobEventType,
 	JobHandler,
 	JobQueueConfig,
 	JobQueueDriver,
 	QueueMetrics,
 	QueueOptions,
-	HandlerRegistryEntry,
-	JobEvent,
 } from "./types";
-import { MemoryJobQueueDriver } from "./drivers/memory";
-import { RedisJobQueueDriver } from "./drivers/redis";
 
 // ============= Job Queue Class =============
 
@@ -25,10 +25,8 @@ export class JobQueue {
 	private driver: JobQueueDriver;
 	private handlers: Map<string, JobHandler<unknown>> = new Map();
 	private handlerRegistry: HandlerRegistryEntry[] = [];
-	private eventListeners: Map<
-		JobEventType,
-		Set<(event: JobEvent) => void>
-	> = new Map();
+	private eventListeners: Map<JobEventType, Set<(event: JobEvent) => void>> =
+		new Map();
 	private isRunning = false;
 
 	constructor(config: JobQueueConfig = {}) {
@@ -140,10 +138,7 @@ export class JobQueue {
 	/**
 	 * Listen for queue events
 	 */
-	onEvent(
-		event: JobEventType,
-		listener: (event: JobEvent) => void,
-	): void {
+	onEvent(event: JobEventType, listener: (event: JobEvent) => void): void {
 		if (!this.eventListeners.has(event)) {
 			this.eventListeners.set(event, new Set());
 		}
@@ -153,10 +148,7 @@ export class JobQueue {
 	/**
 	 * Stop listening for queue events
 	 */
-	offEvent(
-		event: JobEventType,
-		listener: (event: JobEvent) => void,
-	): void {
+	offEvent(event: JobEventType, listener: (event: JobEvent) => void): void {
 		this.eventListeners.get(event)?.delete(listener);
 	}
 
@@ -186,7 +178,9 @@ export class JobQueue {
 	 * Start the polling loop (for tests/manual control)
 	 * Note: In production, use a separate worker process
 	 */
-	async start(options: { pollInterval?: number; concurrency?: number } = {}): Promise<void> {
+	async start(
+		options: { pollInterval?: number; concurrency?: number } = {},
+	): Promise<void> {
 		this.isRunning = true;
 		const pollInterval = options.pollInterval ?? 1000;
 		const concurrency = options.concurrency ?? 10;
@@ -203,9 +197,7 @@ export class JobQueue {
 					try {
 						const handler = this.findHandler(job.name);
 						if (!handler) {
-							console.warn(
-								`No handler found for job type: ${job.name}`,
-							);
+							console.warn(`No handler found for job type: ${job.name}`);
 							await this.driver.complete(job.id);
 							continue;
 						}
@@ -218,41 +210,25 @@ export class JobQueue {
 						await this.driver.complete(job.id);
 					} catch (error) {
 						const errorMsg =
-							error instanceof Error
-								? error.message
-								: String(error);
-						const stackTrace =
-							error instanceof Error ? error.stack : undefined;
+							error instanceof Error ? error.message : String(error);
+						const stackTrace = error instanceof Error ? error.stack : undefined;
 
 						if (job.attempts < job.maxRetries) {
-							const backoffMs =
-								Math.pow(2, job.attempts) * 1000; // Exponential backoff
+							const backoffMs = Math.pow(2, job.attempts) * 1000; // Exponential backoff
 							this._emitEvent("retried", job);
-							await this.driver.scheduleRetry(
-								job.id,
-								backoffMs,
-								errorMsg,
-							);
+							await this.driver.scheduleRetry(job.id, backoffMs, errorMsg);
 						} else {
 							this._emitEvent("failed", job);
-							await this.driver.fail(
-								job.id,
-								errorMsg,
-								stackTrace,
-							);
+							await this.driver.fail(job.id, errorMsg, stackTrace);
 						}
 					}
 				}
 
 				// Sleep before next poll
-				await new Promise((resolve) =>
-					setTimeout(resolve, pollInterval),
-				);
+				await new Promise((resolve) => setTimeout(resolve, pollInterval));
 			} catch (error) {
 				console.error("Error in job queue polling loop:", error);
-				await new Promise((resolve) =>
-					setTimeout(resolve, pollInterval),
-				);
+				await new Promise((resolve) => setTimeout(resolve, pollInterval));
 			}
 		}
 	}

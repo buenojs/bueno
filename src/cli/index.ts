@@ -4,24 +4,30 @@
  * Main entry point for the Bueno CLI
  */
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { parseArgs, hasFlag, generateGlobalHelpText, generateHelpText, type ParsedArgs } from './core/args';
-import { cliConsole, colors, setColorEnabled } from './core/console';
-import { registry } from './commands';
+import { readFileSync } from "fs";
+import { join } from "path";
+import { registry } from "./commands";
+import {
+	type ParsedArgs,
+	generateGlobalHelpText,
+	generateHelpText,
+	hasFlag,
+	parseArgs,
+} from "./core/args";
+import { cliConsole, colors, setColorEnabled } from "./core/console";
 
 // Import commands to register them
-import './commands/new';
-import './commands/generate';
-import './commands/migration';
-import './commands/dev';
-import './commands/build';
-import './commands/start';
-import './commands/help';
+import "./commands/new";
+import "./commands/generate";
+import "./commands/migration";
+import "./commands/dev";
+import "./commands/build";
+import "./commands/start";
+import "./commands/help";
 
 // Read version from package.json dynamically
 const packageJson = JSON.parse(
-	readFileSync(join(import.meta.dir, '../../package.json'), 'utf-8')
+	readFileSync(join(import.meta.dir, "../../package.json"), "utf-8"),
 );
 const VERSION = packageJson.version;
 
@@ -29,15 +35,15 @@ const VERSION = packageJson.version;
  * CLI error types
  */
 export enum CLIErrorType {
-	INVALID_ARGS = 'INVALID_ARGS',
-	FILE_EXISTS = 'FILE_EXISTS',
-	FILE_NOT_FOUND = 'FILE_NOT_FOUND',
-	MODULE_NOT_FOUND = 'MODULE_NOT_FOUND',
-	TEMPLATE_ERROR = 'TEMPLATE_ERROR',
-	DATABASE_ERROR = 'DATABASE_ERROR',
-	NETWORK_ERROR = 'NETWORK_ERROR',
-	PERMISSION_ERROR = 'PERMISSION_ERROR',
-	NOT_FOUND = 'NOT_FOUND',
+	INVALID_ARGS = "INVALID_ARGS",
+	FILE_EXISTS = "FILE_EXISTS",
+	FILE_NOT_FOUND = "FILE_NOT_FOUND",
+	MODULE_NOT_FOUND = "MODULE_NOT_FOUND",
+	TEMPLATE_ERROR = "TEMPLATE_ERROR",
+	DATABASE_ERROR = "DATABASE_ERROR",
+	NETWORK_ERROR = "NETWORK_ERROR",
+	PERMISSION_ERROR = "PERMISSION_ERROR",
+	NOT_FOUND = "NOT_FOUND",
 }
 
 /**
@@ -50,38 +56,40 @@ export class CLIError extends Error {
 		public readonly exitCode = 1,
 	) {
 		super(message);
-		this.name = 'CLIError';
+		this.name = "CLIError";
 	}
 }
 
 /**
  * Run the CLI
  */
-export async function run(argv: string[] = process.argv.slice(2)): Promise<void> {
+export async function run(
+	argv: string[] = process.argv.slice(2),
+): Promise<void> {
 	// Parse arguments
 	const args = parseArgs(argv);
 
 	// Handle global options
-	if (hasFlag(args, 'no-color')) {
+	if (hasFlag(args, "no-color")) {
 		setColorEnabled(false);
 	}
 
-	if (hasFlag(args, 'verbose')) {
-		process.env.BUENO_VERBOSE = 'true';
+	if (hasFlag(args, "verbose")) {
+		process.env.BUENO_VERBOSE = "true";
 	}
 
-	if (hasFlag(args, 'quiet')) {
-		process.env.BUENO_QUIET = 'true';
+	if (hasFlag(args, "quiet")) {
+		process.env.BUENO_QUIET = "true";
 	}
 
 	// Show version
-	if (hasFlag(args, 'version') || hasFlag(args, 'v')) {
+	if (hasFlag(args, "version") || hasFlag(args, "v")) {
 		cliConsole.log(`bueno v${VERSION}`);
 		process.exit(0);
 	}
 
 	// Show help if no command or help flag
-	if (!args.command || hasFlag(args, 'help') || hasFlag(args, 'h')) {
+	if (!args.command || hasFlag(args, "help") || hasFlag(args, "h")) {
 		if (args.command && registry.has(args.command)) {
 			// Show command-specific help
 			const cmd = registry.get(args.command);
@@ -105,7 +113,7 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<void>
 		}
 
 		if (error instanceof Error) {
-			if (process.env.BUENO_VERBOSE === 'true') {
+			if (process.env.BUENO_VERBOSE === "true") {
 				cliConsole.error(error.stack ?? error.message);
 			} else {
 				cliConsole.error(error.message);
@@ -120,14 +128,14 @@ export async function run(argv: string[] = process.argv.slice(2)): Promise<void>
  */
 export async function main(): Promise<void> {
 	// Handle Ctrl+C gracefully
-	process.on('SIGINT', () => {
+	process.on("SIGINT", () => {
 		cliConsole.newline();
 		process.exit(130);
 	});
 
 	// Handle unhandled rejections
-	process.on('unhandledRejection', (reason) => {
-		cliConsole.error('Unhandled rejection:', reason);
+	process.on("unhandledRejection", (reason) => {
+		cliConsole.error("Unhandled rejection:", reason);
 		process.exit(1);
 	});
 
@@ -135,6 +143,6 @@ export async function main(): Promise<void> {
 }
 
 // Export for programmatic use
-export { registry, defineCommand, command } from './commands';
-export * from './core';
-export * from './utils';
+export { registry, defineCommand, command } from "./commands";
+export * from "./core";
+export * from "./utils";

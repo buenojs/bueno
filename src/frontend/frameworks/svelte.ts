@@ -5,7 +5,7 @@
  * including Svelte SFC support and Svelte-specific preprocessing.
  */
 
-import type { FrameworkBuildConfig, BuildPlugin } from "../types.js";
+import type { BuildPlugin, FrameworkBuildConfig } from "../types.js";
 
 /**
  * Svelte-specific build plugins
@@ -20,22 +20,24 @@ export function getSvelteBuildConfig(): FrameworkBuildConfig {
 	return {
 		// Svelte doesn't use JSX runtime in the traditional sense
 		jsxRuntime: "classic",
-		
+
 		// Svelte-specific file extensions
 		extensions: [".svelte", ".js", ".ts"],
-		
+
 		// Svelte-specific plugins
 		plugins: sveltePlugins,
-		
+
 		// Svelte-specific global defines
 		define: {
 			// Svelte production mode
-			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
+			"process.env.NODE_ENV": JSON.stringify(
+				process.env.NODE_ENV || "development",
+			),
 		},
-		
+
 		// External dependencies
 		external: [],
-		
+
 		// Loader configurations for Svelte files
 		loaders: {
 			".svelte": "js", // Svelte SFCs are compiled to JS
@@ -76,7 +78,11 @@ export function getSveltePreprocessConfig() {
 export function getSvelteCompilerOptions() {
 	return {
 		// Enable CSS hashing for scoped styles
-		cssHash: ({ hash, css, name }: { hash: (s: string) => string; css: string; name: string }) => {
+		cssHash: ({
+			hash,
+			css,
+			name,
+		}: { hash: (s: string) => string; css: string; name: string }) => {
 			return `svelte-${hash(css)}-${name}`;
 		},
 		// Generate SSR-friendly code

@@ -7,17 +7,17 @@
  * @module frontend/console-stream
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
+import { CONSOLE_CLIENT_SCRIPT } from "./console-client.js";
 import type {
-	ConsoleMessage,
-	ConsoleStreamConfig,
-	ConsoleStreamClient,
 	ConsoleClientMessage,
-	ConsoleServerMessage,
+	ConsoleMessage,
 	ConsoleMessageType,
+	ConsoleServerMessage,
+	ConsoleStreamClient,
+	ConsoleStreamConfig,
 	PartialConsoleStreamConfig,
 } from "./types.js";
-import { CONSOLE_CLIENT_SCRIPT } from "./console-client.js";
 
 // ============= Constants =============
 
@@ -84,13 +84,23 @@ export class ConsoleStreamManager {
 	/**
 	 * Normalize partial config to full config with defaults
 	 */
-	private normalizeConfig(config?: PartialConsoleStreamConfig): ConsoleStreamConfig {
+	private normalizeConfig(
+		config?: PartialConsoleStreamConfig,
+	): ConsoleStreamConfig {
 		return {
 			enabled: config?.enabled ?? true,
 			showTimestamps: config?.showTimestamps ?? true,
 			showFile: config?.showFile ?? true,
 			colorize: config?.colorize ?? true,
-			filter: config?.filter ?? ['log', 'info', 'warn', 'error', 'debug', 'trace', 'table'],
+			filter: config?.filter ?? [
+				"log",
+				"info",
+				"warn",
+				"error",
+				"debug",
+				"trace",
+				"table",
+			],
 		};
 	}
 
@@ -287,7 +297,9 @@ export class ConsoleStreamManager {
 		}
 
 		// Message type with color
-		const typeColor = this.config.colorize ? CONSOLE_TYPE_COLORS[message.consoleType] : "";
+		const typeColor = this.config.colorize
+			? CONSOLE_TYPE_COLORS[message.consoleType]
+			: "";
 		const typeReset = this.config.colorize ? ANSI_COLORS.reset : "";
 		const typeLabel = message.consoleType.toUpperCase().padEnd(5);
 		parts.push(`${typeColor}${typeLabel}${typeReset}`);
@@ -298,7 +310,11 @@ export class ConsoleStreamManager {
 
 		// File:line information
 		if (this.config.showFile && message.file) {
-			const fileLink = this.formatFileLink(message.file, message.line, message.column);
+			const fileLink = this.formatFileLink(
+				message.file,
+				message.line,
+				message.column,
+			);
 			parts.push(`\n  at ${fileLink}`);
 		}
 
@@ -333,48 +349,64 @@ export class ConsoleStreamManager {
 
 		if (type === "trace") {
 			// Trace already includes the stack in the args
-			return args.map(arg => this.formatValue(arg)).join(" ");
+			return args.map((arg) => this.formatValue(arg)).join(" ");
 		}
 
-		return args.map(arg => this.formatValue(arg)).join(" ");
+		return args.map((arg) => this.formatValue(arg)).join(" ");
 	}
 
 	/**
 	 * Format a single value for display
 	 */
-	private formatValue(value: unknown, depth: number = 0): string {
+	private formatValue(value: unknown, depth = 0): string {
 		if (depth > 3) {
-			return this.config.colorize ? `${ANSI_COLORS.dim}[...]${ANSI_COLORS.reset}` : "[...]";
+			return this.config.colorize
+				? `${ANSI_COLORS.dim}[...]${ANSI_COLORS.reset}`
+				: "[...]";
 		}
 
 		if (value === null) {
-			return this.config.colorize ? `${ANSI_COLORS.gray}null${ANSI_COLORS.reset}` : "null";
+			return this.config.colorize
+				? `${ANSI_COLORS.gray}null${ANSI_COLORS.reset}`
+				: "null";
 		}
 
 		if (value === undefined) {
-			return this.config.colorize ? `${ANSI_COLORS.gray}undefined${ANSI_COLORS.reset}` : "undefined";
+			return this.config.colorize
+				? `${ANSI_COLORS.gray}undefined${ANSI_COLORS.reset}`
+				: "undefined";
 		}
 
 		if (typeof value === "string") {
 			// Check if it's a long string
 			if (value.length > 200) {
 				const truncated = value.substring(0, 200) + "...";
-				return this.config.colorize ? `${ANSI_COLORS.green}"${truncated}"${ANSI_COLORS.reset}` : `"${truncated}"`;
+				return this.config.colorize
+					? `${ANSI_COLORS.green}"${truncated}"${ANSI_COLORS.reset}`
+					: `"${truncated}"`;
 			}
-			return this.config.colorize ? `${ANSI_COLORS.green}"${value}"${ANSI_COLORS.reset}` : `"${value}"`;
+			return this.config.colorize
+				? `${ANSI_COLORS.green}"${value}"${ANSI_COLORS.reset}`
+				: `"${value}"`;
 		}
 
 		if (typeof value === "number") {
-			return this.config.colorize ? `${ANSI_COLORS.yellow}${value}${ANSI_COLORS.reset}` : `${value}`;
+			return this.config.colorize
+				? `${ANSI_COLORS.yellow}${value}${ANSI_COLORS.reset}`
+				: `${value}`;
 		}
 
 		if (typeof value === "boolean") {
-			return this.config.colorize ? `${ANSI_COLORS.magenta}${value}${ANSI_COLORS.reset}` : `${value}`;
+			return this.config.colorize
+				? `${ANSI_COLORS.magenta}${value}${ANSI_COLORS.reset}`
+				: `${value}`;
 		}
 
 		if (value instanceof Error) {
 			const errorStr = `${value.name}: ${value.message}`;
-			return this.config.colorize ? `${ANSI_COLORS.red}${errorStr}${ANSI_COLORS.reset}` : errorStr;
+			return this.config.colorize
+				? `${ANSI_COLORS.red}${errorStr}${ANSI_COLORS.reset}`
+				: errorStr;
 		}
 
 		if (Array.isArray(value)) {
@@ -382,10 +414,12 @@ export class ConsoleStreamManager {
 				return "[]";
 			}
 			if (value.length > 10) {
-				const items = value.slice(0, 10).map(v => this.formatValue(v, depth + 1));
+				const items = value
+					.slice(0, 10)
+					.map((v) => this.formatValue(v, depth + 1));
 				return `[${items.join(", ")}, ... ${value.length - 10} more items]`;
 			}
-			const items = value.map(v => this.formatValue(v, depth + 1));
+			const items = value.map((v) => this.formatValue(v, depth + 1));
 			return `[${items.join(", ")}]`;
 		}
 
@@ -396,10 +430,14 @@ export class ConsoleStreamManager {
 					return "{}";
 				}
 				if (entries.length > 5) {
-					const shown = entries.slice(0, 5).map(([k, v]) => `${k}: ${this.formatValue(v, depth + 1)}`);
+					const shown = entries
+						.slice(0, 5)
+						.map(([k, v]) => `${k}: ${this.formatValue(v, depth + 1)}`);
 					return `{${shown.join(", ")}, ... ${entries.length - 5} more keys}`;
 				}
-				const formatted = entries.map(([k, v]) => `${k}: ${this.formatValue(v, depth + 1)}`);
+				const formatted = entries.map(
+					([k, v]) => `${k}: ${this.formatValue(v, depth + 1)}`,
+				);
 				return `{${formatted.join(", ")}}`;
 			} catch {
 				return "[Object]";
@@ -423,27 +461,45 @@ export class ConsoleStreamManager {
 
 		// Simple table formatting
 		const entries = Array.isArray(data) ? data : Object.entries(data as object);
-		
+
 		if (entries.length === 0) {
-			return this.config.colorize ? `${ANSI_COLORS.dim}(empty table)${ANSI_COLORS.reset}` : "(empty table)";
+			return this.config.colorize
+				? `${ANSI_COLORS.dim}(empty table)${ANSI_COLORS.reset}`
+				: "(empty table)";
 		}
 
 		const lines: string[] = [];
-		lines.push(this.config.colorize ? `${ANSI_COLORS.blue}┌─────────${ANSI_COLORS.reset}` : "┌─────────");
+		lines.push(
+			this.config.colorize
+				? `${ANSI_COLORS.blue}┌─────────${ANSI_COLORS.reset}`
+				: "┌─────────",
+		);
 
 		const maxRows = 10;
 		const shown = entries.slice(0, maxRows);
-		
+
 		for (const entry of shown) {
 			const row = this.formatValue(entry, 1);
-			lines.push(this.config.colorize ? `${ANSI_COLORS.blue}│${ANSI_COLORS.reset} ${row}` : `│ ${row}`);
+			lines.push(
+				this.config.colorize
+					? `${ANSI_COLORS.blue}│${ANSI_COLORS.reset} ${row}`
+					: `│ ${row}`,
+			);
 		}
 
 		if (entries.length > maxRows) {
-			lines.push(this.config.colorize ? `${ANSI_COLORS.blue}│${ANSI_COLORS.reset} ... ${entries.length - maxRows} more rows` : `│ ... ${entries.length - maxRows} more rows`);
+			lines.push(
+				this.config.colorize
+					? `${ANSI_COLORS.blue}│${ANSI_COLORS.reset} ... ${entries.length - maxRows} more rows`
+					: `│ ... ${entries.length - maxRows} more rows`,
+			);
 		}
 
-		lines.push(this.config.colorize ? `${ANSI_COLORS.blue}└─────────${ANSI_COLORS.reset}` : "└─────────");
+		lines.push(
+			this.config.colorize
+				? `${ANSI_COLORS.blue}└─────────${ANSI_COLORS.reset}`
+				: "└─────────",
+		);
 
 		return "\n" + lines.join("\n");
 	}
@@ -454,7 +510,7 @@ export class ConsoleStreamManager {
 	private formatFileLink(file: string, line?: number, column?: number): string {
 		const location = line ? `:${line}${column ? `:${column}` : ""}` : "";
 		const link = `${file}${location}`;
-		
+
 		if (this.config.colorize) {
 			return `${ANSI_COLORS.cyan}${link}${ANSI_COLORS.reset}`;
 		}
@@ -469,11 +525,11 @@ export class ConsoleStreamManager {
 		const formatted = lines.map((line, index) => {
 			if (index === 0) {
 				// First line is usually the error message
-				return this.config.colorize 
+				return this.config.colorize
 					? `  ${ANSI_COLORS.red}${line}${ANSI_COLORS.reset}`
 					: `  ${line}`;
 			}
-			
+
 			// Try to make file paths clickable
 			const match = line.match(/at\s+(.+?)\s+\((.+?):(\d+):(\d+)\)/);
 			if (match) {
@@ -484,7 +540,7 @@ export class ConsoleStreamManager {
 				return `    at ${fn} (${file}:${lineNum}:${col})`;
 			}
 
-			return this.config.colorize 
+			return this.config.colorize
 				? `  ${ANSI_COLORS.gray}${line}${ANSI_COLORS.reset}`
 				: `  ${line}`;
 		});
@@ -551,7 +607,7 @@ export class ConsoleStreamManager {
  */
 export function createConsoleStreamManager(
 	devServerPort: number,
-	config?: PartialConsoleStreamConfig
+	config?: PartialConsoleStreamConfig,
 ): ConsoleStreamManager {
 	return new ConsoleStreamManager(devServerPort, config);
 }

@@ -7,7 +7,10 @@
 import type { Model } from "../model";
 import { Relationship } from "./base";
 
-export class HasOne<TRelated extends Model> extends Relationship<any, TRelated> {
+export class HasOne<TRelated extends Model> extends Relationship<
+	any,
+	TRelated
+> {
 	addConstraints(): void {
 		const parentId = this.parentModel.getAttribute(this.localKey as any);
 		this.query.where(this.foreignKey, parentId);

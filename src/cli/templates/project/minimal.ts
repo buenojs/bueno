@@ -2,14 +2,14 @@
  * Minimal Project Template
  */
 
-import type { ProjectConfig, ProjectTemplateResult } from './types';
-import { getBuenoDependency } from '../../utils/version';
+import { getBuenoDependency } from "../../utils/version";
+import type { ProjectConfig, ProjectTemplateResult } from "./types";
 
 export function minimalTemplate(config: ProjectConfig): ProjectTemplateResult {
 	return {
 		files: [
 			{
-				path: 'server/main.ts',
+				path: "server/main.ts",
 				content: `import { createServer } from '@buenojs/bueno';
 
 const app = createServer();
@@ -27,19 +27,19 @@ console.log('🚀 Server running at http://localhost:3000');
 `,
 			},
 		],
-		directories: ['server', 'tests'],
+		directories: ["server", "tests"],
 		dependencies: {
 			...getBuenoDependency(),
 		},
 		devDependencies: {
-			'@types/bun': 'latest',
-			typescript: '^5.3.0',
+			"@types/bun": "latest",
+			typescript: "^5.3.0",
 		},
 		scripts: {
-			dev: 'bun run --watch server/main.ts',
-			build: 'bun build ./server/main.ts --outdir ./dist --target bun',
-			start: 'bun run dist/main.js',
-			test: 'bun test',
+			dev: "bun run --watch server/main.ts",
+			build: "bun build ./server/main.ts --outdir ./dist --target bun",
+			start: "bun run dist/main.js",
+			test: "bun test",
 		},
 	};
 }

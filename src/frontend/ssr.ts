@@ -9,25 +9,28 @@
  * - Head management (title, meta, links)
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
+import { type ReactSSRRenderer, createReactSSRRenderer } from "./ssr/react.js";
+import { type SolidSSRRenderer, createSolidSSRRenderer } from "./ssr/solid.js";
+import {
+	type SvelteSSRRenderer,
+	createSvelteSSRRenderer,
+} from "./ssr/svelte.js";
+import { type VueSSRRenderer, createVueSSRRenderer } from "./ssr/vue.js";
 import type {
-	SSRConfig,
+	BuildManifest,
+	FrameworkSSRRenderer,
+	FrontendFramework,
 	PartialSSRConfig,
+	PreloadLink,
+	RenderResult,
+	SSRConfig,
 	SSRContext,
 	SSRElement,
-	SSRPage,
-	RenderResult,
 	SSRHydrationData,
+	SSRPage,
 	SSRRenderOptions,
-	BuildManifest,
-	FrontendFramework,
-	FrameworkSSRRenderer,
-	PreloadLink,
 } from "./types.js";
-import { createReactSSRRenderer, type ReactSSRRenderer } from "./ssr/react.js";
-import { createVueSSRRenderer, type VueSSRRenderer } from "./ssr/vue.js";
-import { createSvelteSSRRenderer, type SvelteSSRRenderer } from "./ssr/svelte.js";
-import { createSolidSSRRenderer, type SolidSSRRenderer } from "./ssr/solid.js";
 
 // ============= Constants =============
 
@@ -39,7 +42,7 @@ const DEFAULT_BUFFER_INITIAL_STREAM = true;
 
 /**
  * Main SSR Renderer class
- * 
+ *
  * Provides server-side rendering for all supported frameworks
  * with streaming support and client hydration.
  */
@@ -68,7 +71,8 @@ export class SSRRenderer {
 			clientManifest: config.clientManifest,
 			streaming: config.streaming ?? DEFAULT_STREAMING,
 			maxTimeout: config.maxTimeout ?? DEFAULT_MAX_TIMEOUT,
-			bufferInitialStream: config.bufferInitialStream ?? DEFAULT_BUFFER_INITIAL_STREAM,
+			bufferInitialStream:
+				config.bufferInitialStream ?? DEFAULT_BUFFER_INITIAL_STREAM,
 			framework: config.framework,
 			rootDir: config.rootDir,
 			template: config.template,
@@ -80,14 +84,18 @@ export class SSRRenderer {
 	 * Initialize the framework-specific renderer
 	 */
 	async init(): Promise<void> {
-		this.frameworkRenderer = await this.createFrameworkRenderer(this.config.framework);
+		this.frameworkRenderer = await this.createFrameworkRenderer(
+			this.config.framework,
+		);
 		this.logger.info(`SSR initialized for framework: ${this.config.framework}`);
 	}
 
 	/**
 	 * Create framework-specific renderer
 	 */
-	private async createFrameworkRenderer(framework: FrontendFramework): Promise<FrameworkSSRRenderer> {
+	private async createFrameworkRenderer(
+		framework: FrontendFramework,
+	): Promise<FrameworkSSRRenderer> {
 		switch (framework) {
 			case "react":
 				const reactRenderer = createReactSSRRenderer();
@@ -124,7 +132,7 @@ export class SSRRenderer {
 		try {
 			// Load the page module
 			const page = await this.loadPage(url);
-			
+
 			// Run server-side data fetching if available
 			if (page.getServerSideProps) {
 				this.logger.debug(`Fetching server-side props for: ${url}`);
@@ -134,7 +142,10 @@ export class SSRRenderer {
 
 			// Render the page
 			const component = this.frameworkRenderer!.createComponent(page, context);
-			const html = await this.frameworkRenderer!.renderToString(component, context);
+			const html = await this.frameworkRenderer!.renderToString(
+				component,
+				context,
+			);
 
 			// Get head elements
 			const headElements = this.frameworkRenderer!.getHeadElements(context);
@@ -155,9 +166,10 @@ export class SSRRenderer {
 				status: context.status,
 			};
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			this.logger.error(`SSR render failed for ${url}:`, error);
-			
+
 			return {
 				html: this.renderErrorPage(error),
 				head: "<title>Error</title>",
@@ -202,7 +214,10 @@ export class SSRRenderer {
 
 					// Create component and render to stream
 					const component = frameworkRenderer!.createComponent(page, context);
-					const htmlStream = frameworkRenderer!.renderToStream(component, context);
+					const htmlStream = frameworkRenderer!.renderToStream(
+						component,
+						context,
+					);
 
 					const reader = htmlStream.getReader();
 					while (true) {
@@ -216,7 +231,8 @@ export class SSRRenderer {
 					controller.enqueue(encoder.encode(footer));
 					controller.close();
 				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error";
+					const errorMessage =
+						error instanceof Error ? error.message : "Unknown error";
 					this.logger.error(`SSR stream failed for ${url}:`, error);
 					controller.enqueue(encoder.encode(this.renderErrorPage(error)));
 					controller.close();
@@ -229,7 +245,13 @@ export class SSRRenderer {
 	 * Render with options
 	 */
 	async renderWithOptions(options: SSRRenderOptions): Promise<RenderResult> {
-		const { url, request, params = {}, props = {}, skipStreaming = false } = options;
+		const {
+			url,
+			request,
+			params = {},
+			props = {},
+			skipStreaming = false,
+		} = options;
 
 		if (!skipStreaming && this.config.streaming) {
 			// For streaming, we need to buffer the result
@@ -249,7 +271,7 @@ export class SSRRenderer {
 					combined.set(acc);
 					combined.set(chunk, acc.length);
 					return combined;
-				}, new Uint8Array())
+				}, new Uint8Array()),
 			);
 
 			return {
@@ -448,12 +470,29 @@ export class SSRRenderer {
 		}
 
 		if (element.children && element.children.length > 0) {
-			const children = element.children.map(this.ssrElementToString.bind(this)).join("");
+			const children = element.children
+				.map(this.ssrElementToString.bind(this))
+				.join("");
 			return `${openTag}${children}</${element.tag}>`;
 		}
 
 		// Self-closing tags
-		const voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"];
+		const voidElements = [
+			"area",
+			"base",
+			"br",
+			"col",
+			"embed",
+			"hr",
+			"img",
+			"input",
+			"link",
+			"meta",
+			"param",
+			"source",
+			"track",
+			"wbr",
+		];
 		if (voidElements.includes(element.tag)) {
 			return attrs ? `<${element.tag} ${attrs}>` : `<${element.tag}>`;
 		}
@@ -520,9 +559,10 @@ export class SSRRenderer {
 	 */
 	private renderErrorPage(error: unknown): string {
 		const message = error instanceof Error ? error.message : "Unknown error";
-		const stack = error instanceof Error && process.env.NODE_ENV !== "production" 
-			? `<pre>${this.escapeHtml(error.stack || "")}</pre>` 
-			: "";
+		const stack =
+			error instanceof Error && process.env.NODE_ENV !== "production"
+				? `<pre>${this.escapeHtml(error.stack || "")}</pre>`
+				: "";
 
 		return `<!DOCTYPE html>
 <html>
@@ -588,7 +628,7 @@ export function createSSRRenderer(config: PartialSSRConfig): SSRRenderer {
  */
 export function createSSRContext(
 	request: Request,
-	params: Record<string, string> = {}
+	params: Record<string, string> = {},
 ): SSRContext {
 	const url = new URL(request.url);
 
@@ -674,13 +714,14 @@ export function mergeHeadElements(...arrays: SSRElement[][]): SSRElement[] {
 	for (const arr of arrays) {
 		for (const element of arr) {
 			// Create a key based on tag and identifying attributes
-			const key = element.tag === "title"
-				? "title"
-				: element.tag === "meta" && element.attrs.name
-					? `meta:${element.attrs.name}`
-					: element.tag === "meta" && element.attrs.property
-						? `meta:${element.attrs.property}`
-						: JSON.stringify(element);
+			const key =
+				element.tag === "title"
+					? "title"
+					: element.tag === "meta" && element.attrs.name
+						? `meta:${element.attrs.name}`
+						: element.tag === "meta" && element.attrs.property
+							? `meta:${element.attrs.property}`
+							: JSON.stringify(element);
 
 			if (!seen.has(key)) {
 				seen.add(key);
@@ -695,5 +736,8 @@ export function mergeHeadElements(...arrays: SSRElement[][]): SSRElement[] {
 // Re-export framework renderers
 export { createReactSSRRenderer, type ReactSSRRenderer } from "./ssr/react.js";
 export { createVueSSRRenderer, type VueSSRRenderer } from "./ssr/vue.js";
-export { createSvelteSSRRenderer, type SvelteSSRRenderer } from "./ssr/svelte.js";
+export {
+	createSvelteSSRRenderer,
+	type SvelteSSRRenderer,
+} from "./ssr/svelte.js";
 export { createSolidSSRRenderer, type SolidSSRRenderer } from "./ssr/solid.js";

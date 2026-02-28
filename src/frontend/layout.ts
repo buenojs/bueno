@@ -8,20 +8,20 @@
  * - Per-segment layouts
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
 import type {
-	LayoutDefinition,
-	LayoutNode,
-	LayoutTree,
-	LayoutProps,
-	LayoutRenderer,
-	LayoutMiddleware,
 	LayoutConfig,
-	PartialLayoutConfig,
+	LayoutDefinition,
+	LayoutMiddleware,
+	LayoutNode,
+	LayoutProps,
 	LayoutRenderResult,
+	LayoutRenderer,
 	LayoutSegment,
+	LayoutTree,
+	PartialLayoutConfig,
 } from "./types.js";
-import type { SSRContext, SSRElement, RenderResult } from "./types.js";
+import type { RenderResult, SSRContext, SSRElement } from "./types.js";
 
 // ============= Constants =============
 
@@ -70,7 +70,9 @@ export class LayoutManager {
 	 * Initialize the layout manager by scanning for layout files
 	 */
 	async init(): Promise<void> {
-		this.logger.info(`Initializing layout manager from: ${this.config.pagesDir}`);
+		this.logger.info(
+			`Initializing layout manager from: ${this.config.pagesDir}`,
+		);
 		await this.scanLayoutFiles();
 		this.buildLayoutTree();
 		this.logger.info(`Loaded ${this.layouts.size} layouts`);
@@ -81,7 +83,9 @@ export class LayoutManager {
 	 */
 	private async scanLayoutFiles(): Promise<void> {
 		const pagesPath = this.config.pagesDir;
-		const glob = new Bun.Glob(`**/${LAYOUT_FILE}{${this.config.extensions.join(",")}}`);
+		const glob = new Bun.Glob(
+			`**/${LAYOUT_FILE}{${this.config.extensions.join(",")}}`,
+		);
 
 		try {
 			for await (const file of glob.scan(pagesPath)) {
@@ -95,7 +99,10 @@ export class LayoutManager {
 	/**
 	 * Process a single layout file
 	 */
-	private async processLayoutFile(filePath: string, basePath: string): Promise<void> {
+	private async processLayoutFile(
+		filePath: string,
+		basePath: string,
+	): Promise<void> {
 		const fullPath = `${basePath}/${filePath}`;
 		const segment = this.getLayoutSegment(filePath);
 
@@ -115,7 +122,10 @@ export class LayoutManager {
 	 */
 	private getLayoutSegment(filePath: string): string {
 		// Remove _layout.tsx from path
-		const segment = filePath.replace(new RegExp(`/${LAYOUT_FILE}\\.(tsx?|jsx?)$`), "");
+		const segment = filePath.replace(
+			new RegExp(`/${LAYOUT_FILE}\\.(tsx?|jsx?)$`),
+			"",
+		);
 		return segment === "" ? "/" : `/${segment}`;
 	}
 
@@ -153,7 +163,10 @@ export class LayoutManager {
 	/**
 	 * Build a layout tree node
 	 */
-	private buildTreeNode(layout: LayoutDefinition, parent: LayoutNode | null): LayoutNode {
+	private buildTreeNode(
+		layout: LayoutDefinition,
+		parent: LayoutNode | null,
+	): LayoutNode {
 		const node: LayoutNode = {
 			layout,
 			parent,
@@ -224,7 +237,9 @@ export class LayoutManager {
 	/**
 	 * Load layout module
 	 */
-	private async loadLayoutModule(filePath: string): Promise<LayoutRenderer | null> {
+	private async loadLayoutModule(
+		filePath: string,
+	): Promise<LayoutRenderer | null> {
 		try {
 			const module = await import(filePath);
 			return module.default || module;
@@ -240,7 +255,7 @@ export class LayoutManager {
 	async renderLayouts(
 		routePath: string,
 		content: string,
-		context: SSRContext
+		context: SSRContext,
 	): Promise<LayoutRenderResult> {
 		const chain = this.getLayoutChain(routePath);
 
@@ -361,7 +376,9 @@ export class LayoutManager {
 /**
  * Create a layout manager
  */
-export function createLayoutManager(config: PartialLayoutConfig = {}): LayoutManager {
+export function createLayoutManager(
+	config: PartialLayoutConfig = {},
+): LayoutManager {
 	return new LayoutManager(config);
 }
 
@@ -394,7 +411,7 @@ export function getLayoutSegmentFromPath(filePath: string): string {
  */
 export function buildLayoutProps(
 	children: string,
-	context: SSRContext
+	context: SSRContext,
 ): LayoutProps {
 	return {
 		children,
@@ -409,7 +426,7 @@ export function buildLayoutProps(
  */
 export function createLayoutSegment(
 	path: string,
-	params: Record<string, string> = {}
+	params: Record<string, string> = {},
 ): LayoutSegment {
 	return {
 		path,
@@ -421,9 +438,7 @@ export function createLayoutSegment(
 /**
  * Merge layout head elements
  */
-export function mergeLayoutHead(
-	...heads: SSRElement[][]
-): SSRElement[] {
+export function mergeLayoutHead(...heads: SSRElement[][]): SSRElement[] {
 	const merged: SSRElement[] = [];
 	const seen = new Set<string>();
 

@@ -4,7 +4,7 @@
  * Template for API-only or static website projects
  */
 
-import type { FrontendTemplateResult } from '../project/types';
+import type { FrontendTemplateResult } from "../project/types";
 
 export function noneTemplate(): FrontendTemplateResult {
 	return {

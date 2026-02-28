@@ -2,9 +2,9 @@
  * Environment variable handling for Bueno Framework
  */
 
+import { setNestedValue } from "./merge";
 import type { BuenoConfig, DeepPartial, EnvMapping } from "./types";
 import { ENV_MAPPINGS } from "./types";
-import { setNestedValue } from "./merge";
 
 /**
  * Environment variable source information
@@ -139,33 +139,33 @@ async function loadEnvFile(
  * Files are loaded in priority order, with later files overriding earlier ones
  */
 export async function loadEnvFiles(options?: {
-    /** Custom list of env files to load */
-    files?: string[];
-    /** Whether to also load NODE_ENV-specific file */
-    loadNodeEnv?: boolean;
-    /** Base directory for env files */
-    cwd?: string;
+	/** Custom list of env files to load */
+	files?: string[];
+	/** Whether to also load NODE_ENV-specific file */
+	loadNodeEnv?: boolean;
+	/** Base directory for env files */
+	cwd?: string;
 }): Promise<Record<string, string>> {
-    const cwd = options?.cwd ?? process.cwd();
-    const files = options?.files ?? [...ENV_FILE_PRIORITY];
+	const cwd = options?.cwd ?? process.cwd();
+	const files = options?.files ?? [...ENV_FILE_PRIORITY];
 
-    // Add NODE_ENV-specific file if requested
-    if (options?.loadNodeEnv !== false) {
-        const envFile = getEnvFileName();
-        if (!files.includes(envFile)) {
-            files.push(envFile);
-        }
-    }
+	// Add NODE_ENV-specific file if requested
+	if (options?.loadNodeEnv !== false) {
+		const envFile = getEnvFileName();
+		if (!files.includes(envFile)) {
+			files.push(envFile);
+		}
+	}
 
-    const result: Record<string, string> = {};
+	const result: Record<string, string> = {};
 
-    for (const file of files) {
-        const filePath = file.startsWith("/") ? file : `${cwd}/${file}`;
-        const { vars } = await loadEnvFile(filePath);
-        Object.assign(result, vars);
-    }
+	for (const file of files) {
+		const filePath = file.startsWith("/") ? file : `${cwd}/${file}`;
+		const { vars } = await loadEnvFile(filePath);
+		Object.assign(result, vars);
+	}
 
-    return result;
+	return result;
 }
 
 // ============= Environment Variable Validation =============
@@ -176,20 +176,22 @@ export async function loadEnvFiles(options?: {
  * @param envVars - Environment variables to validate
  * @returns Validation result with transformed values or error details
  */
-export async function validateEnvVars(envVars: Record<string, string>): Promise<ValidationResult> {
-    try {
-        const { validateEnvVars } = await import("./env-validation");
-        return validateEnvVars(envVars);
-    } catch (error) {
-        return {
-            success: false,
-            issues: [
-                {
-                    message: `Failed to validate environment variables: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                },
-            ],
-        };
-    }
+export async function validateEnvVars(
+	envVars: Record<string, string>,
+): Promise<ValidationResult> {
+	try {
+		const { validateEnvVars } = await import("./env-validation");
+		return validateEnvVars(envVars);
+	} catch (error) {
+		return {
+			success: false,
+			issues: [
+				{
+					message: `Failed to validate environment variables: ${error instanceof Error ? error.message : "Unknown error"}`,
+				},
+			],
+		};
+	}
 }
 
 /**
@@ -199,68 +201,78 @@ export async function validateEnvVars(envVars: Record<string, string>): Promise<
  * @returns Loaded environment data with validation result
  */
 export async function loadAndValidateEnv(options?: {
-    /** Custom list of env files to load */
-    files?: string[];
-    /** Whether to also load NODE_ENV-specific file */
-    loadNodeEnv?: boolean;
-    /** Base directory for env files */
-    cwd?: string;
-    /** Whether to merge with existing Bun.env */
-    mergeWithProcess?: boolean;
-    /** Custom environment variable mappings */
-    mappings?: EnvMapping[];
+	/** Custom list of env files to load */
+	files?: string[];
+	/** Whether to also load NODE_ENV-specific file */
+	loadNodeEnv?: boolean;
+	/** Base directory for env files */
+	cwd?: string;
+	/** Whether to merge with existing Bun.env */
+	mergeWithProcess?: boolean;
+	/** Custom environment variable mappings */
+	mappings?: EnvMapping[];
 }): Promise<{ loaded: LoadedEnv; valid: boolean; errors?: string }> {
-    try {
-        // Load environment variables from files
-        const fileVars = await loadEnvFiles(options);
+	try {
+		// Load environment variables from files
+		const fileVars = await loadEnvFiles(options);
 
-        // Validate the environment variables
-        const validationResult = await validateEnvVars(fileVars);
+		// Validate the environment variables
+		const validationResult = await validateEnvVars(fileVars);
 
-        // Merge with Bun.env if requested
-        const raw: Record<string, string> =
-            options?.mergeWithProcess !== false
-                ? { ...fileVars, ...Object.fromEntries(Object.entries(Bun.env).filter(([, v]) => v !== undefined) as [string, string][]) }
-                : fileVars;
+		// Merge with Bun.env if requested
+		const raw: Record<string, string> =
+			options?.mergeWithProcess !== false
+				? {
+						...fileVars,
+						...Object.fromEntries(
+							Object.entries(Bun.env).filter(([, v]) => v !== undefined) as [
+								string,
+								string,
+							][],
+						),
+					}
+				: fileVars;
 
-        // Transform to config
-        const config = envToConfig(raw, options?.mappings);
+		// Transform to config
+		const config = envToConfig(raw, options?.mappings);
 
-        // Track sources
-        const sources = new Map<string, EnvSourceInfo>();
-        for (const [name, value] of Object.entries(raw)) {
-            sources.set(name, {
-                name,
-                value,
-                source: fileVars[name] !== undefined ? ".env file" : "process",
-            });
-        }
+		// Track sources
+		const sources = new Map<string, EnvSourceInfo>();
+		for (const [name, value] of Object.entries(raw)) {
+			sources.set(name, {
+				name,
+				value,
+				source: fileVars[name] !== undefined ? ".env file" : "process",
+			});
+		}
 
-        // Set loaded vars to Bun.env
-        for (const [key, value] of Object.entries(fileVars)) {
-            if (Bun.env[key] === undefined) {
-                Bun.env[key] = value;
-            }
-        }
+		// Set loaded vars to Bun.env
+		for (const [key, value] of Object.entries(fileVars)) {
+			if (Bun.env[key] === undefined) {
+				Bun.env[key] = value;
+			}
+		}
 
-        const loaded: LoadedEnv = { raw, config, sources };
+		const loaded: LoadedEnv = { raw, config, sources };
 
-        if (!validationResult.success) {
-            return {
-                loaded,
-                valid: false,
-                errors: validationResult.issues.map((issue) => issue.message).join('\n'),
-            };
-        }
+		if (!validationResult.success) {
+			return {
+				loaded,
+				valid: false,
+				errors: validationResult.issues
+					.map((issue) => issue.message)
+					.join("\n"),
+			};
+		}
 
-        return { loaded, valid: true };
-    } catch (error) {
-        return {
-            loaded: { raw: {}, config: {}, sources: new Map() },
-            valid: false,
-            errors: `Failed to load and validate environment variables: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        };
-    }
+		return { loaded, valid: true };
+	} catch (error) {
+		return {
+			loaded: { raw: {}, config: {}, sources: new Map() },
+			valid: false,
+			errors: `Failed to load and validate environment variables: ${error instanceof Error ? error.message : "Unknown error"}`,
+		};
+	}
 }
 
 /**
@@ -317,27 +329,29 @@ export function envToConfig(
  * Load environment variables and transform to configuration
  */
 export async function loadEnv(options?: {
-    /** Custom list of env files to load */
-    files?: string[];
-    /** Whether to load NODE_ENV-specific file */
-    loadNodeEnv?: boolean;
-    /** Base directory for env files */
-    cwd?: string;
-    /** Whether to merge with existing Bun.env */
-    mergeWithProcess?: boolean;
-    /** Custom environment variable mappings */
-    mappings?: EnvMapping[];
+	/** Custom list of env files to load */
+	files?: string[];
+	/** Whether to load NODE_ENV-specific file */
+	loadNodeEnv?: boolean;
+	/** Base directory for env files */
+	cwd?: string;
+	/** Whether to merge with existing Bun.env */
+	mergeWithProcess?: boolean;
+	/** Custom environment variable mappings */
+	mappings?: EnvMapping[];
 }): Promise<LoadedEnv> {
-    // Load and validate environment variables
-    const result = await loadAndValidateEnv(options);
+	// Load and validate environment variables
+	const result = await loadAndValidateEnv(options);
 
-    if (!result.valid) {
-        console.error('Environment variable validation failed:');
-        console.error(result.errors);
-        throw new Error('Environment variable validation failed. Check the error messages above.');
-    }
+	if (!result.valid) {
+		console.error("Environment variable validation failed:");
+		console.error(result.errors);
+		throw new Error(
+			"Environment variable validation failed. Check the error messages above.",
+		);
+	}
 
-    return result.loaded;
+	return result.loaded;
 }
 
 /**
@@ -399,7 +413,7 @@ export function parseEnvBoolean(value: string): boolean {
  * Parse a number environment variable
  */
 export function parseEnvNumber(value: string): number {
-	const num = parseInt(value, 10);
+	const num = Number.parseInt(value, 10);
 	if (isNaN(num)) {
 		throw new Error(`Invalid number: ${value}`);
 	}
@@ -426,22 +440,58 @@ export function parseEnvArray(value: string): string[] {
 export const envConfigMapping: EnvConfigMapping[] = [
 	{ envVar: "BUENO_PORT", configKey: "server.port", transform: parseEnvNumber },
 	{ envVar: "BUENO_HOST", configKey: "server.host" },
-	{ envVar: "BUENO_DEV", configKey: "server.development", transform: parseEnvBoolean },
+	{
+		envVar: "BUENO_DEV",
+		configKey: "server.development",
+		transform: parseEnvBoolean,
+	},
 	{ envVar: "DATABASE_URL", configKey: "database.url" },
-	{ envVar: "DATABASE_POOL_SIZE", configKey: "database.poolSize", transform: parseEnvNumber },
+	{
+		envVar: "DATABASE_POOL_SIZE",
+		configKey: "database.poolSize",
+		transform: parseEnvNumber,
+	},
 	{ envVar: "REDIS_URL", configKey: "cache.url" },
 	{ envVar: "CACHE_DRIVER", configKey: "cache.driver" },
 	{ envVar: "CACHE_TTL", configKey: "cache.ttl", transform: parseEnvNumber },
 	{ envVar: "LOG_LEVEL", configKey: "logger.level" },
-	{ envVar: "LOG_PRETTY", configKey: "logger.pretty", transform: parseEnvBoolean },
-	{ envVar: "HEALTH_ENABLED", configKey: "health.enabled", transform: parseEnvBoolean },
-	{ envVar: "METRICS_ENABLED", configKey: "metrics.enabled", transform: parseEnvBoolean },
-	{ envVar: "TELEMETRY_ENABLED", configKey: "telemetry.enabled", transform: parseEnvBoolean },
+	{
+		envVar: "LOG_PRETTY",
+		configKey: "logger.pretty",
+		transform: parseEnvBoolean,
+	},
+	{
+		envVar: "HEALTH_ENABLED",
+		configKey: "health.enabled",
+		transform: parseEnvBoolean,
+	},
+	{
+		envVar: "METRICS_ENABLED",
+		configKey: "metrics.enabled",
+		transform: parseEnvBoolean,
+	},
+	{
+		envVar: "TELEMETRY_ENABLED",
+		configKey: "telemetry.enabled",
+		transform: parseEnvBoolean,
+	},
 	{ envVar: "TELEMETRY_SERVICE_NAME", configKey: "telemetry.serviceName" },
 	{ envVar: "TELEMETRY_ENDPOINT", configKey: "telemetry.endpoint" },
-	{ envVar: "FRONTEND_DEV_SERVER", configKey: "frontend.devServer", transform: parseEnvBoolean },
-	{ envVar: "FRONTEND_HMR", configKey: "frontend.hmr", transform: parseEnvBoolean },
-	{ envVar: "FRONTEND_PORT", configKey: "frontend.port", transform: parseEnvNumber },
+	{
+		envVar: "FRONTEND_DEV_SERVER",
+		configKey: "frontend.devServer",
+		transform: parseEnvBoolean,
+	},
+	{
+		envVar: "FRONTEND_HMR",
+		configKey: "frontend.hmr",
+		transform: parseEnvBoolean,
+	},
+	{
+		envVar: "FRONTEND_PORT",
+		configKey: "frontend.port",
+		transform: parseEnvNumber,
+	},
 ];
 
 /**
@@ -471,7 +521,10 @@ export function getEnvConfig(
 /**
  * Get an environment variable value
  */
-export function getEnvValue(key: string, defaultValue?: string): string | undefined {
+export function getEnvValue(
+	key: string,
+	defaultValue?: string,
+): string | undefined {
 	return Bun.env[key] ?? defaultValue;
 }
 

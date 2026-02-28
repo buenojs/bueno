@@ -4,17 +4,23 @@
  * Frontend framework-specific configuration templates
  */
 
-import type { FrontendFramework, FrontendTemplateResult } from '../project/types';
-import { reactTemplate } from './react';
-import { vueTemplate } from './vue';
-import { svelteTemplate } from './svelte';
-import { solidTemplate } from './solid';
-import { noneTemplate } from './none';
+import type {
+	FrontendFramework,
+	FrontendTemplateResult,
+} from "../project/types";
+import { noneTemplate } from "./none";
+import { reactTemplate } from "./react";
+import { solidTemplate } from "./solid";
+import { svelteTemplate } from "./svelte";
+import { vueTemplate } from "./vue";
 
 /**
  * Frontend template registry
  */
-const frontendTemplates: Record<FrontendFramework, () => FrontendTemplateResult> = {
+const frontendTemplates: Record<
+	FrontendFramework,
+	() => FrontendTemplateResult
+> = {
 	react: reactTemplate,
 	vue: vueTemplate,
 	svelte: svelteTemplate,
@@ -25,21 +31,33 @@ const frontendTemplates: Record<FrontendFramework, () => FrontendTemplateResult>
 /**
  * Get frontend template based on framework
  */
-export function getFrontendTemplate(framework: FrontendFramework): FrontendTemplateResult {
+export function getFrontendTemplate(
+	framework: FrontendFramework,
+): FrontendTemplateResult {
 	return frontendTemplates[framework]();
 }
 
 /**
  * Get frontend selection options for prompts
  */
-export function getFrontendOptions(): { value: FrontendFramework; name: string; description: string }[] {
+export function getFrontendOptions(): {
+	value: FrontendFramework;
+	name: string;
+	description: string;
+}[] {
 	return [
-		{ value: 'none', name: 'None', description: 'Static website or API only' },
-		{ value: 'react', name: 'React', description: 'React with SSR support' },
-		{ value: 'vue', name: 'Vue', description: 'Vue 3 with SSR support' },
-		{ value: 'svelte', name: 'Svelte', description: 'Svelte with SSR support' },
-		{ value: 'solid', name: 'Solid', description: 'SolidJS with SSR support' },
+		{ value: "none", name: "None", description: "Static website or API only" },
+		{ value: "react", name: "React", description: "React with SSR support" },
+		{ value: "vue", name: "Vue", description: "Vue 3 with SSR support" },
+		{ value: "svelte", name: "Svelte", description: "Svelte with SSR support" },
+		{ value: "solid", name: "Solid", description: "SolidJS with SSR support" },
 	];
 }
 
-export { reactTemplate, vueTemplate, svelteTemplate, solidTemplate, noneTemplate };
+export {
+	reactTemplate,
+	vueTemplate,
+	svelteTemplate,
+	solidTemplate,
+	noneTemplate,
+};

@@ -5,7 +5,7 @@
  * including Solid JSX transforms and Solid-specific optimizations.
  */
 
-import type { FrameworkBuildConfig, BuildPlugin } from "../types.js";
+import type { BuildPlugin, FrameworkBuildConfig } from "../types.js";
 
 /**
  * Solid-specific build plugins
@@ -20,24 +20,26 @@ export function getSolidBuildConfig(): FrameworkBuildConfig {
 		// Solid uses automatic JSX runtime with solid-js
 		jsxRuntime: "automatic",
 		jsxImportSource: "solid-js",
-		
+
 		// Solid-specific file extensions
 		extensions: [".jsx", ".tsx", ".js", ".ts"],
-		
+
 		// Solid-specific plugins
 		plugins: solidPlugins,
-		
+
 		// Solid-specific global defines
 		define: {
 			// Solid production mode
-			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
+			"process.env.NODE_ENV": JSON.stringify(
+				process.env.NODE_ENV || "development",
+			),
 			// Solid-specific flags
-			"DEV": JSON.stringify(process.env.NODE_ENV !== "production"),
+			DEV: JSON.stringify(process.env.NODE_ENV !== "production"),
 		},
-		
+
 		// External dependencies
 		external: [],
-		
+
 		// Loader configurations for Solid files
 		loaders: {
 			".jsx": "jsx",

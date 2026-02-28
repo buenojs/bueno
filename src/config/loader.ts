@@ -3,8 +3,13 @@
  * Uses Bun's native TypeScript loader to import config files
  */
 
-import type { BuenoConfig, DeepPartial, UserConfig, UserConfigFn } from "./types";
 import { deepMerge } from "./merge";
+import type {
+	BuenoConfig,
+	DeepPartial,
+	UserConfig,
+	UserConfigFn,
+} from "./types";
 
 /**
  * Configuration file search order
@@ -74,7 +79,9 @@ export function clearConfigCache(): void {
 /**
  * Get cached config
  */
-export function getCachedConfig(path: string): DeepPartial<BuenoConfig> | undefined {
+export function getCachedConfig(
+	path: string,
+): DeepPartial<BuenoConfig> | undefined {
 	return configCache.get(path);
 }
 
@@ -152,18 +159,18 @@ export async function loadConfigFile<T extends BuenoConfig = BuenoConfig>(
  * Load configuration from file
  * Searches for config files in order and loads the first one found
  */
-export async function loadConfig<T extends BuenoConfig = BuenoConfig>(
-	options?: {
-		/** Custom config file path */
-		configPath?: string;
-		/** Working directory to search for config */
-		cwd?: string;
-		/** Whether to use cache */
-		useCache?: boolean;
-		/** Additional context to pass to config function */
-		context?: Record<string, unknown>;
-	},
-): Promise<LoadedConfig> {
+export async function loadConfig<
+	T extends BuenoConfig = BuenoConfig,
+>(options?: {
+	/** Custom config file path */
+	configPath?: string;
+	/** Working directory to search for config */
+	cwd?: string;
+	/** Whether to use cache */
+	useCache?: boolean;
+	/** Additional context to pass to config function */
+	context?: Record<string, unknown>;
+}): Promise<LoadedConfig> {
 	// If a specific path is provided, use it
 	if (options?.configPath) {
 		return loadConfigFile<T>(options.configPath, {
@@ -306,7 +313,9 @@ export function validateConfigStructure(
 /**
  * Extract config file path from CLI args
  */
-export function getConfigPathFromArgs(args: string[] = process.argv): string | undefined {
+export function getConfigPathFromArgs(
+	args: string[] = process.argv,
+): string | undefined {
 	const configIndex = args.indexOf("--config");
 	if (configIndex !== -1 && args[configIndex + 1]) {
 		return args[configIndex + 1];

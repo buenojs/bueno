@@ -8,17 +8,17 @@
  * - Integration with existing Router
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
 import { Router } from "../router/index.js";
 import type {
+	DynamicRoute,
+	FileRouteOptions,
 	FileRouterConfig,
 	PartialFileRouterConfig,
 	RouteDefinition,
-	RouteMatch,
-	DynamicRoute,
 	RouteHandler,
+	RouteMatch,
 	RouteMiddleware,
-	FileRouteOptions,
 	RouteType,
 } from "./types.js";
 import type { SSRPage } from "./types.js";
@@ -103,7 +103,10 @@ export class FileRouter {
 	/**
 	 * Process a single route file
 	 */
-	private async processRouteFile(filePath: string, basePath: string): Promise<void> {
+	private async processRouteFile(
+		filePath: string,
+		basePath: string,
+	): Promise<void> {
 		const fullPath = `${basePath}/${filePath}`;
 		const routePath = this.filePathToRoute(filePath);
 
@@ -167,7 +170,10 @@ export class FileRouter {
 	 * Determine route type from file path
 	 */
 	private getRouteType(filePath: string): RouteType {
-		if (filePath.startsWith(`${this.config.apiDir}/`) || filePath.startsWith("api/")) {
+		if (
+			filePath.startsWith(`${this.config.apiDir}/`) ||
+			filePath.startsWith("api/")
+		) {
 			return "api";
 		}
 		return "page";
@@ -176,9 +182,12 @@ export class FileRouter {
 	/**
 	 * Parse route pattern and extract parameters
 	 */
-	private parseRoutePattern(routePath: string): { pattern: string; params: string[] } {
+	private parseRoutePattern(routePath: string): {
+		pattern: string;
+		params: string[];
+	} {
 		const params: string[] = [];
-		let pattern = routePath;
+		const pattern = routePath;
 
 		// Match [param] - single parameter
 		const singleParamRegex = /\[([^\]]+)\]/g;
@@ -235,7 +244,10 @@ export class FileRouter {
 
 		for (const route of sortedRoutes) {
 			if (route.type === "page") {
-				this.router.get(route.path, this.createPageHandler(route) as import("../types").RouteHandler);
+				this.router.get(
+					route.path,
+					this.createPageHandler(route) as import("../types").RouteHandler,
+				);
 			} else if (route.type === "api") {
 				this.registerApiRoute(route);
 			}
@@ -298,7 +310,10 @@ export class FileRouter {
 		if (!module) return;
 
 		const handlers: Record<string, RouteHandler> = {};
-		const methodMap: Record<string, (pattern: string, handler: import("../types").RouteHandler) => void> = {
+		const methodMap: Record<
+			string,
+			(pattern: string, handler: import("../types").RouteHandler) => void
+		> = {
 			GET: this.router.get.bind(this.router),
 			POST: this.router.post.bind(this.router),
 			PUT: this.router.put.bind(this.router),
@@ -308,10 +323,23 @@ export class FileRouter {
 			OPTIONS: this.router.options.bind(this.router),
 		};
 
-		for (const method of ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const) {
+		for (const method of [
+			"GET",
+			"POST",
+			"PUT",
+			"PATCH",
+			"DELETE",
+			"HEAD",
+			"OPTIONS",
+		] as const) {
 			if (module[method]) {
 				handlers[method] = module[method];
-				methodMap[method](route.path, this.createApiHandler(route, method) as import("../types").RouteHandler);
+				methodMap[method](
+					route.path,
+					this.createApiHandler(route, method) as import(
+						"../types",
+					).RouteHandler,
+				);
 			}
 		}
 
@@ -321,7 +349,10 @@ export class FileRouter {
 	/**
 	 * Create API handler for a route and method
 	 */
-	private createApiHandler(route: RouteDefinition, method: string): RouteHandler {
+	private createApiHandler(
+		route: RouteDefinition,
+		method: string,
+	): RouteHandler {
 		return async (request: Request) => {
 			const module = await this.loadApiModule(route.filePath);
 			if (!module || !module[method]) {
@@ -357,7 +388,9 @@ export class FileRouter {
 	/**
 	 * Load API module dynamically
 	 */
-	private async loadApiModule(filePath: string): Promise<Record<string, RouteHandler> | null> {
+	private async loadApiModule(
+		filePath: string,
+	): Promise<Record<string, RouteHandler> | null> {
 		try {
 			const module = await import(filePath);
 			return module;
@@ -370,7 +403,10 @@ export class FileRouter {
 	/**
 	 * Extract params from URL using route definition
 	 */
-	private extractParams(pathname: string, route: RouteDefinition): Record<string, string> {
+	private extractParams(
+		pathname: string,
+		route: RouteDefinition,
+	): Record<string, string> {
 		const params: Record<string, string> = {};
 		const match = pathname.match(route.regex);
 
@@ -386,7 +422,10 @@ export class FileRouter {
 	/**
 	 * Create context for request
 	 */
-	private createContext(request: Request, params: Record<string, string> = {}): import("./types").SSRContext {
+	private createContext(
+		request: Request,
+		params: Record<string, string> = {},
+	): import("./types").SSRContext {
 		const url = new URL(request.url);
 		return {
 			request,
@@ -483,7 +522,10 @@ export class FileRouter {
 	/**
 	 * Generate URL for a route
 	 */
-	generateUrl(routeId: string, params: Record<string, string> = {}): string | null {
+	generateUrl(
+		routeId: string,
+		params: Record<string, string> = {},
+	): string | null {
 		for (const route of this.routes.values()) {
 			if (route.id === routeId) {
 				let url = route.path;
@@ -530,7 +572,9 @@ export class FileRouter {
 /**
  * Create a file router
  */
-export function createFileRouter(config: PartialFileRouterConfig = {}): FileRouter {
+export function createFileRouter(
+	config: PartialFileRouterConfig = {},
+): FileRouter {
 	return new FileRouter(config);
 }
 

@@ -31,9 +31,9 @@ export abstract class Relationship<
 
 	constructor(
 		protected parentModel: TParent,
-		protected relatedClass: { new(): TRelated } & typeof Model,
+		protected relatedClass: { new (): TRelated } & typeof Model,
 		protected foreignKey: string,
-		protected localKey: string = "id",
+		protected localKey = "id",
 	) {
 		this.db = getModelDatabase(relatedClass.name);
 		this.query = new OrmQueryBuilder(this.db, relatedClass.table as string);
@@ -47,7 +47,10 @@ export abstract class Relationship<
 	 * private fields are assigned, if the subclass needs them in addConstraints().
 	 */
 	protected initConstraints(): void {
-		this.query = new OrmQueryBuilder(this.db, this.relatedClass.table as string);
+		this.query = new OrmQueryBuilder(
+			this.db,
+			this.relatedClass.table as string,
+		);
 		this.addConstraints();
 	}
 
@@ -83,7 +86,10 @@ export abstract class Relationship<
 	 * Used during eager loading to clear single-model constraints from constructor
 	 */
 	protected resetQuery(): void {
-		this.query = new OrmQueryBuilder(this.db, this.relatedClass.table as string);
+		this.query = new OrmQueryBuilder(
+			this.db,
+			this.relatedClass.table as string,
+		);
 	}
 
 	// ============= Chainable Methods =============
@@ -133,9 +139,7 @@ export abstract class Relationship<
 		// Set the foreign key
 		const model_data = {
 			...data,
-			[this.foreignKey]: this.parentModel.getAttribute(
-				this.localKey as any,
-			),
+			[this.foreignKey]: this.parentModel.getAttribute(this.localKey as any),
 		};
 		return this.relatedClass.create(model_data);
 	}

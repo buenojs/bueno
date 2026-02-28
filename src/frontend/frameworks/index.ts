@@ -5,19 +5,42 @@
  * Each framework module provides configuration for JSX runtime, plugins, and defines.
  */
 
-import type { FrontendFramework, FrameworkBuildConfig } from "../types.js";
+import type { FrameworkBuildConfig, FrontendFramework } from "../types.js";
 
 // Import framework configurations for internal use
 import { getReactBuildConfig, reactFrameworkMeta } from "./react.js";
-import { getVueBuildConfig, vueFrameworkMeta } from "./vue.js";
-import { getSvelteBuildConfig, svelteFrameworkMeta } from "./svelte.js";
 import { getSolidBuildConfig, solidFrameworkMeta } from "./solid.js";
+import { getSvelteBuildConfig, svelteFrameworkMeta } from "./svelte.js";
+import { getVueBuildConfig, vueFrameworkMeta } from "./vue.js";
 
 // Re-export framework configurations
-export { getReactBuildConfig, isReactComponent, getReactRefreshPreamble, reactFrameworkMeta } from "./react.js";
-export { getVueBuildConfig, isVueComponent, isVueJsx, getVueBlockTypes, vueFrameworkMeta } from "./vue.js";
-export { getSvelteBuildConfig, isSvelteComponent, getSveltePreprocessConfig, getSvelteCompilerOptions, svelteFrameworkMeta } from "./svelte.js";
-export { getSolidBuildConfig, isSolidComponent, getSolidRefreshPreamble, getSolidTransformOptions, solidFrameworkMeta } from "./solid.js";
+export {
+	getReactBuildConfig,
+	isReactComponent,
+	getReactRefreshPreamble,
+	reactFrameworkMeta,
+} from "./react.js";
+export {
+	getVueBuildConfig,
+	isVueComponent,
+	isVueJsx,
+	getVueBlockTypes,
+	vueFrameworkMeta,
+} from "./vue.js";
+export {
+	getSvelteBuildConfig,
+	isSvelteComponent,
+	getSveltePreprocessConfig,
+	getSvelteCompilerOptions,
+	svelteFrameworkMeta,
+} from "./svelte.js";
+export {
+	getSolidBuildConfig,
+	isSolidComponent,
+	getSolidRefreshPreamble,
+	getSolidTransformOptions,
+	solidFrameworkMeta,
+} from "./solid.js";
 
 // Framework metadata types
 export interface FrameworkMeta {
@@ -33,7 +56,9 @@ export interface FrameworkMeta {
 /**
  * Get framework build configuration by framework name
  */
-export function getFrameworkConfig(framework: FrontendFramework): FrameworkBuildConfig {
+export function getFrameworkConfig(
+	framework: FrontendFramework,
+): FrameworkBuildConfig {
 	switch (framework) {
 		case "react":
 			return getReactBuildConfig();
@@ -70,7 +95,9 @@ export function getFrameworkMeta(framework: FrontendFramework): FrameworkMeta {
 /**
  * Detect framework from file extension
  */
-export function detectFrameworkFromExtension(filePath: string): FrontendFramework | null {
+export function detectFrameworkFromExtension(
+	filePath: string,
+): FrontendFramework | null {
 	if (filePath.endsWith(".vue")) {
 		return "vue";
 	}

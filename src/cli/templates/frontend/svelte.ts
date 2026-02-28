@@ -2,13 +2,13 @@
  * Svelte Frontend Template
  */
 
-import type { FrontendTemplateResult } from '../project/types';
+import type { FrontendTemplateResult } from "../project/types";
 
 export function svelteTemplate(): FrontendTemplateResult {
 	return {
 		files: [
 			{
-				path: 'client/index.html',
+				path: "client/index.html",
 				content: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +24,7 @@ export function svelteTemplate(): FrontendTemplateResult {
 `,
 			},
 			{
-				path: 'client/src/main.ts',
+				path: "client/src/main.ts",
 				content: `import App from './App.svelte';
 import './styles/globals.css';
 
@@ -36,7 +36,7 @@ export default app;
 `,
 			},
 			{
-				path: 'client/src/App.svelte',
+				path: "client/src/App.svelte",
 				content: `<script lang="ts">
   let count = 0;
 </script>
@@ -85,7 +85,7 @@ export default app;
 `,
 			},
 			{
-				path: 'client/src/styles/globals.css',
+				path: "client/src/styles/globals.css",
 				content: `@tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -109,23 +109,23 @@ body {
 			},
 		],
 		directories: [
-			'client/src/components',
-			'client/src/styles',
-			'client/public',
+			"client/src/components",
+			"client/src/styles",
+			"client/public",
 		],
 		dependencies: {
-			svelte: '^4.2.0',
+			svelte: "^4.2.0",
 		},
 		devDependencies: {
-			'@sveltejs/vite-plugin-svelte': '^3.0.0',
-			svelte: '^4.2.0',
-			tailwindcss: '^3.4.0',
-			postcss: '^8.4.0',
-			autoprefixer: '^10.4.0',
+			"@sveltejs/vite-plugin-svelte": "^3.0.0",
+			svelte: "^4.2.0",
+			tailwindcss: "^3.4.0",
+			postcss: "^8.4.0",
+			autoprefixer: "^10.4.0",
 		},
 		scripts: {
-			'dev:client': 'bun run --watch client/index.html',
-			'build:client': 'bun build ./client/src/main.ts --outdir ./dist/client',
+			"dev:client": "bun run --watch client/index.html",
+			"build:client": "bun build ./client/src/main.ts --outdir ./dist/client",
 		},
 	};
 }

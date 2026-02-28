@@ -637,7 +637,7 @@ export function getHMRClientScript(options?: {
 	if (options?.port) {
 		return HMR_CLIENT_SCRIPT.replace(
 			"return parseInt(window.location.port || '3000', 10) + 1;",
-			`return ${options.port};`
+			`return ${options.port};`,
 		);
 	}
 	return HMR_CLIENT_SCRIPT;
@@ -648,16 +648,18 @@ export function getHMRClientScript(options?: {
  */
 export function injectHMRScript(html: string, port?: number): string {
 	const script = getHMRClientScript({ port });
-	
+
 	// Find the </head> or </body> tag to inject before
 	const headMatch = html.match(/<\/head>/i);
 	const bodyMatch = html.match(/<\/body>/i);
-	
-	const injectionPoint = headMatch ? headMatch.index! + headMatch[0].length : 
-							bodyMatch ? bodyMatch.index! + bodyMatch[0].length : 
-							html.length;
-	
-	const scriptTag = `<script data-hmr-port="${port || ''}">${script}</script>`;
-	
+
+	const injectionPoint = headMatch
+		? headMatch.index! + headMatch[0].length
+		: bodyMatch
+			? bodyMatch.index! + bodyMatch[0].length
+			: html.length;
+
+	const scriptTag = `<script data-hmr-port="${port || ""}">${script}</script>`;
+
 	return html.slice(0, injectionPoint) + scriptTag + html.slice(injectionPoint);
 }

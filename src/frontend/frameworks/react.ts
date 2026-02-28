@@ -5,7 +5,7 @@
  * including JSX runtime, automatic import handling, and React-specific defines.
  */
 
-import type { FrameworkBuildConfig, BuildPlugin } from "../types.js";
+import type { BuildPlugin, FrameworkBuildConfig } from "../types.js";
 
 /**
  * React-specific build plugins
@@ -20,22 +20,24 @@ export function getReactBuildConfig(): FrameworkBuildConfig {
 		// React 17+ automatic JSX runtime
 		jsxRuntime: "automatic",
 		jsxImportSource: "react",
-		
+
 		// React-specific file extensions
 		extensions: [".jsx", ".tsx", ".js", ".ts"],
-		
+
 		// React-specific plugins
 		plugins: reactPlugins,
-		
+
 		// React-specific global defines
 		define: {
 			// Enable React production mode in production builds
-			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
+			"process.env.NODE_ENV": JSON.stringify(
+				process.env.NODE_ENV || "development",
+			),
 		},
-		
+
 		// External dependencies (should not be bundled in library mode)
 		external: [],
-		
+
 		// Loader configurations for React files
 		loaders: {
 			".jsx": "jsx",

@@ -3,7 +3,7 @@
  * Supports Standard Schema validators (Zod, Valibot, ArkType)
  */
 
-import type { StandardSchema, StandardIssue } from "../types";
+import type { StandardIssue, StandardSchema } from "../types";
 import type { BuenoConfig, DeepPartial } from "./types";
 
 /**
@@ -142,10 +142,16 @@ const DEFAULT_RULES: ValidationRule[] = [
 		validate: (value) => {
 			if (value === undefined) return { valid: true };
 			if (typeof value !== "number") {
-				return { valid: false, message: "Slow query threshold must be a number" };
+				return {
+					valid: false,
+					message: "Slow query threshold must be a number",
+				};
 			}
 			if (value < 0) {
-				return { valid: false, message: "Slow query threshold must be non-negative" };
+				return {
+					valid: false,
+					message: "Slow query threshold must be non-negative",
+				};
 			}
 			return { valid: true };
 		},
@@ -215,7 +221,10 @@ const DEFAULT_RULES: ValidationRule[] = [
 				return { valid: false, message: "Collect interval must be a number" };
 			}
 			if (value < 0) {
-				return { valid: false, message: "Collect interval must be non-negative" };
+				return {
+					valid: false,
+					message: "Collect interval must be non-negative",
+				};
 			}
 			return { valid: true };
 		},
@@ -295,7 +304,10 @@ const DEFAULT_RULES: ValidationRule[] = [
 				return { valid: false, message: "Poll interval must be a number" };
 			}
 			if (value < 100) {
-				return { valid: false, message: "Poll interval must be at least 100ms" };
+				return {
+					valid: false,
+					message: "Poll interval must be at least 100ms",
+				};
 			}
 			return { valid: true };
 		},
@@ -354,7 +366,10 @@ const DEFAULT_RULES: ValidationRule[] = [
 				return { valid: false, message: "SMTP port must be a number" };
 			}
 			if (value < 1 || value > 65535) {
-				return { valid: false, message: "SMTP port must be between 1 and 65535" };
+				return {
+					valid: false,
+					message: "SMTP port must be between 1 and 65535",
+				};
 			}
 			return { valid: true };
 		},
@@ -483,7 +498,11 @@ export function validateConfigDefaults(
 		});
 	}
 
-	if (config.cache?.driver === "redis" && !config.cache.url && !process.env.REDIS_URL) {
+	if (
+		config.cache?.driver === "redis" &&
+		!config.cache.url &&
+		!process.env.REDIS_URL
+	) {
 		warnings.push({
 			message: "Redis cache driver selected but no Redis URL configured",
 			path: "cache.url",
@@ -591,7 +610,9 @@ export async function assertValidConfig<T extends BuenoConfig = BuenoConfig>(
 	// Log warnings
 	if (result.warnings.length > 0) {
 		for (const warning of result.warnings) {
-			console.warn(`Config warning: ${warning.message}${warning.path ? ` (at ${warning.path})` : ""}`);
+			console.warn(
+				`Config warning: ${warning.message}${warning.path ? ` (at ${warning.path})` : ""}`,
+			);
 		}
 	}
 }

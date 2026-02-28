@@ -13,10 +13,14 @@
  * - Provide default values
  */
 
-import type { Context } from "../context";
 import type { Token } from "../container";
+import type { Context } from "../context";
 import type { StandardSchema } from "../types";
-import { validate, isStandardSchema, type ValidationResult } from "../validation";
+import {
+	type ValidationResult,
+	isStandardSchema,
+	validate,
+} from "../validation";
 
 // ============= Types =============
 
@@ -74,7 +78,7 @@ export interface PipeTransform<T = unknown, R = unknown> {
  */
 export type PipeFn<T = unknown, R = unknown> = (
 	value: T,
-	context: PipeContext
+	context: PipeContext,
 ) => R | Promise<R>;
 
 /**
@@ -94,7 +98,10 @@ export type Pipe<T = unknown, R = unknown> =
 type Constructor = new (...args: unknown[]) => unknown;
 
 // WeakMap for storing pipes metadata on method prototypes
-const pipesMethodMetadata = new WeakMap<object, Map<string | symbol, ParameterPipeMetadata[]>>();
+const pipesMethodMetadata = new WeakMap<
+	object,
+	Map<string | symbol, ParameterPipeMetadata[]>
+>();
 
 /**
  * Metadata for a parameter with pipes
@@ -103,7 +110,7 @@ export interface ParameterPipeMetadata {
 	/** Parameter index */
 	index: number;
 	/** Parameter decorator type */
-	decorator: 'body' | 'query' | 'param' | 'custom';
+	decorator: "body" | "query" | "param" | "custom";
 	/** Key for query/param decorators */
 	key?: string;
 	/** Schema for validation */
@@ -118,7 +125,7 @@ export interface ParameterPipeMetadata {
 function setMethodPipes(
 	target: object,
 	propertyKey: string | symbol,
-	metadata: ParameterPipeMetadata[]
+	metadata: ParameterPipeMetadata[],
 ): void {
 	if (!pipesMethodMetadata.has(target)) {
 		pipesMethodMetadata.set(target, new Map());
@@ -131,7 +138,7 @@ function setMethodPipes(
  */
 export function getMethodPipes(
 	target: object,
-	propertyKey: string | symbol
+	propertyKey: string | symbol,
 ): ParameterPipeMetadata[] | undefined {
 	return pipesMethodMetadata.get(target)?.get(propertyKey);
 }
@@ -155,7 +162,7 @@ export function UsePipes(...pipes: Pipe[]): ParameterDecorator {
 	return (
 		target: unknown,
 		propertyKey: string | symbol | undefined,
-		parameterIndex: number
+		parameterIndex: number,
 	) => {
 		if (propertyKey === undefined) {
 			throw new Error("UsePipes can only be used on method parameters");
@@ -163,19 +170,19 @@ export function UsePipes(...pipes: Pipe[]): ParameterDecorator {
 
 		const targetObj = target as object;
 		const existing = getMethodPipes(targetObj, propertyKey) ?? [];
-		
+
 		// Find existing metadata for this parameter or create new
-		const existingParam = existing.find(p => p.index === parameterIndex);
+		const existingParam = existing.find((p) => p.index === parameterIndex);
 		if (existingParam) {
 			existingParam.pipes.push(...pipes);
 		} else {
 			existing.push({
 				index: parameterIndex,
-				decorator: 'custom',
-				pipes: [...pipes]
+				decorator: "custom",
+				pipes: [...pipes],
 			});
 		}
-		
+
 		setMethodPipes(targetObj, propertyKey, existing);
 	};
 }
@@ -198,7 +205,7 @@ export function Body(schema?: StandardSchema): ParameterDecorator {
 	return (
 		target: unknown,
 		propertyKey: string | symbol | undefined,
-		parameterIndex: number
+		parameterIndex: number,
 	) => {
 		if (propertyKey === undefined) {
 			throw new Error("Body can only be used on method parameters");
@@ -206,14 +213,14 @@ export function Body(schema?: StandardSchema): ParameterDecorator {
 
 		const targetObj = target as object;
 		const existing = getMethodPipes(targetObj, propertyKey) ?? [];
-		
+
 		existing.push({
 			index: parameterIndex,
-			decorator: 'body',
+			decorator: "body",
 			schema,
-			pipes: schema ? [new ValidationPipe(schema)] : []
+			pipes: schema ? [new ValidationPipe(schema)] : [],
 		});
-		
+
 		setMethodPipes(targetObj, propertyKey, existing);
 	};
 }
@@ -234,11 +241,14 @@ export function Body(schema?: StandardSchema): ParameterDecorator {
  * search(@Query('limit', limitSchema) limit: number) {}
  * ```
  */
-export function Query(key?: string, schema?: StandardSchema): ParameterDecorator {
+export function Query(
+	key?: string,
+	schema?: StandardSchema,
+): ParameterDecorator {
 	return (
 		target: unknown,
 		propertyKey: string | symbol | undefined,
-		parameterIndex: number
+		parameterIndex: number,
 	) => {
 		if (propertyKey === undefined) {
 			throw new Error("Query can only be used on method parameters");
@@ -246,15 +256,15 @@ export function Query(key?: string, schema?: StandardSchema): ParameterDecorator
 
 		const targetObj = target as object;
 		const existing = getMethodPipes(targetObj, propertyKey) ?? [];
-		
+
 		existing.push({
 			index: parameterIndex,
-			decorator: 'query',
+			decorator: "query",
 			key,
 			schema,
-			pipes: schema ? [new ValidationPipe(schema)] : []
+			pipes: schema ? [new ValidationPipe(schema)] : [],
 		});
-		
+
 		setMethodPipes(targetObj, propertyKey, existing);
 	};
 }
@@ -276,7 +286,7 @@ export function Param(key?: string, ...pipes: Pipe[]): ParameterDecorator {
 	return (
 		target: unknown,
 		propertyKey: string | symbol | undefined,
-		parameterIndex: number
+		parameterIndex: number,
 	) => {
 		if (propertyKey === undefined) {
 			throw new Error("Param can only be used on method parameters");
@@ -284,14 +294,14 @@ export function Param(key?: string, ...pipes: Pipe[]): ParameterDecorator {
 
 		const targetObj = target as object;
 		const existing = getMethodPipes(targetObj, propertyKey) ?? [];
-		
+
 		existing.push({
 			index: parameterIndex,
-			decorator: 'param',
+			decorator: "param",
 			key,
-			pipes: [...pipes]
+			pipes: [...pipes],
 		});
-		
+
 		setMethodPipes(targetObj, propertyKey, existing);
 	};
 }
@@ -313,13 +323,16 @@ export class ValidationPipe<T = unknown> implements PipeTransform<unknown, T> {
 
 	async transform(value: unknown, context: PipeContext): Promise<T> {
 		const result: ValidationResult<T> = await validate(this.schema, value);
-		
+
 		if (result.success) {
 			return result.data;
 		}
-		
+
 		// Validation failed
-		const failedResult = result as Extract<ValidationResult<T>, { success: false }>;
+		const failedResult = result as Extract<
+			ValidationResult<T>,
+			{ success: false }
+		>;
 		const error = new Error("Validation failed");
 		(error as Error & { issues: unknown[] }).issues = [...failedResult.issues];
 		throw error;
@@ -336,12 +349,12 @@ export class ValidationPipe<T = unknown> implements PipeTransform<unknown, T> {
  */
 export class ParseIntPipe implements PipeTransform<string, number> {
 	transform(value: string, context: PipeContext): number {
-		const parsed = parseInt(value, 10);
-		
+		const parsed = Number.parseInt(value, 10);
+
 		if (isNaN(parsed)) {
 			throw new Error(`Validation failed: "${value}" is not a valid integer`);
 		}
-		
+
 		return parsed;
 	}
 }
@@ -356,12 +369,12 @@ export class ParseIntPipe implements PipeTransform<string, number> {
  */
 export class ParseFloatPipe implements PipeTransform<string, number> {
 	transform(value: string, context: PipeContext): number {
-		const parsed = parseFloat(value);
-		
+		const parsed = Number.parseFloat(value);
+
 		if (isNaN(parsed)) {
 			throw new Error(`Validation failed: "${value}" is not a valid number`);
 		}
-		
+
 		return parsed;
 	}
 }
@@ -375,20 +388,20 @@ export class ParseFloatPipe implements PipeTransform<string, number> {
  * ```
  */
 export class ParseBoolPipe implements PipeTransform<string, boolean> {
-	private readonly truthyValues = ['true', '1', 'yes', 'on'];
-	private readonly falsyValues = ['false', '0', 'no', 'off'];
+	private readonly truthyValues = ["true", "1", "yes", "on"];
+	private readonly falsyValues = ["false", "0", "no", "off"];
 
 	transform(value: string, context: PipeContext): boolean {
 		const lower = value.toLowerCase();
-		
+
 		if (this.truthyValues.includes(lower)) {
 			return true;
 		}
-		
+
 		if (this.falsyValues.includes(lower)) {
 			return false;
 		}
-		
+
 		throw new Error(`Validation failed: "${value}" is not a valid boolean`);
 	}
 }
@@ -422,8 +435,8 @@ export class DefaultValuePipe<T> implements PipeTransform<unknown, T> {
  */
 export class TrimPipe implements PipeTransform<string, string> {
 	transform(value: string, context: PipeContext): string {
-		if (typeof value !== 'string') {
-			throw new Error('Value must be a string');
+		if (typeof value !== "string") {
+			throw new Error("Value must be a string");
 		}
 		return value.trim();
 	}
@@ -456,13 +469,16 @@ export class ParseJsonPipe<T = unknown> implements PipeTransform<string, T> {
  * ```
  */
 export class ParseArrayPipe implements PipeTransform<string, string[]> {
-	constructor(private separator: string = ',') {}
+	constructor(private separator = ",") {}
 
 	transform(value: string, context: PipeContext): string[] {
-		if (typeof value !== 'string') {
-			throw new Error('Value must be a string');
+		if (typeof value !== "string") {
+			throw new Error("Value must be a string");
 		}
-		return value.split(this.separator).map(s => s.trim()).filter(s => s.length > 0);
+		return value
+			.split(this.separator)
+			.map((s) => s.trim())
+			.filter((s) => s.length > 0);
 	}
 }
 
@@ -492,7 +508,7 @@ export interface PipeExecutorOptions {
 export async function executePipes<T = unknown>(
 	value: unknown,
 	context: PipeContext,
-	options: PipeExecutorOptions
+	options: PipeExecutorOptions,
 ): Promise<T> {
 	const { globalPipes = [], parameterPipes = [], resolvePipe } = options;
 
@@ -509,8 +525,11 @@ export async function executePipes<T = unknown>(
 		if (typeof pipe === "function") {
 			// Check if it's a pipe function or a class constructor
 			const funcPipe = pipe as { prototype?: unknown; transform?: unknown };
-			if (funcPipe.prototype && typeof funcPipe.prototype === "object" &&
-				"transform" in (funcPipe.prototype as object)) {
+			if (
+				funcPipe.prototype &&
+				typeof funcPipe.prototype === "object" &&
+				"transform" in (funcPipe.prototype as object)
+			) {
 				// It's a class constructor - try to resolve from container or create instance
 				pipeInstance = resolvePipe ? resolvePipe(pipe) : null;
 				if (!pipeInstance) {
@@ -559,25 +578,25 @@ export async function executePipes<T = unknown>(
  */
 export async function extractParameterValue(
 	context: Context,
-	metadata: ParameterPipeMetadata
+	metadata: ParameterPipeMetadata,
 ): Promise<unknown> {
 	switch (metadata.decorator) {
-		case 'body':
+		case "body":
 			return await context.body();
-		
-		case 'query':
+
+		case "query":
 			if (metadata.key) {
 				return context.query[metadata.key];
 			}
 			return context.query;
-		
-		case 'param':
+
+		case "param":
 			if (metadata.key) {
 				return context.params[metadata.key];
 			}
 			return context.params;
-		
-		case 'custom':
+
+		case "custom":
 		default:
 			return undefined;
 	}
@@ -590,18 +609,21 @@ export async function extractParameterValue(
  */
 export function createBadRequestResponse(error: Error): Response {
 	const issues = (error as Error & { issues?: unknown[] }).issues;
-	
-	return new Response(JSON.stringify({
-		statusCode: 400,
-		error: "Bad Request",
-		message: error.message,
-		...(issues && { issues })
-	}), {
-		status: 400,
-		headers: {
-			"Content-Type": "application/json",
+
+	return new Response(
+		JSON.stringify({
+			statusCode: 400,
+			error: "Bad Request",
+			message: error.message,
+			...(issues && { issues }),
+		}),
+		{
+			status: 400,
+			headers: {
+				"Content-Type": "application/json",
+			},
 		},
-	});
+	);
 }
 
 // ============= Type Guards =============

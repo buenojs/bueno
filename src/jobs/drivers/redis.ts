@@ -177,11 +177,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 		hgetall: (key: string) => Promise<Record<string, string>>;
 		hset: (key: string, field: string, value: string) => Promise<number>;
 		hincrby: (key: string, field: string, increment: number) => Promise<number>;
-		eval: (
-			script: string,
-			keys: string[],
-			args: string[],
-		) => Promise<unknown>;
+		eval: (script: string, keys: string[], args: string[]) => Promise<unknown>;
 		flushdb: () => Promise<void>;
 	} {
 		return this.client as any;
@@ -253,11 +249,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 		await client.set(this.key(`job:${jobId}`), JSON.stringify(job));
 
 		// Add to pending queue (sorted by creation time for FIFO)
-		await client.zadd(
-			this.key("queue:pending"),
-			scheduledScore,
-			jobId,
-		);
+		await client.zadd(this.key("queue:pending"), scheduledScore, jobId);
 
 		// Update metrics
 		await client.hincrby(this.key("metrics"), "enqueued", 1);
@@ -265,10 +257,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 		return jobId;
 	}
 
-	async claim(
-		count: number,
-		timeout: number,
-	): Promise<Job[]> {
+	async claim(count: number, timeout: number): Promise<Job[]> {
 		const client = this.getClient();
 		const now = Date.now();
 		const claimed: Job[] = [];
@@ -298,11 +287,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 
 				// Atomically move to processing
 				await client.set(jobKey, JSON.stringify(job));
-				await client.zadd(
-					this.key("queue:processing"),
-					now + timeout,
-					jobId,
-				);
+				await client.zadd(this.key("queue:processing"), now + timeout, jobId);
 				await client.zrem(this.key("queue:pending"), jobId);
 
 				claimed.push(job);
@@ -331,8 +316,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 
 		if (job.startedAt) {
 			job.duration =
-				new Date(job.completedAt).getTime() -
-				new Date(job.startedAt).getTime();
+				new Date(job.completedAt).getTime() - new Date(job.startedAt).getTime();
 		}
 
 		// Update job and remove from processing
@@ -365,11 +349,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 
 		await client.set(jobKey, JSON.stringify(job));
 		await client.zrem(this.key("queue:processing"), jobId);
-		await client.zadd(
-			this.key("queue:failed"),
-			Date.now(),
-			jobId,
-		);
+		await client.zadd(this.key("queue:failed"), Date.now(), jobId);
 
 		// Update metrics
 		await client.hincrby(this.key("metrics"), "failed", 1);
@@ -396,11 +376,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 		await client.zrem(this.key("queue:processing"), jobId);
 
 		// Re-add to pending with scheduled timestamp
-		await client.zadd(
-			this.key("queue:pending"),
-			Date.now() + delayMs,
-			jobId,
-		);
+		await client.zadd(this.key("queue:pending"), Date.now() + delayMs, jobId);
 
 		// Update metrics
 		await client.hincrby(this.key("metrics"), "retried", 1);
@@ -422,11 +398,11 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 		const pendingCount = await client.zcard(this.key("queue:pending"));
 		const processingCount = await client.zcard(this.key("queue:processing"));
 
-		const enqueued = parseInt(metricsData.enqueued || "0");
-		const processed = parseInt(metricsData.processed || "0");
-		const failed = parseInt(metricsData.failed || "0");
-		const totalLatency = parseInt(metricsData.totalLatency || "0");
-		const retried = parseInt(metricsData.retried || "0");
+		const enqueued = Number.parseInt(metricsData.enqueued || "0");
+		const processed = Number.parseInt(metricsData.processed || "0");
+		const failed = Number.parseInt(metricsData.failed || "0");
+		const totalLatency = Number.parseInt(metricsData.totalLatency || "0");
+		const retried = Number.parseInt(metricsData.retried || "0");
 
 		const total = enqueued;
 		const successRate = total > 0 ? processed / total : 0;
@@ -457,11 +433,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 		];
 
 		// Also clear all job data
-		const pendingJobs = await client.zrange(
-			this.key("queue:pending"),
-			0,
-			-1,
-		);
+		const pendingJobs = await client.zrange(this.key("queue:pending"), 0, -1);
 		for (const jobId of pendingJobs) {
 			keys.push(this.key(`job:${jobId}`));
 		}
@@ -475,11 +447,7 @@ export class RedisJobQueueDriver implements JobQueueDriver {
 			keys.push(this.key(`job:${jobId}`));
 		}
 
-		const failedJobs = await client.zrange(
-			this.key("queue:failed"),
-			0,
-			-1,
-		);
+		const failedJobs = await client.zrange(this.key("queue:failed"), 0, -1);
 		for (const jobId of failedJobs) {
 			keys.push(this.key(`job:${jobId}`));
 		}

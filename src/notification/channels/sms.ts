@@ -5,7 +5,7 @@
  * (Twilio, AWS SNS, custom)
  */
 
-import type { SMSMessage, SMSChannelConfig } from "../types";
+import type { SMSChannelConfig, SMSMessage } from "../types";
 import { BaseChannelService } from "./base";
 
 // ============= SMS Channel Service =============
@@ -36,7 +36,9 @@ export class SMSChannelService extends BaseChannelService<SMSMessage> {
 		}
 
 		if (typeof msg.recipient !== "string" || msg.recipient.length === 0) {
-			throw new Error("Invalid SMS message: recipient (phone number) is required");
+			throw new Error(
+				"Invalid SMS message: recipient (phone number) is required",
+			);
 		}
 
 		if (typeof msg.message !== "string" || msg.message.length === 0) {
@@ -44,7 +46,9 @@ export class SMSChannelService extends BaseChannelService<SMSMessage> {
 		}
 
 		if (msg.message.length > 160) {
-			console.warn(`SMS message exceeds 160 characters (${msg.message.length}), will be split`);
+			console.warn(
+				`SMS message exceeds 160 characters (${msg.message.length}), will be split`,
+			);
 		}
 	}
 
@@ -63,7 +67,9 @@ export class SMSChannelService extends BaseChannelService<SMSMessage> {
 			// In a real implementation, delegate to appropriate driver
 			// For now, simulate sending
 			const messageId = this._generateMessageId();
-			console.log(`[SMSChannel] SMS sent: ${messageId} to ${message.recipient}`);
+			console.log(
+				`[SMSChannel] SMS sent: ${messageId} to ${message.recipient}`,
+			);
 			this.sentCount++;
 
 			return messageId;

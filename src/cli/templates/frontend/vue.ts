@@ -2,13 +2,13 @@
  * Vue Frontend Template
  */
 
-import type { FrontendTemplateResult } from '../project/types';
+import type { FrontendTemplateResult } from "../project/types";
 
 export function vueTemplate(): FrontendTemplateResult {
 	return {
 		files: [
 			{
-				path: 'client/index.html',
+				path: "client/index.html",
 				content: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +24,7 @@ export function vueTemplate(): FrontendTemplateResult {
 `,
 			},
 			{
-				path: 'client/src/main.ts',
+				path: "client/src/main.ts",
 				content: `import { createApp } from 'vue';
 import App from './App.vue';
 import './styles/globals.css';
@@ -33,7 +33,7 @@ createApp(App).mount('#app');
 `,
 			},
 			{
-				path: 'client/src/App.vue',
+				path: "client/src/App.vue",
 				content: `<script setup lang="ts">
 import { ref } from 'vue';
 
@@ -86,7 +86,7 @@ const count = ref(0);
 `,
 			},
 			{
-				path: 'client/src/styles/globals.css',
+				path: "client/src/styles/globals.css",
 				content: `@tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -110,21 +110,21 @@ body {
 			},
 		],
 		directories: [
-			'client/src/components',
-			'client/src/styles',
-			'client/public',
+			"client/src/components",
+			"client/src/styles",
+			"client/public",
 		],
 		dependencies: {
-			vue: '^3.4.0',
+			vue: "^3.4.0",
 		},
 		devDependencies: {
-			tailwindcss: '^3.4.0',
-			postcss: '^8.4.0',
-			autoprefixer: '^10.4.0',
+			tailwindcss: "^3.4.0",
+			postcss: "^8.4.0",
+			autoprefixer: "^10.4.0",
 		},
 		scripts: {
-			'dev:client': 'bun run --watch client/index.html',
-			'build:client': 'bun build ./client/src/main.ts --outdir ./dist/client',
+			"dev:client": "bun run --watch client/index.html",
+			"build:client": "bun build ./client/src/main.ts --outdir ./dist/client",
 		},
 	};
 }

@@ -200,7 +200,6 @@ function parseTableRow(line: string): string[] {
 	return content.split("|").map((cell) => cell.trim());
 }
 
-
 function parseMarkdown(markdown: string): string {
 	let html = markdown;
 
@@ -241,8 +240,8 @@ function parseMarkdown(markdown: string): string {
 		// Generate slug from heading text
 		const slug = trimmedText
 			.toLowerCase()
-			.replace(/[^a-z0-9]+/g, '-')
-			.replace(/^-|-$/g, '');
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-|-$/g, "");
 		return `<h${level} id="${slug}">${trimmedText}</h${level}>`;
 	});
 
@@ -495,11 +494,13 @@ export class SSG {
 
 		if (!layout) {
 			console.warn(`Layout not found: ${layoutName}, using default`);
-			return this.layouts.get("default")?.({
-				content: page.html,
-				page,
-				site: this.siteConfig,
-			}) ?? "";
+			return (
+				this.layouts.get("default")?.({
+					content: page.html,
+					page,
+					site: this.siteConfig,
+				}) ?? ""
+			);
 		}
 
 		return layout({

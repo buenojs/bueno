@@ -4,6 +4,6 @@
  * Re-exports all utility functions
  */
 
-export * from './strings';
-export * from './fs';
-export * from './version';
+export * from "./strings";
+export * from "./fs";
+export * from "./version";

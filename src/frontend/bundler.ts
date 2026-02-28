@@ -13,26 +13,26 @@
  * - Build manifest for SSR integration
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
 import { watch } from "fs";
 import type { FSWatcher } from "fs";
+import { type Logger, createLogger } from "../logger/index.js";
+import { getFrameworkConfig, getFrameworkMeta } from "./frameworks/index.js";
 import type {
-	BundlerConfig,
-	PartialBundlerConfig,
-	BuildResult,
-	BuildOutput,
 	BuildError,
-	BuildWarning,
 	BuildManifest,
-	BundleAnalysis,
+	BuildOutput,
+	BuildResult,
+	BuildWarning,
 	BuildWatchCallback,
+	BundleAnalysis,
+	BundlerConfig,
 	BundlerState,
-	FrontendFramework,
 	FrameworkBuildConfig,
 	FrameworkDetectionResult,
+	FrontendFramework,
 	PackageDependencies,
+	PartialBundlerConfig,
 } from "./types.js";
-import { getFrameworkConfig, getFrameworkMeta } from "./frameworks/index.js";
 
 // ============= Constants =============
 
@@ -64,7 +64,9 @@ function detectFramework(rootDir: string): FrameworkDetectionResult {
 		}
 
 		// Read package.json synchronously
-		const packageJson = JSON.parse(require("fs").readFileSync(packageJsonPath, "utf-8"));
+		const packageJson = JSON.parse(
+			require("fs").readFileSync(packageJsonPath, "utf-8"),
+		);
 		const dependencies: PackageDependencies = {
 			...packageJson.dependencies,
 			...packageJson.devDependencies,
@@ -72,7 +74,12 @@ function detectFramework(rootDir: string): FrameworkDetectionResult {
 
 		// Check for each framework in order of specificity
 		// Solid and Svelte are more specific than React/Vue
-		const frameworkOrder: FrontendFramework[] = ["solid", "svelte", "vue", "react"];
+		const frameworkOrder: FrontendFramework[] = [
+			"solid",
+			"svelte",
+			"vue",
+			"react",
+		];
 
 		for (const framework of frameworkOrder) {
 			const indicators = FRAMEWORK_INDICATORS[framework];
@@ -243,20 +250,25 @@ export class Bundler {
 			// Build using Bun.build()
 			const buildResult = await Bun.build({
 				entrypoints: entryPoints.map((e) =>
-					e.startsWith("/") ? e : `${this.config.rootDir}/${e}`
+					e.startsWith("/") ? e : `${this.config.rootDir}/${e}`,
 				),
 				outdir: this.config.outDir,
 				minify: this.config.minify,
 				splitting: this.config.splitting,
-				sourcemap: this.config.sourcemap === "none" ? "external" : this.config.sourcemap,
+				sourcemap:
+					this.config.sourcemap === "none" ? "external" : this.config.sourcemap,
 				define,
 				external: [...this.config.external, ...frameworkConfig.external],
 				target: this.config.target,
 				format: this.config.format,
 				// JSX configuration
-				jsx: frameworkConfig.jsxRuntime === "automatic"
-					? { runtime: "automatic", importSource: frameworkConfig.jsxImportSource }
-					: { runtime: "classic" },
+				jsx:
+					frameworkConfig.jsxRuntime === "automatic"
+						? {
+								runtime: "automatic",
+								importSource: frameworkConfig.jsxImportSource,
+							}
+						: { runtime: "classic" },
 				// Public path for assets
 				publicPath: this.config.publicPath,
 				// Generate manifest
@@ -321,7 +333,8 @@ export class Bundler {
 				outputs: [],
 				errors: [
 					{
-						message: error instanceof Error ? error.message : "Unknown build error",
+						message:
+							error instanceof Error ? error.message : "Unknown build error",
 						stack: error instanceof Error ? error.stack : undefined,
 					},
 				],
@@ -359,22 +372,22 @@ export class Bundler {
 			: [this.config.entryPoints];
 
 		const srcDir = `${this.config.rootDir}/src`;
-		
+
 		this.watcher = watch(
 			srcDir,
 			{ recursive: true },
 			async (event: "rename" | "change", filename: string | null) => {
 				if (!filename) return;
-				
+
 				const filePath = `${srcDir}/${filename}`;
 				this.logger.debug(`File changed: ${filePath}`);
-				
+
 				// Check if changed file is relevant
 				if (this.isRelevantFile(filePath, entryPoints)) {
 					const result = await this.build();
 					callback(result);
 				}
-			}
+			},
 		);
 
 		this.logger.info("Watching for file changes...");
@@ -485,7 +498,11 @@ export class Bundler {
 	/**
 	 * Parse build error from Bun build log
 	 */
-	private parseBuildError(log: { message: string; position?: { line: number; column: number } | null; file?: string }): BuildError {
+	private parseBuildError(log: {
+		message: string;
+		position?: { line: number; column: number } | null;
+		file?: string;
+	}): BuildError {
 		return {
 			message: log.message,
 			file: log.file,
@@ -497,7 +514,11 @@ export class Bundler {
 	/**
 	 * Parse build warning from Bun build log
 	 */
-	private parseBuildWarning(log: { message: string; position?: { line: number; column: number } | null; file?: string }): BuildWarning {
+	private parseBuildWarning(log: {
+		message: string;
+		position?: { line: number; column: number } | null;
+		file?: string;
+	}): BuildWarning {
 		return {
 			message: log.message,
 			file: log.file,
@@ -509,7 +530,9 @@ export class Bundler {
 	/**
 	 * Process build outputs from Bun.build result
 	 */
-	private processBuildOutputs(outputs: Awaited<ReturnType<typeof Bun.build>>["outputs"]): BuildOutput[] {
+	private processBuildOutputs(
+		outputs: Awaited<ReturnType<typeof Bun.build>>["outputs"],
+	): BuildOutput[] {
 		return outputs.map((output) => {
 			const path = output.path.replace(`${this.config.outDir}/`, "");
 			const type = this.getOutputType(output.path);
@@ -553,7 +576,7 @@ export class Bundler {
 	private async generateManifest(
 		buildResult: Awaited<ReturnType<typeof Bun.build>>,
 		outputs: BuildOutput[],
-		duration: number
+		duration: number,
 	): Promise<BuildManifest> {
 		const entryPoints: Record<string, string[]> = {};
 		const files: BuildManifest["files"] = {};
@@ -561,17 +584,28 @@ export class Bundler {
 
 		// Process entry points
 		const entryNames = Array.isArray(this.config.entryPoints)
-			? this.config.entryPoints.map((e) => e.split("/").pop()?.replace(/\.[^.]+$/, "") || "main")
-			: [this.config.entryPoints.split("/").pop()?.replace(/\.[^.]+$/, "") || "main"];
+			? this.config.entryPoints.map(
+					(e) =>
+						e
+							.split("/")
+							.pop()
+							?.replace(/\.[^.]+$/, "") || "main",
+				)
+			: [
+					this.config.entryPoints
+						.split("/")
+						.pop()
+						?.replace(/\.[^.]+$/, "") || "main",
+				];
 
 		for (const name of entryNames) {
 			entryPoints[name] = outputs
-				.filter((o) => o.type === "js" && (o.entryPoint === name || !o.entryPoint))
+				.filter(
+					(o) => o.type === "js" && (o.entryPoint === name || !o.entryPoint),
+				)
 				.map((o) => o.path);
 
-			css[name] = outputs
-				.filter((o) => o.type === "css")
-				.map((o) => o.path);
+			css[name] = outputs.filter((o) => o.type === "css").map((o) => o.path);
 		}
 
 		// Process all files
@@ -612,7 +646,15 @@ export class Bundler {
 		}
 
 		// Check file extension
-		const supportedExtensions = [".ts", ".tsx", ".js", ".jsx", ".css", ".vue", ".svelte"];
+		const supportedExtensions = [
+			".ts",
+			".tsx",
+			".js",
+			".jsx",
+			".css",
+			".vue",
+			".svelte",
+		];
 		return supportedExtensions.some((ext) => filePath.endsWith(ext));
 	}
 }
@@ -633,7 +675,7 @@ export function createBundler(config: PartialBundlerConfig): Bundler {
  */
 export async function build(
 	entryPoints: string | string[],
-	options?: Partial<Omit<PartialBundlerConfig, "entryPoints">>
+	options?: Partial<Omit<PartialBundlerConfig, "entryPoints">>,
 ): Promise<BuildResult> {
 	const bundler = createBundler({
 		entryPoints,

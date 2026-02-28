@@ -10,7 +10,12 @@
 /**
  * Span kind enumeration
  */
-export type SpanKind = "server" | "client" | "producer" | "consumer" | "internal";
+export type SpanKind =
+	| "server"
+	| "client"
+	| "producer"
+	| "consumer"
+	| "internal";
 
 /**
  * Span status code
@@ -80,7 +85,11 @@ export interface SpanOptions {
 	/** Initial attributes */
 	attributes?: Record<string, string | number | boolean>;
 	/** Links to other spans */
-	links?: Array<{ traceId: string; spanId: string; attributes?: Record<string, string | number | boolean> }>;
+	links?: Array<{
+		traceId: string;
+		spanId: string;
+		attributes?: Record<string, string | number | boolean>;
+	}>;
 	/** Start time in nanoseconds (defaults to current time) */
 	startTime?: number;
 }
@@ -215,7 +224,7 @@ export function generateSpanId(): string {
 function hexToBase64(hex: string): string {
 	const bytes = new Uint8Array(hex.length / 2);
 	for (let i = 0; i < hex.length; i += 2) {
-		bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+		bytes[i / 2] = Number.parseInt(hex.substring(i, i + 2), 16);
 	}
 	return btoa(String.fromCharCode(...bytes));
 }
@@ -230,7 +239,10 @@ export function nowNanoseconds(): number {
 /**
  * Convert an attribute value to OTLP format
  */
-function toOTLPAttribute(key: string, value: string | number | boolean): OTLPAttribute {
+function toOTLPAttribute(
+	key: string,
+	value: string | number | boolean,
+): OTLPAttribute {
 	if (typeof value === "string") {
 		return { key, value: { stringValue: value } };
 	} else if (typeof value === "number") {
@@ -289,7 +301,7 @@ export class OTLPExporter {
 	private pendingSpans: Span[] = [];
 	private exportTimer: Timer | null = null;
 	private isShuttingDown = false;
-	private serviceName: string = "unknown-service";
+	private serviceName = "unknown-service";
 	private resourceAttributes: Record<string, string | number | boolean> = {};
 
 	constructor(options: OTLPExporterOptions) {
@@ -315,7 +327,9 @@ export class OTLPExporter {
 	/**
 	 * Set resource attributes
 	 */
-	setResourceAttributes(attributes: Record<string, string | number | boolean>): void {
+	setResourceAttributes(
+		attributes: Record<string, string | number | boolean>,
+	): void {
 		this.resourceAttributes = { ...attributes };
 	}
 
@@ -444,17 +458,23 @@ export class OTLPExporter {
 		const otlpSpans: OTLPSpan[] = spans.map((span) => ({
 			traceId: hexToBase64(span.traceId),
 			spanId: hexToBase64(span.spanId),
-			parentSpanId: span.parentSpanId ? hexToBase64(span.parentSpanId) : undefined,
+			parentSpanId: span.parentSpanId
+				? hexToBase64(span.parentSpanId)
+				: undefined,
 			name: span.name,
 			kind: spanKindToOTLP(span.kind),
 			startTimeUnixNano: span.startTime,
 			endTimeUnixNano: span.endTime ?? span.startTime,
-			attributes: Object.entries(span.attributes).map(([k, v]) => toOTLPAttribute(k, v)),
+			attributes: Object.entries(span.attributes).map(([k, v]) =>
+				toOTLPAttribute(k, v),
+			),
 			events: span.events.map((event) => ({
 				timeUnixNano: event.timestamp,
 				name: event.name,
 				attributes: event.attributes
-					? Object.entries(event.attributes).map(([k, v]) => toOTLPAttribute(k, v))
+					? Object.entries(event.attributes).map(([k, v]) =>
+							toOTLPAttribute(k, v),
+						)
 					: [],
 			})),
 			status: {
@@ -612,14 +632,19 @@ export class Tracer {
 
 			// Pop from stack
 			this.spanStack.pop();
-			this.currentSpan = previousSpan ?? this.spanStack[this.spanStack.length - 1] ?? null;
+			this.currentSpan =
+				previousSpan ?? this.spanStack[this.spanStack.length - 1] ?? null;
 		}
 	}
 
 	/**
 	 * Add an event to a span
 	 */
-	addEvent(span: Span, name: string, attributes?: Record<string, string | number | boolean>): void {
+	addEvent(
+		span: Span,
+		name: string,
+		attributes?: Record<string, string | number | boolean>,
+	): void {
 		if (span.ended) return;
 
 		span.events.push({
@@ -632,7 +657,11 @@ export class Tracer {
 	/**
 	 * Set an attribute on a span
 	 */
-	setAttribute(span: Span, key: string, value: string | number | boolean): void {
+	setAttribute(
+		span: Span,
+		key: string,
+		value: string | number | boolean,
+	): void {
 		if (span.ended) return;
 		span.attributes[key] = value;
 	}
@@ -640,7 +669,10 @@ export class Tracer {
 	/**
 	 * Set multiple attributes on a span
 	 */
-	setAttributes(span: Span, attributes: Record<string, string | number | boolean>): void {
+	setAttributes(
+		span: Span,
+		attributes: Record<string, string | number | boolean>,
+	): void {
 		if (span.ended) return;
 		Object.assign(span.attributes, attributes);
 	}
@@ -725,7 +757,7 @@ export class Tracer {
 		return {
 			traceId,
 			spanId,
-			traceFlags: parseInt(flags, 16),
+			traceFlags: Number.parseInt(flags, 16),
 			traceState: carrier["tracestate"] ?? carrier["Tracestate"],
 		};
 	}
@@ -789,7 +821,10 @@ export class Tracer {
 /**
  * Create a configured tracer
  */
-export function createTracer(serviceName: string, options: Omit<TracerOptions, "serviceName"> = {}): Tracer {
+export function createTracer(
+	serviceName: string,
+	options: Omit<TracerOptions, "serviceName"> = {},
+): Tracer {
 	return new Tracer({
 		...options,
 		serviceName,
@@ -847,7 +882,11 @@ export function traceMiddleware(tracer: Tracer) {
 
 		let span: Span;
 		if (parentContext) {
-			span = tracer.startSpanFromContext(`${ctx.method} ${ctx.path}`, parentContext, spanOptions);
+			span = tracer.startSpanFromContext(
+				`${ctx.method} ${ctx.path}`,
+				parentContext,
+				spanOptions,
+			);
 		} else {
 			span = tracer.startSpan(`${ctx.method} ${ctx.path}`, spanOptions);
 		}
@@ -895,7 +934,11 @@ interface TracedDatabase {
 /**
  * Wrap database with tracing
  */
-export function traceDatabase(tracer: Tracer, db: TracedDatabase, system: string = "unknown"): TracedDatabase {
+export function traceDatabase(
+	tracer: Tracer,
+	db: TracedDatabase,
+	system = "unknown",
+): TracedDatabase {
 	const tracedDb: TracedDatabase = { ...db };
 
 	// Wrap query method
@@ -958,7 +1001,9 @@ export function traceDatabase(tracer: Tracer, db: TracedDatabase, system: string
  */
 function extractOperation(sql: string): string {
 	const normalized = sql.trim().toUpperCase();
-	const match = normalized.match(/^(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TRUNCATE)/);
+	const match = normalized.match(
+		/^(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TRUNCATE)/,
+	);
 	return match ? match[1] : "UNKNOWN";
 }
 
@@ -977,7 +1022,9 @@ interface TracedFetchOptions extends RequestInit {
 /**
  * Create a traced fetch function
  */
-export function createTracedFetch(tracer: Tracer): (url: string | URL, options?: TracedFetchOptions) => Promise<Response> {
+export function createTracedFetch(
+	tracer: Tracer,
+): (url: string | URL, options?: TracedFetchOptions) => Promise<Response> {
 	return async (url: string | URL, options: TracedFetchOptions = {}) => {
 		const { parentSpan, attributes = {}, ...fetchOptions } = options;
 		const urlStr = url.toString();
@@ -1052,7 +1099,10 @@ export class SpanBuilder {
 	/**
 	 * Add an event
 	 */
-	addEvent(name: string, attributes?: Record<string, string | number | boolean>): this {
+	addEvent(
+		name: string,
+		attributes?: Record<string, string | number | boolean>,
+	): this {
 		this.tracer.addEvent(this.span, name, attributes);
 		return this;
 	}
@@ -1092,6 +1142,10 @@ export class SpanBuilder {
 /**
  * Create a span builder
  */
-export function span(tracer: Tracer, name: string, options: SpanOptions = {}): SpanBuilder {
+export function span(
+	tracer: Tracer,
+	name: string,
+	options: SpanOptions = {},
+): SpanBuilder {
 	return new SpanBuilder(tracer, name, options);
 }

@@ -414,6 +414,6 @@ export const CONSOLE_CLIENT_SCRIPT = `
 export function getConsoleClientScript(port: number): string {
 	return CONSOLE_CLIENT_SCRIPT.replace(
 		/typeof CONSOLE_PORT !== 'undefined' \? CONSOLE_PORT : \d+/,
-		`typeof CONSOLE_PORT !== 'undefined' ? CONSOLE_PORT : ${port}`
+		`typeof CONSOLE_PORT !== 'undefined' ? CONSOLE_PORT : ${port}`,
 	);
 }

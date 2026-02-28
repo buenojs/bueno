@@ -20,7 +20,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["bun-types"],
+    "types": ["bun-types", "bun-types/test-globals"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictBindCallApply": false,

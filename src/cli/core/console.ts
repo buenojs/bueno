@@ -7,44 +7,47 @@
 
 // ANSI color codes
 const COLORS = {
-	reset: '\x1b[0m',
-	bold: '\x1b[1m',
-	dim: '\x1b[2m',
-	italic: '\x1b[3m',
-	underline: '\x1b[4m',
-	
+	reset: "\x1b[0m",
+	bold: "\x1b[1m",
+	dim: "\x1b[2m",
+	italic: "\x1b[3m",
+	underline: "\x1b[4m",
+
 	// Foreground colors
-	black: '\x1b[30m',
-	red: '\x1b[31m',
-	green: '\x1b[32m',
-	yellow: '\x1b[33m',
-	blue: '\x1b[34m',
-	magenta: '\x1b[35m',
-	cyan: '\x1b[36m',
-	white: '\x1b[37m',
-	
+	black: "\x1b[30m",
+	red: "\x1b[31m",
+	green: "\x1b[32m",
+	yellow: "\x1b[33m",
+	blue: "\x1b[34m",
+	magenta: "\x1b[35m",
+	cyan: "\x1b[36m",
+	white: "\x1b[37m",
+
 	// Bright foreground colors
-	brightRed: '\x1b[91m',
-	brightGreen: '\x1b[92m',
-	brightYellow: '\x1b[93m',
-	brightBlue: '\x1b[94m',
-	brightMagenta: '\x1b[95m',
-	brightCyan: '\x1b[96m',
-	brightWhite: '\x1b[97m',
-	
+	brightRed: "\x1b[91m",
+	brightGreen: "\x1b[92m",
+	brightYellow: "\x1b[93m",
+	brightBlue: "\x1b[94m",
+	brightMagenta: "\x1b[95m",
+	brightCyan: "\x1b[96m",
+	brightWhite: "\x1b[97m",
+
 	// Background colors
-	bgBlack: '\x1b[40m',
-	bgRed: '\x1b[41m',
-	bgGreen: '\x1b[42m',
-	bgYellow: '\x1b[43m',
-	bgBlue: '\x1b[44m',
-	bgMagenta: '\x1b[45m',
-	bgCyan: '\x1b[46m',
-	bgWhite: '\x1b[47m',
+	bgBlack: "\x1b[40m",
+	bgRed: "\x1b[41m",
+	bgGreen: "\x1b[42m",
+	bgYellow: "\x1b[43m",
+	bgBlue: "\x1b[44m",
+	bgMagenta: "\x1b[45m",
+	bgCyan: "\x1b[46m",
+	bgWhite: "\x1b[47m",
 } as const;
 
 // Check if colors should be disabled
-let colorEnabled = !process.env.NO_COLOR && process.env.BUENO_NO_COLOR !== 'true' && process.stdout.isTTY;
+let colorEnabled =
+	!process.env.NO_COLOR &&
+	process.env.BUENO_NO_COLOR !== "true" &&
+	process.stdout.isTTY;
 
 /**
  * Enable or disable colored output
@@ -72,22 +75,22 @@ function colorize(text: string, color: keyof typeof COLORS): string {
  * Color helper functions
  */
 export const colors = {
-	red: (text: string) => colorize(text, 'red'),
-	green: (text: string) => colorize(text, 'green'),
-	yellow: (text: string) => colorize(text, 'yellow'),
-	blue: (text: string) => colorize(text, 'blue'),
-	magenta: (text: string) => colorize(text, 'magenta'),
-	cyan: (text: string) => colorize(text, 'cyan'),
-	white: (text: string) => colorize(text, 'white'),
-	brightRed: (text: string) => colorize(text, 'brightRed'),
-	brightGreen: (text: string) => colorize(text, 'brightGreen'),
-	brightYellow: (text: string) => colorize(text, 'brightYellow'),
-	brightBlue: (text: string) => colorize(text, 'brightBlue'),
-	brightCyan: (text: string) => colorize(text, 'brightCyan'),
-	dim: (text: string) => colorize(text, 'dim'),
-	bold: (text: string) => colorize(text, 'bold'),
-	underline: (text: string) => colorize(text, 'underline'),
-	italic: (text: string) => colorize(text, 'italic'),
+	red: (text: string) => colorize(text, "red"),
+	green: (text: string) => colorize(text, "green"),
+	yellow: (text: string) => colorize(text, "yellow"),
+	blue: (text: string) => colorize(text, "blue"),
+	magenta: (text: string) => colorize(text, "magenta"),
+	cyan: (text: string) => colorize(text, "cyan"),
+	white: (text: string) => colorize(text, "white"),
+	brightRed: (text: string) => colorize(text, "brightRed"),
+	brightGreen: (text: string) => colorize(text, "brightGreen"),
+	brightYellow: (text: string) => colorize(text, "brightYellow"),
+	brightBlue: (text: string) => colorize(text, "brightBlue"),
+	brightCyan: (text: string) => colorize(text, "brightCyan"),
+	dim: (text: string) => colorize(text, "dim"),
+	bold: (text: string) => colorize(text, "bold"),
+	underline: (text: string) => colorize(text, "underline"),
+	italic: (text: string) => colorize(text, "italic"),
 };
 
 /**
@@ -105,36 +108,36 @@ export const cliConsole = {
 	 * Log an info message
 	 */
 	info(message: string, ...args: unknown[]): void {
-		globalThis.console.log(colors.cyan('ℹ'), message, ...args);
+		globalThis.console.log(colors.cyan("ℹ"), message, ...args);
 	},
 
 	/**
 	 * Log a success message
 	 */
 	success(message: string, ...args: unknown[]): void {
-		globalThis.console.log(colors.green('✓'), message, ...args);
+		globalThis.console.log(colors.green("✓"), message, ...args);
 	},
 
 	/**
 	 * Log a warning message
 	 */
 	warn(message: string, ...args: unknown[]): void {
-		globalThis.console.log(colors.yellow('⚠'), message, ...args);
+		globalThis.console.log(colors.yellow("⚠"), message, ...args);
 	},
 
 	/**
 	 * Log an error message
 	 */
 	error(message: string, ...args: unknown[]): void {
-		globalThis.console.error(colors.red('✗'), message, ...args);
+		globalThis.console.error(colors.red("✗"), message, ...args);
 	},
 
 	/**
 	 * Log a debug message (only in verbose mode)
 	 */
 	debug(message: string, ...args: unknown[]): void {
-		if (process.env.BUENO_VERBOSE === 'true') {
-			globalThis.console.log(colors.dim('⋯'), colors.dim(message), ...args);
+		if (process.env.BUENO_VERBOSE === "true") {
+			globalThis.console.log(colors.dim("⋯"), colors.dim(message), ...args);
 		}
 	},
 
@@ -166,7 +169,7 @@ export const cliConsole = {
 	 * Clear the console
 	 */
 	clear(): void {
-		process.stdout.write('\x1b[2J\x1b[0f');
+		process.stdout.write("\x1b[2J\x1b[0f");
 	},
 };
 
@@ -184,30 +187,22 @@ export function formatTable(
 		return Math.max(h.length, maxRowWidth);
 	});
 
-	const pad = ' '.repeat(padding);
+	const pad = " ".repeat(padding);
 
 	// Header
-	const headerLine = headers
-		.map((h, i) => h.padEnd(widths[i] ?? 0))
-		.join(pad);
+	const headerLine = headers.map((h, i) => h.padEnd(widths[i] ?? 0)).join(pad);
 
 	// Separator
-	const separator = widths
-		.map((w) => '─'.repeat(w))
-		.join(pad);
+	const separator = widths.map((w) => "─".repeat(w)).join(pad);
 
 	// Rows
 	const rowLines = rows.map((row) =>
-		row
-			.map((cell, i) => (cell ?? '').padEnd(widths[i] ?? 0))
-			.join(pad)
+		row.map((cell, i) => (cell ?? "").padEnd(widths[i] ?? 0)).join(pad),
 	);
 
-	return [
-		colors.bold(headerLine),
-		colors.dim(separator),
-		...rowLines,
-	].join('\n');
+	return [colors.bold(headerLine), colors.dim(separator), ...rowLines].join(
+		"\n",
+	);
 }
 
 /**
@@ -228,10 +223,12 @@ export function formatList(
 	items: string[],
 	options: { bullet?: string; indent?: number } = {},
 ): string {
-	const bullet = options.bullet ?? '•';
-	const indent = ' '.repeat(options.indent ?? 2);
+	const bullet = options.bullet ?? "•";
+	const indent = " ".repeat(options.indent ?? 2);
 
-	return items.map((item) => `${indent}${colors.cyan(bullet)} ${item}`).join('\n');
+	return items
+		.map((item) => `${indent}${colors.cyan(bullet)} ${item}`)
+		.join("\n");
 }
 
 /**
@@ -252,15 +249,11 @@ export interface TreeNode {
 	children?: TreeNode[];
 }
 
-export function formatTree(
-	node: TreeNode,
-	prefix = '',
-	isLast = true,
-): string {
-	const connector = isLast ? '└── ' : '├── ';
-	const childPrefix = isLast ? '    ' : '│   ';
+export function formatTree(node: TreeNode, prefix = "", isLast = true): string {
+	const connector = isLast ? "└── " : "├── ";
+	const childPrefix = isLast ? "    " : "│   ";
 
-	let result = prefix + connector + node.label + '\n';
+	let result = prefix + connector + node.label + "\n";
 
 	if (node.children) {
 		for (let i = 0; i < node.children.length; i++) {
@@ -288,7 +281,7 @@ export function printTree(node: TreeNode): void {
 			const child = node.children[i];
 			if (child) {
 				globalThis.console.log(
-					formatTree(child, '', i === node.children.length - 1),
+					formatTree(child, "", i === node.children.length - 1),
 				);
 			}
 		}
@@ -299,7 +292,7 @@ export function printTree(node: TreeNode): void {
  * Format file size
  */
 export function formatSize(bytes: number): string {
-	const units = ['B', 'KB', 'MB', 'GB'];
+	const units = ["B", "KB", "MB", "GB"];
 	let size = bytes;
 	let unitIndex = 0;
 
@@ -325,7 +318,7 @@ export function formatDuration(ms: number): string {
  */
 export function formatPath(path: string, baseDir?: string): string {
 	if (baseDir && path.startsWith(baseDir)) {
-		return '.' + path.slice(baseDir.length);
+		return "." + path.slice(baseDir.length);
 	}
 	return path;
 }
@@ -336,14 +329,15 @@ export function formatPath(path: string, baseDir?: string): string {
 export function highlightCode(code: string): string {
 	// Simple syntax highlighting for TypeScript
 	return code
-		.replace(/\b(import|export|from|const|let|var|function|class|interface|type|async|await|return|if|else|for|while|switch|case|break|continue|new|this|extends|implements)\b/g, 
-			(match) => colors.magenta(match))
-		.replace(/\b(string|number|boolean|void|any|unknown|never|null|undefined|true|false)\b/g,
-			(match) => colors.yellow(match))
-		.replace(/'([^']*)'|"([^"]*)"|`([^`]*)`/g,
-			(match) => colors.green(match))
-		.replace(/\/\/.*$/gm,
-			(match) => colors.dim(match))
-		.replace(/\/\*[\s\S]*?\*\//g,
-			(match) => colors.dim(match));
+		.replace(
+			/\b(import|export|from|const|let|var|function|class|interface|type|async|await|return|if|else|for|while|switch|case|break|continue|new|this|extends|implements)\b/g,
+			(match) => colors.magenta(match),
+		)
+		.replace(
+			/\b(string|number|boolean|void|any|unknown|never|null|undefined|true|false)\b/g,
+			(match) => colors.yellow(match),
+		)
+		.replace(/'([^']*)'|"([^"]*)"|`([^`]*)`/g, (match) => colors.green(match))
+		.replace(/\/\/.*$/gm, (match) => colors.dim(match))
+		.replace(/\/\*[\s\S]*?\*\//g, (match) => colors.dim(match));
 }

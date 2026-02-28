@@ -73,21 +73,21 @@ export {
 } from "./validation";
 
 import type { StandardSchema } from "../types";
+import { getEnvConfig, loadEnv } from "./env";
+import { clearConfigCache, findConfigFile, loadConfig } from "./loader";
+import { deepMerge, mergeConfigs } from "./merge";
 import type {
 	BuenoConfig,
 	DeepPartial,
+	InferConfig,
 	UserConfig,
 	UserConfigFn,
-	InferConfig,
 } from "./types";
-import { deepMerge, mergeConfigs } from "./merge";
-import { loadEnv, getEnvConfig } from "./env";
-import { loadConfig, findConfigFile, clearConfigCache } from "./loader";
 import {
+	type ConfigValidationResult,
+	assertValidConfig,
 	validateConfig,
 	validateConfigSync,
-	assertValidConfig,
-	type ConfigValidationResult,
 } from "./validation";
 
 /**
@@ -181,9 +181,9 @@ export class ConfigManager<T extends BuenoConfig = BuenoConfig> {
 
 	constructor(options: ConfigManagerOptions<T> = {}) {
 		this.options = options;
-		this.config = (options.useDefaults !== false
-			? { ...DEFAULT_CONFIG }
-			: {}) as T;
+		this.config = (
+			options.useDefaults !== false ? { ...DEFAULT_CONFIG } : {}
+		) as T;
 
 		// Apply initial config if provided
 		if (options.config) {
@@ -215,10 +215,10 @@ export class ConfigManager<T extends BuenoConfig = BuenoConfig> {
 		// Merge all sources
 		const merged = mergeConfigs(
 			{} as T,
-			this.options.useDefaults !== false ? DEFAULT_CONFIG : {} as T,
+			this.options.useDefaults !== false ? DEFAULT_CONFIG : ({} as T),
 			fileConfig as T,
 			envConfig as T,
-			this.options.config as T || {} as T,
+			(this.options.config as T) || ({} as T),
 		);
 
 		this.config = merged as T;
@@ -273,7 +273,10 @@ export class ConfigManager<T extends BuenoConfig = BuenoConfig> {
 	set(key: string, value: unknown): void;
 	set(key: string, value: unknown): void {
 		const parts = key.split(".");
-		let current: Record<string, unknown> = this.config as Record<string, unknown>;
+		let current: Record<string, unknown> = this.config as Record<
+			string,
+			unknown
+		>;
 
 		for (let i = 0; i < parts.length - 1; i++) {
 			const part = parts[i];
@@ -323,7 +326,9 @@ export class ConfigManager<T extends BuenoConfig = BuenoConfig> {
 	 * Validate synchronously (only default rules)
 	 */
 	validateSync(): ConfigValidationResult {
-		return validateConfigSync(this.config as unknown as DeepPartial<BuenoConfig>);
+		return validateConfigSync(
+			this.config as unknown as DeepPartial<BuenoConfig>,
+		);
 	}
 
 	/**
@@ -455,9 +460,9 @@ export function defineConfigFn<T extends BuenoConfig = BuenoConfig>(
  * const config = await createConfigManager();
  * const port = config.get('server.port');
  */
-export async function createConfigManager<
-	T extends BuenoConfig = BuenoConfig,
->(options?: ConfigManagerOptions<T>): Promise<ConfigManager<T>> {
+export async function createConfigManager<T extends BuenoConfig = BuenoConfig>(
+	options?: ConfigManagerOptions<T>,
+): Promise<ConfigManager<T>> {
 	const manager = new ConfigManager<T>(options);
 	await manager.load();
 	return manager;
@@ -481,9 +486,9 @@ export function createConfigManagerSync<T extends BuenoConfig = BuenoConfig>(
  * const config = await loadConfigDirect();
  * console.log(config.server?.port);
  */
-export async function loadConfigDirect<
-	T extends BuenoConfig = BuenoConfig,
->(options?: ConfigManagerOptions<T>): Promise<T> {
+export async function loadConfigDirect<T extends BuenoConfig = BuenoConfig>(
+	options?: ConfigManagerOptions<T>,
+): Promise<T> {
 	const manager = await createConfigManager<T>(options);
 	return manager.getAll();
 }

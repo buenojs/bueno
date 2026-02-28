@@ -11,7 +11,7 @@
 
 import type { Context } from "../context";
 import type { Token } from "../types";
-import { BuenoError, ValidationError, NotFoundError } from "../types";
+import { BuenoError, NotFoundError, ValidationError } from "../types";
 
 // ============= Types =============
 
@@ -69,10 +69,7 @@ function setFilterMetadata(
 	filterMetadataStore.get(target)?.set(key, value);
 }
 
-function getFilterMetadata<T>(
-	target: Constructor,
-	key: string,
-): T | undefined {
+function getFilterMetadata<T>(target: Constructor, key: string): T | undefined {
 	return filterMetadataStore.get(target)?.get(key) as T | undefined;
 }
 
@@ -114,7 +111,9 @@ function getFilterPrototypeMetadata<T>(
  * }
  * ```
  */
-export function UseFilters(...filters: Filter[]): MethodDecorator & ClassDecorator {
+export function UseFilters(
+	...filters: Filter[]
+): MethodDecorator & ClassDecorator {
 	const decorator = (
 		target: unknown,
 		propertyKey?: string | symbol,
@@ -168,7 +167,11 @@ export function Catch<T extends Error>(
 	exceptionType: new (...args: never[]) => T,
 ): ClassDecorator {
 	const decorator = (target: Constructor): void => {
-		catchMetadataStore.set(target, { exceptionType: exceptionType as unknown as new (...args: unknown[]) => Error });
+		catchMetadataStore.set(target, {
+			exceptionType: exceptionType as unknown as new (
+				...args: unknown[]
+			) => Error,
+		});
 	};
 	return decorator as ClassDecorator;
 }
@@ -224,10 +227,7 @@ export function getCatchType(
 /**
  * Check if a filter can handle a specific exception
  */
-export function canHandleException(
-	filter: Filter,
-	exception: Error,
-): boolean {
+export function canHandleException(filter: Filter, exception: Error): boolean {
 	const catchType = getCatchType(filter);
 	if (!catchType) {
 		// No specific catch type means it handles all exceptions
@@ -327,11 +327,7 @@ export async function findAndExecuteFilter(
 	const { globalFilters, classFilters, methodFilters, resolveFilter } = options;
 
 	// Combine all filters in execution order (method first, then class, then global)
-	const allFilters = [
-		...methodFilters,
-		...classFilters,
-		...globalFilters,
-	];
+	const allFilters = [...methodFilters, ...classFilters, ...globalFilters];
 
 	// Find the first filter that can handle this exception type
 	for (const filter of allFilters) {

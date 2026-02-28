@@ -15,8 +15,8 @@ import type { LocaleMatch } from "./types";
  * Parsed entry from an Accept-Language header.
  */
 interface AcceptEntry {
-	locale: string;   // e.g. "en-US"
-	quality: number;  // 0.0–1.0, default 1.0
+	locale: string; // e.g. "en-US"
+	quality: number; // 0.0–1.0, default 1.0
 }
 
 // ============= Parsing =============
@@ -44,7 +44,7 @@ export function parseAcceptLanguage(header: string): AcceptEntry[] {
 			const [localeRaw, qRaw] = part.trim().split(";");
 			const locale = localeRaw?.trim() ?? "";
 			const quality = qRaw
-				? parseFloat(qRaw.trim().replace("q=", ""))
+				? Number.parseFloat(qRaw.trim().replace("q=", ""))
 				: 1.0;
 			return { locale, quality: isNaN(quality) ? 1.0 : quality };
 		})
@@ -132,9 +132,7 @@ export class LocaleNegotiator {
 		for (const entry of entries) {
 			const lang = languageSubtag(entry.locale);
 
-			const prefix = this.supported.find(
-				(s) => languageSubtag(s) === lang
-			);
+			const prefix = this.supported.find((s) => languageSubtag(s) === lang);
 			if (prefix) {
 				return { locale: prefix, strategy: "prefix", source: entry.locale };
 			}

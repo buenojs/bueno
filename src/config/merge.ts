@@ -7,7 +7,9 @@ import type { BuenoConfig, DeepPartial } from "./types";
 /**
  * Check if a value is a plain object (not an array, not null, not a class instance)
  */
-export function isPlainObject(value: unknown): value is Record<string, unknown> {
+export function isPlainObject(
+	value: unknown,
+): value is Record<string, unknown> {
 	if (value === null || typeof value !== "object") {
 		return false;
 	}
@@ -60,7 +62,10 @@ export function deepMerge<T>(target: T, source: DeepPartial<T>): T {
 
 		if (isPlainObject(sourceValue) && isPlainObject(targetValue)) {
 			// Both are objects, merge recursively
-			result[key] = deepMerge(targetValue, sourceValue as DeepPartial<typeof targetValue>);
+			result[key] = deepMerge(
+				targetValue,
+				sourceValue as DeepPartial<typeof targetValue>,
+			);
 		} else if (Array.isArray(sourceValue) && Array.isArray(targetValue)) {
 			// Both are arrays, concatenate them
 			result[key] = [...targetValue, ...sourceValue];
@@ -80,13 +85,19 @@ export function deepMerge<T>(target: T, source: DeepPartial<T>): T {
 export function mergeConfigs<T extends BuenoConfig = BuenoConfig>(
 	...configs: (DeepPartial<T> | undefined | null)[]
 ): DeepPartial<T> {
-	return configs.reduce<DeepPartial<T>>((acc, config) => {
-		if (config === undefined || config === null) {
-			return acc;
-		}
-		// Use unknown as intermediate type to avoid recursive type issues
-		return deepMerge(acc as unknown as T, config as unknown as DeepPartial<T>) as unknown as DeepPartial<T>;
-	}, {} as DeepPartial<T>);
+	return configs.reduce<DeepPartial<T>>(
+		(acc, config) => {
+			if (config === undefined || config === null) {
+				return acc;
+			}
+			// Use unknown as intermediate type to avoid recursive type issues
+			return deepMerge(
+				acc as unknown as T,
+				config as unknown as DeepPartial<T>,
+			) as unknown as DeepPartial<T>;
+		},
+		{} as DeepPartial<T>,
+	);
 }
 
 /**

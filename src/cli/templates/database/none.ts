@@ -4,7 +4,7 @@
  * Template for projects that don't need a database
  */
 
-import type { DatabaseTemplateResult } from '../project/types';
+import type { DatabaseTemplateResult } from "../project/types";
 
 export function noneTemplate(): DatabaseTemplateResult {
 	return {

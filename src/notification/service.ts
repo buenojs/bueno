@@ -6,12 +6,12 @@
  */
 
 import type {
-	NotificationMessage,
+	ChannelHealth,
+	ChannelMetrics,
 	ChannelService,
 	Notifiable,
 	NotificationChannel,
-	ChannelHealth,
-	ChannelMetrics,
+	NotificationMessage,
 	NotificationServiceConfig,
 	TemplateRef,
 } from "./types";
@@ -33,7 +33,9 @@ export class NotificationService {
 	 * @param service Channel service to register
 	 * @throws Error if channel is already registered
 	 */
-	registerChannel<T extends NotificationMessage>(service: ChannelService<T>): void {
+	registerChannel<T extends NotificationMessage>(
+		service: ChannelService<T>,
+	): void {
 		if (this.channels.has(service.name)) {
 			throw new Error(`Channel already registered: ${service.name}`);
 		}
@@ -129,7 +131,9 @@ export class NotificationService {
 	 * @param messages Array of notification messages
 	 * @returns Array of message IDs
 	 */
-	async sendBatch(messages: NotificationMessage[]): Promise<(string | undefined)[]> {
+	async sendBatch(
+		messages: NotificationMessage[],
+	): Promise<(string | undefined)[]> {
 		const results: (string | undefined)[] = [];
 
 		for (const message of messages) {
@@ -150,7 +154,10 @@ export class NotificationService {
 	 * @param channel Optional specific channel (otherwise uses buildAll or default)
 	 * @returns Message ID(s)
 	 */
-	async sendNotifiable(notifiable: Notifiable, channel?: NotificationChannel): Promise<string | undefined> {
+	async sendNotifiable(
+		notifiable: Notifiable,
+		channel?: NotificationChannel,
+	): Promise<string | undefined> {
 		if (channel) {
 			// Send to specific channel
 			const message = await notifiable.build(channel);
@@ -161,7 +168,9 @@ export class NotificationService {
 		if (notifiable.buildAll) {
 			const messages = await notifiable.buildAll();
 			const results = await this.sendBatch(
-				Object.values(messages).filter((m) => m !== undefined) as NotificationMessage[],
+				Object.values(messages).filter(
+					(m) => m !== undefined,
+				) as NotificationMessage[],
 			);
 			return results[0]; // Return first message ID
 		}
@@ -186,7 +195,9 @@ export class NotificationService {
 	 * Get health status for a channel
 	 * @param channelName Name of the channel
 	 */
-	async getChannelHealth(channelName: NotificationChannel): Promise<ChannelHealth | null> {
+	async getChannelHealth(
+		channelName: NotificationChannel,
+	): Promise<ChannelHealth | null> {
 		const service = this.channels.get(channelName);
 		if (!service) return null;
 
@@ -239,7 +250,9 @@ export class NotificationService {
 	/**
 	 * Resolve TemplateRef objects in message fields to rendered strings
 	 */
-	private async _resolveTemplates(message: NotificationMessage): Promise<NotificationMessage> {
+	private async _resolveTemplates(
+		message: NotificationMessage,
+	): Promise<NotificationMessage> {
 		const engine = this.config.templateEngine;
 		if (!engine) {
 			// If no engine, check that no TemplateRef fields exist
@@ -250,11 +263,17 @@ export class NotificationService {
 		const channel = message.channel;
 		const msg = { ...message } as Record<string, unknown>;
 
-		const resolveField = async (value: unknown, defaultFormat: "html" | "text"): Promise<string> => {
+		const resolveField = async (
+			value: unknown,
+			defaultFormat: "html" | "text",
+		): Promise<string> => {
 			if (!isTemplateRef(value)) return value as string;
 			const fmt = value.outputFormat ?? defaultFormat;
 			const variant = value.variant ?? engine.getVariantForChannel(channel);
-			return engine.render(value.templateId, value.data, { variant, outputFormat: fmt });
+			return engine.render(value.templateId, value.data, {
+				variant,
+				outputFormat: fmt,
+			});
 		};
 
 		// Email: resolve html (→ HTML) and text (→ text)
@@ -319,7 +338,8 @@ export class NotificationService {
 
 		const total = metrics.sent + metrics.failed;
 		metrics.successRate = total > 0 ? metrics.sent / total : 0;
-		metrics.avgSendTime = metrics.sent > 0 ? metrics.totalSendTime / metrics.sent : 0;
+		metrics.avgSendTime =
+			metrics.sent > 0 ? metrics.totalSendTime / metrics.sent : 0;
 		metrics.updatedAt = new Date();
 	}
 }

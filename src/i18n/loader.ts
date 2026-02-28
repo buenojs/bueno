@@ -6,8 +6,12 @@
  */
 
 import { existsSync, readFileSync, watch } from "fs";
-import { resolve, join } from "path";
-import type { FlatTranslations, LocaleBundle, ResolvedI18nConfig } from "./types";
+import { join, resolve } from "path";
+import type {
+	FlatTranslations,
+	LocaleBundle,
+	ResolvedI18nConfig,
+} from "./types";
 
 // ============= Flattening =============
 
@@ -30,7 +34,7 @@ import type { FlatTranslations, LocaleBundle, ResolvedI18nConfig } from "./types
 function flattenTranslations(
 	obj: Record<string, unknown>,
 	prefix = "",
-	result: FlatTranslations = new Map()
+	result: FlatTranslations = new Map(),
 ): FlatTranslations {
 	for (const [key, value] of Object.entries(obj)) {
 		const dotKey = prefix ? `${prefix}.${key}` : key;
@@ -180,7 +184,7 @@ export class TranslationLoader {
 			if (locale === this.config.defaultLocale) {
 				throw new Error(
 					`[i18n] Default locale file not found: ${filePath}. ` +
-					`Create ${locale}.json in ${this.config.basePath}`
+						`Create ${locale}.json in ${this.config.basePath}`,
 				);
 			}
 			// For non-default locales, silently return an empty bundle
@@ -198,7 +202,9 @@ export class TranslationLoader {
 		try {
 			parsed = JSON.parse(raw);
 		} catch (err) {
-			throw new Error(`[i18n] Failed to parse locale file ${filePath}: ${String(err)}`);
+			throw new Error(
+				`[i18n] Failed to parse locale file ${filePath}: ${String(err)}`,
+			);
 		}
 
 		const bundle: LocaleBundle = {

@@ -12,7 +12,10 @@ import type { LogEntry, LogLevel, LoggerConfig } from "../index";
 /**
  * Error callback for transport errors
  */
-export type TransportErrorCallback = (error: Error, transport: LogTransport) => void;
+export type TransportErrorCallback = (
+	error: Error,
+	transport: LogTransport,
+) => void;
 
 /**
  * Base interface for log transports
@@ -192,7 +195,7 @@ export class HTTPWebhookTransport implements LogTransport {
 					await this.sleep(delay);
 					delay = Math.min(
 						delay * this.retryOptions.backoffMultiplier,
-						this.retryOptions.maxDelay
+						this.retryOptions.maxDelay,
 					);
 				}
 			}
@@ -259,7 +262,9 @@ export class HTTPWebhookTransport implements LogTransport {
 			try {
 				await this.flush();
 			} catch (error) {
-				this.handleError(error instanceof Error ? error : new Error(String(error)));
+				this.handleError(
+					error instanceof Error ? error : new Error(String(error)),
+				);
 			}
 		}
 	}
@@ -337,7 +342,8 @@ export class DatadogTransport implements LogTransport {
 		this.env = options.env ?? process.env.NODE_ENV ?? "development";
 		this.hostname = options.hostname ?? this.getDefaultHostname();
 		this.tags = options.tags ?? [];
-		this.endpoint = options.endpoint ?? "https://http-intake.logs.datadoghq.com/v1/input";
+		this.endpoint =
+			options.endpoint ?? "https://http-intake.logs.datadoghq.com/v1/input";
 		this.batchSize = options.batchSize ?? 100;
 		this.flushInterval = options.flushInterval ?? 5000;
 		this.timeout = options.timeout ?? 30000;
@@ -395,7 +401,7 @@ export class DatadogTransport implements LogTransport {
 	 */
 	private toDatadogFormat(entry: LogEntry): DatadogLogEntry {
 		const allTags = [...this.tags];
-		
+
 		// Add environment tag
 		if (this.env) {
 			allTags.push(`env:${this.env}`);
@@ -404,7 +410,11 @@ export class DatadogTransport implements LogTransport {
 		// Add context as tags
 		if (entry.context) {
 			for (const [key, value] of Object.entries(entry.context)) {
-				if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+				if (
+					typeof value === "string" ||
+					typeof value === "number" ||
+					typeof value === "boolean"
+				) {
 					allTags.push(`${key}:${value}`);
 				}
 			}
@@ -437,7 +447,16 @@ export class DatadogTransport implements LogTransport {
 
 		// Add any additional fields from the entry
 		for (const [key, value] of Object.entries(entry)) {
-			if (!["level", "message", "timestamp", "context", "error", "duration"].includes(key)) {
+			if (
+				![
+					"level",
+					"message",
+					"timestamp",
+					"context",
+					"error",
+					"duration",
+				].includes(key)
+			) {
 				datadogEntry[key] = value;
 			}
 		}
@@ -510,7 +529,7 @@ export class DatadogTransport implements LogTransport {
 					await this.sleep(delay);
 					delay = Math.min(
 						delay * this.retryOptions.backoffMultiplier,
-						this.retryOptions.maxDelay
+						this.retryOptions.maxDelay,
 					);
 				}
 			}
@@ -540,7 +559,9 @@ export class DatadogTransport implements LogTransport {
 			});
 
 			if (!response.ok) {
-				throw new Error(`Datadog API error: HTTP ${response.status}: ${response.statusText}`);
+				throw new Error(
+					`Datadog API error: HTTP ${response.status}: ${response.statusText}`,
+				);
 			}
 		} finally {
 			clearTimeout(timeoutId);
@@ -579,7 +600,9 @@ export class DatadogTransport implements LogTransport {
 			try {
 				await this.flush();
 			} catch (error) {
-				this.handleError(error instanceof Error ? error : new Error(String(error)));
+				this.handleError(
+					error instanceof Error ? error : new Error(String(error)),
+				);
 			}
 		}
 	}
@@ -680,7 +703,10 @@ export class ConsoleTransport implements LogTransport {
 			this.output(formatted, entry.level);
 		} catch (error) {
 			if (this.onError) {
-				this.onError(error instanceof Error ? error : new Error(String(error)), this);
+				this.onError(
+					error instanceof Error ? error : new Error(String(error)),
+					this,
+				);
 			}
 		}
 	}
@@ -766,7 +792,10 @@ export class TransportManager {
 				await transport.send(entry);
 			} catch (error) {
 				if (this.onError) {
-					this.onError(error instanceof Error ? error : new Error(String(error)), transport);
+					this.onError(
+						error instanceof Error ? error : new Error(String(error)),
+						transport,
+					);
 				}
 			}
 		});
@@ -783,7 +812,10 @@ export class TransportManager {
 				await transport.sendBatch(entries);
 			} catch (error) {
 				if (this.onError) {
-					this.onError(error instanceof Error ? error : new Error(String(error)), transport);
+					this.onError(
+						error instanceof Error ? error : new Error(String(error)),
+						transport,
+					);
 				}
 			}
 		});
@@ -801,7 +833,10 @@ export class TransportManager {
 					await transport.flush();
 				} catch (error) {
 					if (this.onError) {
-						this.onError(error instanceof Error ? error : new Error(String(error)), transport);
+						this.onError(
+							error instanceof Error ? error : new Error(String(error)),
+							transport,
+						);
 					}
 				}
 			}
@@ -820,7 +855,10 @@ export class TransportManager {
 					await transport.close();
 				} catch (error) {
 					if (this.onError) {
-						this.onError(error instanceof Error ? error : new Error(String(error)), transport);
+						this.onError(
+							error instanceof Error ? error : new Error(String(error)),
+							transport,
+						);
 					}
 				}
 			}
@@ -853,10 +891,12 @@ export class LoggerWithTransports extends Logger {
 
 	constructor(config: LoggerWithTransportsConfig = {}) {
 		const { transports, onTransportError, ...loggerConfig } = config;
-		
+
 		// Create transport manager
-		const transportManager = new TransportManager({ onError: onTransportError });
-		
+		const transportManager = new TransportManager({
+			onError: onTransportError,
+		});
+
 		// Add transports
 		if (transports) {
 			for (const transport of transports) {
@@ -931,7 +971,7 @@ export class LoggerWithTransports extends Logger {
  * Create a logger with transports
  */
 export function createLoggerWithTransports(
-	config: LoggerWithTransportsConfig = {}
+	config: LoggerWithTransportsConfig = {},
 ): LoggerWithTransports {
 	return new LoggerWithTransports(config);
 }
@@ -941,10 +981,10 @@ export function createLoggerWithTransports(
  */
 export function createTransportOutput(
 	transports: LogTransport[],
-	options?: { onError?: TransportErrorCallback }
+	options?: { onError?: TransportErrorCallback },
 ): (entry: LogEntry) => void {
 	const manager = new TransportManager({ onError: options?.onError });
-	
+
 	for (const transport of transports) {
 		manager.addTransport(transport);
 	}

@@ -16,8 +16,8 @@
  * - Add headers or modify request/response
  */
 
-import type { Context } from "../context";
 import type { Token } from "../container";
+import type { Context } from "../context";
 
 // ============= Types =============
 
@@ -72,7 +72,7 @@ export interface NestInterceptor<T = unknown, R = unknown> {
  */
 export type InterceptorFn = (
 	context: Context,
-	next: () => Promise<unknown>
+	next: () => Promise<unknown>,
 ) => Promise<unknown> | unknown;
 
 /**
@@ -81,7 +81,10 @@ export type InterceptorFn = (
  * - An interceptor class instance
  * - An interceptor function
  */
-export type Interceptor = Token<NestInterceptor> | NestInterceptor | InterceptorFn;
+export type Interceptor =
+	| Token<NestInterceptor>
+	| NestInterceptor
+	| InterceptorFn;
 
 // ============= Metadata Storage =============
 
@@ -92,19 +95,27 @@ type Constructor = new (...args: unknown[]) => unknown;
 const interceptorsClassMetadata = new WeakMap<Constructor, Interceptor[]>();
 
 // WeakMap for storing interceptors metadata on method prototypes
-const interceptorsMethodMetadata = new WeakMap<object, Map<string | symbol, Interceptor[]>>();
+const interceptorsMethodMetadata = new WeakMap<
+	object,
+	Map<string | symbol, Interceptor[]>
+>();
 
 /**
  * Set interceptors on a class constructor
  */
-function setClassInterceptors(target: Constructor, interceptors: Interceptor[]): void {
+function setClassInterceptors(
+	target: Constructor,
+	interceptors: Interceptor[],
+): void {
 	interceptorsClassMetadata.set(target, interceptors);
 }
 
 /**
  * Get interceptors from a class constructor
  */
-export function getClassInterceptors(target: Constructor): Interceptor[] | undefined {
+export function getClassInterceptors(
+	target: Constructor,
+): Interceptor[] | undefined {
 	return interceptorsClassMetadata.get(target);
 }
 
@@ -153,7 +164,9 @@ export function getMethodInterceptors(
  * }
  * ```
  */
-export function UseInterceptors(...interceptors: Interceptor[]): MethodDecorator & ClassDecorator {
+export function UseInterceptors(
+	...interceptors: Interceptor[]
+): MethodDecorator & ClassDecorator {
 	const decorator = (
 		target: unknown,
 		propertyKey?: string | symbol,
@@ -162,14 +175,21 @@ export function UseInterceptors(...interceptors: Interceptor[]): MethodDecorator
 		if (propertyKey !== undefined && descriptor !== undefined) {
 			// Method decorator
 			const targetObj = target as object;
-			const existingInterceptors = getMethodInterceptors(targetObj, propertyKey) ?? [];
-			setMethodInterceptors(targetObj, propertyKey, [...existingInterceptors, ...interceptors]);
+			const existingInterceptors =
+				getMethodInterceptors(targetObj, propertyKey) ?? [];
+			setMethodInterceptors(targetObj, propertyKey, [
+				...existingInterceptors,
+				...interceptors,
+			]);
 			return descriptor;
 		} else {
 			// Class decorator
 			const targetClass = target as Constructor;
 			const existingInterceptors = getClassInterceptors(targetClass) ?? [];
-			setClassInterceptors(targetClass, [...existingInterceptors, ...interceptors]);
+			setClassInterceptors(targetClass, [
+				...existingInterceptors,
+				...interceptors,
+			]);
 		}
 	};
 	return decorator as MethodDecorator & ClassDecorator;
@@ -235,8 +255,13 @@ export interface TransformResponse<T> {
  * // Response: { data: [{ id: 1, name: 'John' }], timestamp: '2024-01-15T10:30:00.000Z' }
  * ```
  */
-export class TransformInterceptor<T = unknown> implements NestInterceptor<T, TransformResponse<T>> {
-	async intercept(context: Context, next: CallHandler<T>): Promise<TransformResponse<T>> {
+export class TransformInterceptor<T = unknown>
+	implements NestInterceptor<T, TransformResponse<T>>
+{
+	async intercept(
+		context: Context,
+		next: CallHandler<T>,
+	): Promise<TransformResponse<T>> {
 		const result = await next.handle();
 		return {
 			data: result,
@@ -298,7 +323,7 @@ export class CacheInterceptor implements NestInterceptor {
 	private static cache = new Map<string, CacheEntry>();
 	private static cleanupInterval: Timer | null = null;
 
-	constructor(private ttlMs: number = 60000) {
+	constructor(private ttlMs = 60000) {
 		// Setup periodic cleanup of expired entries
 		CacheInterceptor.setupCleanup();
 	}
@@ -410,7 +435,9 @@ export interface InterceptorExecutorOptions {
 	/** Interceptors from method */
 	methodInterceptors?: Interceptor[];
 	/** Container for resolving interceptor instances */
-	resolveInterceptor?: (interceptor: Interceptor) => NestInterceptor | InterceptorFn | null;
+	resolveInterceptor?: (
+		interceptor: Interceptor,
+	) => NestInterceptor | InterceptorFn | null;
 }
 
 /**
@@ -420,7 +447,9 @@ function createCallHandler(
 	interceptors: Array<NestInterceptor | InterceptorFn>,
 	context: Context,
 	finalHandler: () => Promise<unknown>,
-	resolveInterceptor?: (interceptor: Interceptor) => NestInterceptor | InterceptorFn | null,
+	resolveInterceptor?: (
+		interceptor: Interceptor,
+	) => NestInterceptor | InterceptorFn | null,
 ): CallHandler {
 	let index = 0;
 
@@ -430,10 +459,15 @@ function createCallHandler(
 		}
 
 		const interceptor = interceptors[index++];
-		let interceptorInstance: NestInterceptor | InterceptorFn | null = interceptor;
+		let interceptorInstance: NestInterceptor | InterceptorFn | null =
+			interceptor;
 
 		// Resolve if needed
-		if (resolveInterceptor && !isNestInterceptor(interceptor) && !isInterceptorFn(interceptor)) {
+		if (
+			resolveInterceptor &&
+			!isNestInterceptor(interceptor) &&
+			!isInterceptorFn(interceptor)
+		) {
 			interceptorInstance = resolveInterceptor(interceptor);
 		}
 
@@ -502,7 +536,10 @@ export async function executeInterceptors(
 		// Resolve the interceptor
 		if (typeof interceptor === "function") {
 			// Check if it's an interceptor function or a class constructor
-			const funcInterceptor = interceptor as { prototype?: unknown; intercept?: unknown };
+			const funcInterceptor = interceptor as {
+				prototype?: unknown;
+				intercept?: unknown;
+			};
 			if (
 				funcInterceptor.prototype &&
 				typeof funcInterceptor.prototype === "object" &&
@@ -512,7 +549,8 @@ export async function executeInterceptors(
 				instance = resolveInterceptor ? resolveInterceptor(interceptor) : null;
 				if (!instance) {
 					// Create a new instance if not in container
-					const InterceptorClass = interceptor as unknown as new () => NestInterceptor;
+					const InterceptorClass =
+						interceptor as unknown as new () => NestInterceptor;
 					instance = new InterceptorClass();
 				}
 			} else {

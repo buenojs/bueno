@@ -79,19 +79,28 @@ export { DevServer, createDevServer } from "./dev-server.js";
 
 // ============= HMR =============
 
-export { HMRManager, createHMRManager, isHMRBoundary, parseImports } from "./hmr.js";
-export { HMR_CLIENT_SCRIPT, getHMRClientScript, injectHMRScript } from "./hmr-client.js";
+export {
+	HMRManager,
+	createHMRManager,
+	isHMRBoundary,
+	parseImports,
+} from "./hmr.js";
+export {
+	HMR_CLIENT_SCRIPT,
+	getHMRClientScript,
+	injectHMRScript,
+} from "./hmr-client.js";
 
 // ============= Console Stream =============
 
 export {
 	ConsoleStreamManager,
 	createConsoleStreamManager,
-	injectConsoleScript
+	injectConsoleScript,
 } from "./console-stream.js";
 export {
 	CONSOLE_CLIENT_SCRIPT,
-	getConsoleClientScript
+	getConsoleClientScript,
 } from "./console-client.js";
 
 // ============= Bundler =============

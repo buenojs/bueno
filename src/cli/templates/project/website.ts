@@ -4,14 +4,14 @@
  * Static website template using SSG (Static Site Generation)
  */
 
-import type { ProjectConfig, ProjectTemplateResult } from './types';
-import { getBuenoDependency } from '../../utils/version';
+import { getBuenoDependency } from "../../utils/version";
+import type { ProjectConfig, ProjectTemplateResult } from "./types";
 
 export function websiteTemplate(config: ProjectConfig): ProjectTemplateResult {
 	return {
 		files: [
 			{
-				path: 'src/build.ts',
+				path: "src/build.ts",
 				content: `/**
  * Build script for ${config.name}
  *
@@ -80,7 +80,7 @@ function renderDefaultLayout(ctx: LayoutContext): string {
 `,
 			},
 			{
-				path: 'src/serve.ts',
+				path: "src/serve.ts",
 				content: `/**
  * Development server for serving the built website
  */
@@ -131,7 +131,7 @@ serve();
 `,
 			},
 			{
-				path: 'content/index.md',
+				path: "content/index.md",
 				content: `---
 title: Welcome
 description: Welcome to my website
@@ -150,7 +150,7 @@ This is a static website built with [Bueno Framework](https://buenojs.dev).
 `,
 			},
 			{
-				path: 'public/styles/main.css',
+				path: "public/styles/main.css",
 				content: `/* Main styles for the website */
 * {
   box-sizing: border-box;
@@ -234,7 +234,7 @@ pre {
 `,
 			},
 			{
-				path: '.env.example',
+				path: ".env.example",
 				content: `# ${config.name} Environment Variables
 # Copy this file to .env and customize as needed
 
@@ -246,18 +246,18 @@ NODE_ENV=development
 `,
 			},
 		],
-		directories: ['src', 'content', 'public/styles', 'layouts'],
+		directories: ["src", "content", "public/styles", "layouts"],
 		dependencies: {
 			...getBuenoDependency(),
 		},
 		devDependencies: {
-			'@types/bun': 'latest',
-			typescript: '^5.3.0',
+			"@types/bun": "latest",
+			typescript: "^5.3.0",
 		},
 		scripts: {
-			dev: 'bun run --watch src/build.ts --dev',
-			build: 'bun run src/build.ts',
-			serve: 'bun run src/serve.ts',
+			dev: "bun run --watch src/build.ts --dev",
+			build: "bun run src/build.ts",
+			serve: "bun run src/serve.ts",
 		},
 	};
 }

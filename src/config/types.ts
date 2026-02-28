@@ -338,20 +338,23 @@ export type UserConfig<T extends BuenoConfig = BuenoConfig> = DeepPartial<T>;
 /**
  * User configuration function type
  */
-export type UserConfigFn<T extends BuenoConfig = BuenoConfig> = (env: string) => UserConfig<T> | Promise<UserConfig<T>>;
+export type UserConfigFn<T extends BuenoConfig = BuenoConfig> = (
+	env: string,
+) => UserConfig<T> | Promise<UserConfig<T>>;
 
 /**
  * Configuration value type for a given key path
  */
-export type ConfigValueForKey<TKey extends string> = TKey extends `${infer T}.${infer Rest}`
-	? T extends keyof BuenoConfig
-		? Rest extends string
-			? ConfigValueForKey<Rest>
-			: BuenoConfig[T]
-		: unknown
-	: TKey extends keyof BuenoConfig
-		? BuenoConfig[TKey]
-		: unknown;
+export type ConfigValueForKey<TKey extends string> =
+	TKey extends `${infer T}.${infer Rest}`
+		? T extends keyof BuenoConfig
+			? Rest extends string
+				? ConfigValueForKey<Rest>
+				: BuenoConfig[T]
+			: unknown
+		: TKey extends keyof BuenoConfig
+			? BuenoConfig[TKey]
+			: unknown;
 
 // ============= Default Configuration =============
 
@@ -484,119 +487,319 @@ export interface EnvMapping {
 
 export const ENV_MAPPINGS: EnvMapping[] = [
 	// Server
-	{ envVar: "BUENO_PORT", configKey: "server.port", transform: (v) => parseInt(v, 10) },
+	{
+		envVar: "BUENO_PORT",
+		configKey: "server.port",
+		transform: (v) => Number.parseInt(v, 10),
+	},
 	{ envVar: "BUENO_HOST", configKey: "server.host" },
-	{ envVar: "BUENO_DEV", configKey: "server.development", transform: (v) => v === "true" },
-	{ envVar: "PORT", configKey: "server.port", transform: (v) => parseInt(v, 10) },
+	{
+		envVar: "BUENO_DEV",
+		configKey: "server.development",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "PORT",
+		configKey: "server.port",
+		transform: (v) => Number.parseInt(v, 10),
+	},
 	{ envVar: "HOST", configKey: "server.host" },
 
 	// Database
 	{ envVar: "DATABASE_URL", configKey: "database.url" },
 	{ envVar: "BUENO_DATABASE_URL", configKey: "database.url" },
-	{ envVar: "BUENO_DB_POOL_SIZE", configKey: "database.poolSize", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_DB_METRICS", configKey: "database.enableMetrics", transform: (v) => v === "true" },
-	{ envVar: "BUENO_DB_SLOW_QUERY", configKey: "database.slowQueryThreshold", transform: (v) => parseInt(v, 10) },
+	{
+		envVar: "BUENO_DB_POOL_SIZE",
+		configKey: "database.poolSize",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_DB_METRICS",
+		configKey: "database.enableMetrics",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_DB_SLOW_QUERY",
+		configKey: "database.slowQueryThreshold",
+		transform: (v) => Number.parseInt(v, 10),
+	},
 
 	// Cache
 	{ envVar: "REDIS_URL", configKey: "cache.url" },
 	{ envVar: "BUENO_REDIS_URL", configKey: "cache.url" },
 	{ envVar: "BUENO_CACHE_DRIVER", configKey: "cache.driver" },
-	{ envVar: "BUENO_CACHE_TTL", configKey: "cache.ttl", transform: (v) => parseInt(v, 10) },
+	{
+		envVar: "BUENO_CACHE_TTL",
+		configKey: "cache.ttl",
+		transform: (v) => Number.parseInt(v, 10),
+	},
 	{ envVar: "BUENO_CACHE_PREFIX", configKey: "cache.keyPrefix" },
 
 	// Jobs
-	{ envVar: "BUENO_JOBS_ENABLED", configKey: "jobs.enabled", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_JOBS_ENABLED",
+		configKey: "jobs.enabled",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_JOBS_DRIVER", configKey: "jobs.driver" },
 	{ envVar: "BUENO_JOBS_URL", configKey: "jobs.url" },
-	{ envVar: "BUENO_JOBS_CONCURRENCY", configKey: "jobs.concurrency", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_JOBS_MAX_RETRIES", configKey: "jobs.maxRetries", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_JOBS_RETRY_DELAY", configKey: "jobs.retryDelay", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_JOBS_BATCH_SIZE", configKey: "jobs.batchSize", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_JOBS_POLL_INTERVAL", configKey: "jobs.pollInterval", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_JOBS_TIMEOUT", configKey: "jobs.jobTimeout", transform: (v) => parseInt(v, 10) },
+	{
+		envVar: "BUENO_JOBS_CONCURRENCY",
+		configKey: "jobs.concurrency",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_JOBS_MAX_RETRIES",
+		configKey: "jobs.maxRetries",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_JOBS_RETRY_DELAY",
+		configKey: "jobs.retryDelay",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_JOBS_BATCH_SIZE",
+		configKey: "jobs.batchSize",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_JOBS_POLL_INTERVAL",
+		configKey: "jobs.pollInterval",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_JOBS_TIMEOUT",
+		configKey: "jobs.jobTimeout",
+		transform: (v) => Number.parseInt(v, 10),
+	},
 
 	// Template
-	{ envVar: "BUENO_TEMPLATE_ENABLED", configKey: "template.enabled", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_TEMPLATE_ENABLED",
+		configKey: "template.enabled",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_TEMPLATE_BASE_PATH", configKey: "template.basePath" },
-	{ envVar: "BUENO_TEMPLATE_CACHE_ENABLED", configKey: "template.cache.enabled", transform: (v) => v === "true" },
-	{ envVar: "BUENO_TEMPLATE_CACHE_TTL", configKey: "template.cache.ttl", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_TEMPLATE_CACHE_MAX_SIZE", configKey: "template.cache.maxSize", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_TEMPLATE_WATCH", configKey: "template.watch", transform: (v) => v === "true" },
-	{ envVar: "BUENO_TEMPLATE_DEFAULT_FORMAT", configKey: "template.defaultFormat" },
+	{
+		envVar: "BUENO_TEMPLATE_CACHE_ENABLED",
+		configKey: "template.cache.enabled",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_TEMPLATE_CACHE_TTL",
+		configKey: "template.cache.ttl",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_TEMPLATE_CACHE_MAX_SIZE",
+		configKey: "template.cache.maxSize",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_TEMPLATE_WATCH",
+		configKey: "template.watch",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_TEMPLATE_DEFAULT_FORMAT",
+		configKey: "template.defaultFormat",
+	},
 
 	// Notification
-	{ envVar: "BUENO_NOTIFICATION_ENABLED", configKey: "notification.enabled", transform: (v) => v === "true" },
-	{ envVar: "BUENO_NOTIFICATION_METRICS", configKey: "notification.enableMetrics", transform: (v) => v === "true" },
-	{ envVar: "BUENO_NOTIFICATION_QUEUE", configKey: "notification.queue", transform: (v) => v === "true" },
-	{ envVar: "BUENO_NOTIFICATION_DEFAULT", configKey: "notification.defaultChannel" },
+	{
+		envVar: "BUENO_NOTIFICATION_ENABLED",
+		configKey: "notification.enabled",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_NOTIFICATION_METRICS",
+		configKey: "notification.enableMetrics",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_NOTIFICATION_QUEUE",
+		configKey: "notification.queue",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_NOTIFICATION_DEFAULT",
+		configKey: "notification.defaultChannel",
+	},
 
 	// Email Channel
-	{ envVar: "BUENO_EMAIL_ENABLED", configKey: "notification.email.enabled", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_EMAIL_ENABLED",
+		configKey: "notification.email.enabled",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_EMAIL_DRIVER", configKey: "notification.email.driver" },
 	{ envVar: "BUENO_EMAIL_FROM", configKey: "notification.email.from" },
 	{ envVar: "BUENO_EMAIL_FROM_NAME", configKey: "notification.email.fromName" },
 	{ envVar: "BUENO_EMAIL_API_KEY", configKey: "notification.email.apiKey" },
-	{ envVar: "BUENO_EMAIL_DRY_RUN", configKey: "notification.email.dryRun", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_EMAIL_DRY_RUN",
+		configKey: "notification.email.dryRun",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_SMTP_HOST", configKey: "notification.email.smtp.host" },
-	{ envVar: "BUENO_SMTP_PORT", configKey: "notification.email.smtp.port", transform: (v) => parseInt(v, 10) },
+	{
+		envVar: "BUENO_SMTP_PORT",
+		configKey: "notification.email.smtp.port",
+		transform: (v) => Number.parseInt(v, 10),
+	},
 	{ envVar: "BUENO_SMTP_USER", configKey: "notification.email.smtp.username" },
-	{ envVar: "BUENO_SMTP_PASSWORD", configKey: "notification.email.smtp.password" },
-	{ envVar: "BUENO_SMTP_SECURE", configKey: "notification.email.smtp.secure", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_SMTP_PASSWORD",
+		configKey: "notification.email.smtp.password",
+	},
+	{
+		envVar: "BUENO_SMTP_SECURE",
+		configKey: "notification.email.smtp.secure",
+		transform: (v) => v === "true",
+	},
 
 	// SMS Channel
-	{ envVar: "BUENO_SMS_ENABLED", configKey: "notification.sms.enabled", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_SMS_ENABLED",
+		configKey: "notification.sms.enabled",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_SMS_DRIVER", configKey: "notification.sms.driver" },
-	{ envVar: "BUENO_SMS_DRY_RUN", configKey: "notification.sms.dryRun", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_SMS_DRY_RUN",
+		configKey: "notification.sms.dryRun",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_SMS_ACCOUNT_SID", configKey: "notification.sms.accountSid" },
 	{ envVar: "BUENO_SMS_AUTH_TOKEN", configKey: "notification.sms.authToken" },
 	{ envVar: "BUENO_SMS_FROM_NUMBER", configKey: "notification.sms.fromNumber" },
 
 	// WhatsApp Channel
-	{ envVar: "BUENO_WHATSAPP_ENABLED", configKey: "notification.whatsapp.enabled", transform: (v) => v === "true" },
-	{ envVar: "BUENO_WHATSAPP_DRIVER", configKey: "notification.whatsapp.driver" },
-	{ envVar: "BUENO_WHATSAPP_DRY_RUN", configKey: "notification.whatsapp.dryRun", transform: (v) => v === "true" },
-	{ envVar: "BUENO_WHATSAPP_ACCOUNT_SID", configKey: "notification.whatsapp.accountSid" },
-	{ envVar: "BUENO_WHATSAPP_AUTH_TOKEN", configKey: "notification.whatsapp.authToken" },
-	{ envVar: "BUENO_WHATSAPP_BUSINESS_PHONE", configKey: "notification.whatsapp.businessPhoneNumber" },
+	{
+		envVar: "BUENO_WHATSAPP_ENABLED",
+		configKey: "notification.whatsapp.enabled",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_WHATSAPP_DRIVER",
+		configKey: "notification.whatsapp.driver",
+	},
+	{
+		envVar: "BUENO_WHATSAPP_DRY_RUN",
+		configKey: "notification.whatsapp.dryRun",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_WHATSAPP_ACCOUNT_SID",
+		configKey: "notification.whatsapp.accountSid",
+	},
+	{
+		envVar: "BUENO_WHATSAPP_AUTH_TOKEN",
+		configKey: "notification.whatsapp.authToken",
+	},
+	{
+		envVar: "BUENO_WHATSAPP_BUSINESS_PHONE",
+		configKey: "notification.whatsapp.businessPhoneNumber",
+	},
 
 	// Push Channel
-	{ envVar: "BUENO_PUSH_ENABLED", configKey: "notification.push.enabled", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_PUSH_ENABLED",
+		configKey: "notification.push.enabled",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_PUSH_DRIVER", configKey: "notification.push.driver" },
-	{ envVar: "BUENO_PUSH_DRY_RUN", configKey: "notification.push.dryRun", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_PUSH_DRY_RUN",
+		configKey: "notification.push.dryRun",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_PUSH_SERVER_KEY", configKey: "notification.push.serverKey" },
-	{ envVar: "BUENO_PUSH_CERTIFICATE_PATH", configKey: "notification.push.certificatePath" },
+	{
+		envVar: "BUENO_PUSH_CERTIFICATE_PATH",
+		configKey: "notification.push.certificatePath",
+	},
 
 	// i18n
-	{ envVar: "BUENO_I18N_ENABLED", configKey: "i18n.enabled", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_I18N_ENABLED",
+		configKey: "i18n.enabled",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_I18N_DEFAULT_LOCALE", configKey: "i18n.defaultLocale" },
-	{ envVar: "BUENO_I18N_SUPPORTED_LOCALES", configKey: "i18n.supportedLocales", transform: (v) => v.split(",").map((s) => s.trim()) },
+	{
+		envVar: "BUENO_I18N_SUPPORTED_LOCALES",
+		configKey: "i18n.supportedLocales",
+		transform: (v) => v.split(",").map((s) => s.trim()),
+	},
 	{ envVar: "BUENO_I18N_BASE_PATH", configKey: "i18n.basePath" },
-	{ envVar: "BUENO_I18N_FALLBACK", configKey: "i18n.fallbackToDefault", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_I18N_FALLBACK",
+		configKey: "i18n.fallbackToDefault",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_I18N_COOKIE_NAME", configKey: "i18n.cookieName" },
-	{ envVar: "BUENO_I18N_COOKIE_MAX_AGE", configKey: "i18n.cookieMaxAge", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_I18N_WATCH", configKey: "i18n.watch", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_I18N_COOKIE_MAX_AGE",
+		configKey: "i18n.cookieMaxAge",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_I18N_WATCH",
+		configKey: "i18n.watch",
+		transform: (v) => v === "true",
+	},
 
 	// Logger
 	{ envVar: "LOG_LEVEL", configKey: "logger.level" },
 	{ envVar: "BUENO_LOG_LEVEL", configKey: "logger.level" },
-	{ envVar: "BUENO_LOG_PRETTY", configKey: "logger.pretty", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_LOG_PRETTY",
+		configKey: "logger.pretty",
+		transform: (v) => v === "true",
+	},
 
 	// Health
-	{ envVar: "BUENO_HEALTH_ENABLED", configKey: "health.enabled", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_HEALTH_ENABLED",
+		configKey: "health.enabled",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_HEALTH_PATH", configKey: "health.healthPath" },
 	{ envVar: "BUENO_READY_PATH", configKey: "health.readyPath" },
 
 	// Metrics
-	{ envVar: "BUENO_METRICS_ENABLED", configKey: "metrics.enabled", transform: (v) => v === "true" },
-	{ envVar: "BUENO_METRICS_INTERVAL", configKey: "metrics.collectInterval", transform: (v) => parseInt(v, 10) },
+	{
+		envVar: "BUENO_METRICS_ENABLED",
+		configKey: "metrics.enabled",
+		transform: (v) => v === "true",
+	},
+	{
+		envVar: "BUENO_METRICS_INTERVAL",
+		configKey: "metrics.collectInterval",
+		transform: (v) => Number.parseInt(v, 10),
+	},
 
 	// Telemetry
-	{ envVar: "BUENO_TELEMETRY_ENABLED", configKey: "telemetry.enabled", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_TELEMETRY_ENABLED",
+		configKey: "telemetry.enabled",
+		transform: (v) => v === "true",
+	},
 	{ envVar: "BUENO_SERVICE_NAME", configKey: "telemetry.serviceName" },
 	{ envVar: "BUENO_OTEL_ENDPOINT", configKey: "telemetry.endpoint" },
 	{ envVar: "OTEL_EXPORTER_OTLP_ENDPOINT", configKey: "telemetry.endpoint" },
 
 	// Frontend
-	{ envVar: "BUENO_FRONTEND_PORT", configKey: "frontend.port", transform: (v) => parseInt(v, 10) },
-	{ envVar: "BUENO_HMR", configKey: "frontend.hmr", transform: (v) => v === "true" },
+	{
+		envVar: "BUENO_FRONTEND_PORT",
+		configKey: "frontend.port",
+		transform: (v) => Number.parseInt(v, 10),
+	},
+	{
+		envVar: "BUENO_HMR",
+		configKey: "frontend.hmr",
+		transform: (v) => v === "true",
+	},
 ];

@@ -4,8 +4,8 @@
  * Provides file system operations using Bun's native APIs
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Check if a file exists
@@ -73,7 +73,7 @@ export async function readFile(filePath: string): Promise<string> {
  * Read a file as string (sync)
  */
 export function readFileSync(filePath: string): string {
-	return fs.readFileSync(filePath, 'utf-8');
+	return fs.readFileSync(filePath, "utf-8");
 }
 
 /**
@@ -98,7 +98,7 @@ export function writeFileSync(filePath: string, content: string): void {
 	const dir = path.dirname(filePath);
 	createDirectorySync(dir);
 
-	fs.writeFileSync(filePath, content, 'utf-8');
+	fs.writeFileSync(filePath, content, "utf-8");
 }
 
 /**
@@ -132,10 +132,7 @@ export function deleteDirectorySync(dirPath: string): void {
 /**
  * Copy a file
  */
-export async function copyFile(
-	src: string,
-	dest: string,
-): Promise<void> {
+export async function copyFile(src: string, dest: string): Promise<void> {
 	// Ensure destination directory exists
 	const dir = path.dirname(dest);
 	await createDirectory(dir);
@@ -211,9 +208,9 @@ export async function findFileUp(
 	options: { stopAt?: string } = {},
 ): Promise<string | null> {
 	let currentDir = startDir;
-	const stopAt = options.stopAt ?? '/';
+	const stopAt = options.stopAt ?? "/";
 
-	while (currentDir !== stopAt && currentDir !== '/') {
+	while (currentDir !== stopAt && currentDir !== "/") {
 		const filePath = path.join(currentDir, fileName);
 		if (await fileExists(filePath)) {
 			return filePath;
@@ -231,7 +228,7 @@ export async function getProjectRoot(
 	startDir: string = process.cwd(),
 ): Promise<string | null> {
 	// Look for package.json as indicator
-	const packageJsonPath = await findFileUp(startDir, 'package.json');
+	const packageJsonPath = await findFileUp(startDir, "package.json");
 	if (packageJsonPath) {
 		return path.dirname(packageJsonPath);
 	}
@@ -248,10 +245,10 @@ export async function isBuenoProject(
 	if (!root) return false;
 
 	// Check for bueno.config.ts or package.json with bueno dependency
-	const configPath = path.join(root, 'bueno.config.ts');
+	const configPath = path.join(root, "bueno.config.ts");
 	if (await fileExists(configPath)) return true;
 
-	const packageJsonPath = path.join(root, 'package.json');
+	const packageJsonPath = path.join(root, "package.json");
 	if (await fileExists(packageJsonPath)) {
 		const content = await readFile(packageJsonPath);
 		try {
@@ -281,9 +278,10 @@ export async function writeJson(
 	data: unknown,
 	options: { pretty?: boolean } = {},
 ): Promise<void> {
-	const content = options.pretty !== false
-		? JSON.stringify(data, null, 2)
-		: JSON.stringify(data);
+	const content =
+		options.pretty !== false
+			? JSON.stringify(data, null, 2)
+			: JSON.stringify(data);
 	await writeFile(filePath, content);
 }
 
@@ -326,7 +324,7 @@ export function getExtName(filePath: string): string {
  * Normalize path separators
  */
 export function normalizePath(filePath: string): string {
-	return filePath.replace(/\\/g, '/');
+	return filePath.replace(/\\/g, "/");
 }
 
 /**
@@ -339,10 +337,7 @@ export interface TemplateData {
 /**
  * Process a template string
  */
-export function processTemplate(
-	template: string,
-	data: TemplateData,
-): string {
+export function processTemplate(template: string, data: TemplateData): string {
 	let result = template;
 
 	// Process conditionals: {{#if key}}...{{/if}}
@@ -350,7 +345,7 @@ export function processTemplate(
 		/\{\{#if\s+(\w+)\}\}([\s\S]*?)\{\{\/if\}\}/g,
 		(_, key: string, content: string) => {
 			const value = data[key];
-			return value ? content : '';
+			return value ? content : "";
 		},
 	);
 
@@ -359,55 +354,74 @@ export function processTemplate(
 		/\{\{#each\s+(\w+)\}\}([\s\S]*?)\{\{\/each\}\}/g,
 		(_, key: string, content: string) => {
 			const items = data[key];
-			if (!Array.isArray(items)) return '';
+			if (!Array.isArray(items)) return "";
 
 			return items
 				.map((item) => {
 					let itemContent = content;
-					if (typeof item === 'object' && item !== null) {
+					if (typeof item === "object" && item !== null) {
 						// Replace nested properties
 						for (const [k, v] of Object.entries(item)) {
 							itemContent = itemContent.replace(
-								new RegExp(`\\{\\{${k}\\}\\}`, 'g'),
+								new RegExp(`\\{\\{${k}\\}\\}`, "g"),
 								String(v),
 							);
 						}
 					}
 					return itemContent;
 				})
-				.join('');
+				.join("");
 		},
 	);
 
 	// Process simple variables with helpers: {{helperName key}}
 	const helpers: Record<string, (v: string) => string> = {
 		camelCase: (v) =>
-			v.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : '')).replace(/^(.)/, (c) => c.toLowerCase()),
+			v
+				.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""))
+				.replace(/^(.)/, (c) => c.toLowerCase()),
 		pascalCase: (v) =>
-			v.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : '')).replace(/^(.)/, (c) => c.toUpperCase()),
+			v
+				.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""))
+				.replace(/^(.)/, (c) => c.toUpperCase()),
 		kebabCase: (v) =>
-			v.replace(/([a-z])([A-Z])/g, '$1-$2').replace(/[-_\s]+/g, '-').toLowerCase(),
+			v
+				.replace(/([a-z])([A-Z])/g, "$1-$2")
+				.replace(/[-_\s]+/g, "-")
+				.toLowerCase(),
 		snakeCase: (v) =>
-			v.replace(/([a-z])([A-Z])/g, '$1_$2').replace(/[-\s]+/g, '_').toLowerCase(),
+			v
+				.replace(/([a-z])([A-Z])/g, "$1_$2")
+				.replace(/[-\s]+/g, "_")
+				.toLowerCase(),
 		upperCase: (v) => v.toUpperCase(),
 		lowerCase: (v) => v.toLowerCase(),
 		capitalize: (v) => v.charAt(0).toUpperCase() + v.slice(1),
 		pluralize: (v) => {
-			if (v.endsWith('y') && !['ay', 'ey', 'iy', 'oy', 'uy'].some((e) => v.endsWith(e))) {
-				return v.slice(0, -1) + 'ies';
+			if (
+				v.endsWith("y") &&
+				!["ay", "ey", "iy", "oy", "uy"].some((e) => v.endsWith(e))
+			) {
+				return v.slice(0, -1) + "ies";
 			}
-			if (v.endsWith('s') || v.endsWith('x') || v.endsWith('z') || v.endsWith('ch') || v.endsWith('sh')) {
-				return v + 'es';
+			if (
+				v.endsWith("s") ||
+				v.endsWith("x") ||
+				v.endsWith("z") ||
+				v.endsWith("ch") ||
+				v.endsWith("sh")
+			) {
+				return v + "es";
 			}
-			return v + 's';
+			return v + "s";
 		},
 	};
 
 	for (const [helperName, helperFn] of Object.entries(helpers)) {
-		const regex = new RegExp(`\\{\\{${helperName}\\s+(\\w+)\\}\\}`, 'g');
+		const regex = new RegExp(`\\{\\{${helperName}\\s+(\\w+)\\}\\}`, "g");
 		result = result.replace(regex, (_, key: string) => {
 			const value = data[key];
-			if (typeof value === 'string') {
+			if (typeof value === "string") {
 				return helperFn(value);
 			}
 			return String(value);
@@ -416,13 +430,13 @@ export function processTemplate(
 
 	// Process simple variables: {{key}}
 	for (const [key, value] of Object.entries(data)) {
-		const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+		const regex = new RegExp(`\\{\\{${key}\\}\\}`, "g");
 		result = result.replace(regex, String(value));
 	}
 
 	// Clean up empty lines left by conditionals
-	result = result.replace(/^\s*\n/gm, '\n');
-	result = result.replace(/\n{3,}/g, '\n\n');
+	result = result.replace(/^\s*\n/gm, "\n");
+	result = result.replace(/\n{3,}/g, "\n\n");
 
 	return result.trim();
 }

@@ -8,20 +8,23 @@
 /**
  * Valid deployment platforms
  */
-export type DeployPlatform = 'render' | 'fly' | 'railway';
+export type DeployPlatform = "render" | "fly" | "railway";
 
 /**
  * Get Render.com deployment configuration (render.yaml)
  *
  * Blueprint format for Render.com with web service and optional database
  */
-export function getRenderYamlTemplate(projectName: string, database?: string): string {
-	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-	
-	let databaseSection = '';
-	let envVars = '';
+export function getRenderYamlTemplate(
+	projectName: string,
+	database?: string,
+): string {
+	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
 
-	if (database === 'postgresql') {
+	let databaseSection = "";
+	let envVars = "";
+
+	if (database === "postgresql") {
 		databaseSection = `
   # PostgreSQL Database
   - type: pserv
@@ -53,7 +56,7 @@ export function getRenderYamlTemplate(projectName: string, database?: string): s
       - key: BUN_ENV
         value: production
 `;
-	} else if (database === 'mysql') {
+	} else if (database === "mysql") {
 		databaseSection = `
   # MySQL Database (using Render's managed MySQL)
   - type: pserv
@@ -128,7 +131,7 @@ metadata:
  * Fly.io app configuration with HTTP service and auto-scaling
  */
 export function getFlyTomlTemplate(projectName: string): string {
-	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
 
 	return `# ${projectName} - Fly.io Deployment Configuration
 # https://fly.io/docs/reference/configuration/
@@ -193,7 +196,7 @@ primary_region = "sea"
  * Railway configuration with builder settings and health checks
  */
 export function getRailwayTomlTemplate(projectName: string): string {
-	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+	const kebabName = projectName.toLowerCase().replace(/[^a-z0-9-]/g, "-");
 
 	return `# ${projectName} - Railway Deployment Configuration
 # https://docs.railway.app/reference/config-as-code
@@ -251,11 +254,11 @@ export function getDeployTemplate(
 	database?: string,
 ): string {
 	switch (platform) {
-		case 'render':
+		case "render":
 			return getRenderYamlTemplate(projectName, database);
-		case 'fly':
+		case "fly":
 			return getFlyTomlTemplate(projectName);
-		case 'railway':
+		case "railway":
 			return getRailwayTomlTemplate(projectName);
 		default:
 			throw new Error(`Unknown deployment platform: ${platform}`);
@@ -267,12 +270,12 @@ export function getDeployTemplate(
  */
 export function getDeployFilename(platform: DeployPlatform): string {
 	switch (platform) {
-		case 'render':
-			return 'render.yaml';
-		case 'fly':
-			return 'fly.toml';
-		case 'railway':
-			return 'railway.toml';
+		case "render":
+			return "render.yaml";
+		case "fly":
+			return "fly.toml";
+		case "railway":
+			return "railway.toml";
 		default:
 			throw new Error(`Unknown deployment platform: ${platform}`);
 	}
@@ -283,12 +286,12 @@ export function getDeployFilename(platform: DeployPlatform): string {
  */
 export function getDeployPlatformName(platform: DeployPlatform): string {
 	switch (platform) {
-		case 'render':
-			return 'Render.com';
-		case 'fly':
-			return 'Fly.io';
-		case 'railway':
-			return 'Railway';
+		case "render":
+			return "Render.com";
+		case "fly":
+			return "Fly.io";
+		case "railway":
+			return "Railway";
 		default:
 			return platform;
 	}

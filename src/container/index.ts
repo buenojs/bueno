@@ -51,7 +51,10 @@ class ResolutionStack {
 	 * Track tokens that are being lazily resolved for circular dependencies.
 	 * These tokens have a proxy placeholder that will be resolved later.
 	 */
-	private lazyResolutions = new Map<Token, { resolved: boolean; instance?: unknown }>();
+	private lazyResolutions = new Map<
+		Token,
+		{ resolved: boolean; instance?: unknown }
+	>();
 
 	push(token: Token): void {
 		if (this.stack.has(token)) {
@@ -73,7 +76,10 @@ class ResolutionStack {
 	/**
 	 * Mark a token as being lazily resolved (for circular dependency support)
 	 */
-	markLazy(token: Token, placeholder: { resolved: boolean; instance?: unknown }): void {
+	markLazy(
+		token: Token,
+		placeholder: { resolved: boolean; instance?: unknown },
+	): void {
 		this.lazyResolutions.set(token, placeholder);
 	}
 
@@ -201,8 +207,12 @@ export class Container {
 			get: (target: T, prop: string | symbol): unknown => {
 				// If already resolved, return the cached value
 				if (placeholder.resolved && placeholder.instance) {
-					const value = (placeholder.instance as Record<string | symbol, unknown>)[prop];
-					return typeof value === 'function' ? value.bind(placeholder.instance) : value;
+					const value = (
+						placeholder.instance as Record<string | symbol, unknown>
+					)[prop];
+					return typeof value === "function"
+						? value.bind(placeholder.instance)
+						: value;
 				}
 
 				// Resolve the actual instance
@@ -215,7 +225,7 @@ export class Container {
 					// If not yet cached, we need to wait for the resolution to complete
 					// This happens when the proxy is accessed during construction
 					// Return a function that will resolve later
-					if (prop === 'then') {
+					if (prop === "then") {
 						// Make the proxy thenable for async contexts
 						return undefined;
 					}
@@ -223,22 +233,27 @@ export class Container {
 
 				// Try to get the value from the resolved instance
 				if (placeholder.instance) {
-					const value = (placeholder.instance as Record<string | symbol, unknown>)[prop];
-					return typeof value === 'function' ? value.bind(placeholder.instance) : value;
+					const value = (
+						placeholder.instance as Record<string | symbol, unknown>
+					)[prop];
+					return typeof value === "function"
+						? value.bind(placeholder.instance)
+						: value;
 				}
 
 				// Return a no-op function for method calls during construction
 				return () => undefined;
 			},
-			
+
 			set: (target: T, prop: string | symbol, value: unknown): boolean => {
 				if (placeholder.instance) {
-					(placeholder.instance as Record<string | symbol, unknown>)[prop] = value;
+					(placeholder.instance as Record<string | symbol, unknown>)[prop] =
+						value;
 					return true;
 				}
 				return false;
 			},
-			
+
 			has: (target: T, prop: string | symbol): boolean => {
 				if (placeholder.instance) {
 					return prop in (placeholder.instance as object);
@@ -376,11 +391,18 @@ export function Inject(token: Token | ForwardRef<Token>): ParameterDecorator {
 	) => {
 		const targetObj = target as object;
 		const existingTokens: Array<Token | ForwardRef<Token>> =
-			getContainerMetadata<Array<Token | ForwardRef<Token>>>(targetObj, "inject:tokens") ?? [];
+			getContainerMetadata<Array<Token | ForwardRef<Token>>>(
+				targetObj,
+				"inject:tokens",
+			) ?? [];
 		existingTokens[parameterIndex] = token;
 		setContainerMetadata(targetObj, "inject:tokens", existingTokens);
 	};
 }
 
 // Export getter and setter for use by modules
-export { getContainerMetadata as getInjectTokens, setContainerMetadata, getContainerMetadata };
+export {
+	getContainerMetadata as getInjectTokens,
+	setContainerMetadata,
+	getContainerMetadata,
+};

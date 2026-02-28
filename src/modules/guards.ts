@@ -3,21 +3,21 @@
  *
  * Guards determine whether a request should be allowed to proceed to the handler.
  * They run before interceptors and pipes in the request pipeline.
- * 
+ *
  * Execution Order:
  * Incoming Request → Guards → Interceptors → Pipes → Handler
- * 
+ *
  * If any guard returns false, the request is rejected with 403 Forbidden.
  */
 
-import type { Context } from "../context";
 import type { Token } from "../container";
+import type { Context } from "../context";
 
 // ============= Types =============
 
 /**
  * Guard interface for authorization checks
- * 
+ *
  * @example
  * ```typescript
  * @Injectable()
@@ -34,7 +34,7 @@ export interface CanActivate {
 
 /**
  * Guard function type (for functional guards)
- * 
+ *
  * @example
  * ```typescript
  * const authGuard: GuardFn = (context) => {
@@ -66,7 +66,10 @@ type Constructor = new (...args: unknown[]) => unknown;
 const guardsClassMetadata = new WeakMap<Constructor, Guard[]>();
 
 // WeakMap for storing guards metadata on method prototypes
-const guardsMethodMetadata = new WeakMap<object, Map<string | symbol, Guard[]>>();
+const guardsMethodMetadata = new WeakMap<
+	object,
+	Map<string | symbol, Guard[]>
+>();
 
 /**
  * Set guards on a class constructor
@@ -130,7 +133,9 @@ export function getMethodGuards(
  * }
  * ```
  */
-export function UseGuards(...guards: Guard[]): MethodDecorator & ClassDecorator {
+export function UseGuards(
+	...guards: Guard[]
+): MethodDecorator & ClassDecorator {
 	const decorator = (
 		target: unknown,
 		propertyKey?: string | symbol,
@@ -183,7 +188,10 @@ export class AuthGuard implements CanActivate {
 const ROLES_METADATA_KEY = "roles";
 
 // WeakMap for storing roles metadata on method prototypes
-const rolesMethodMetadata = new WeakMap<object, Map<string | symbol, string[]>>();
+const rolesMethodMetadata = new WeakMap<
+	object,
+	Map<string | symbol, string[]>
+>();
 
 /**
  * Set required roles on a method
@@ -212,10 +220,10 @@ export function getMethodRoles(
 /**
  * Decorator to specify required roles for a route
  * Must be used in conjunction with RolesGuard
- * 
+ *
  * @param roles - Required roles
  * @returns MethodDecorator
- * 
+ *
  * @example
  * ```typescript
  * @Controller('admin')
@@ -281,7 +289,8 @@ declare module "../context" {
 export class RolesGuard implements CanActivate {
 	canActivate(context: Context): boolean {
 		// Get required roles from context (set by the framework during route matching)
-		const requiredRoles = (context as unknown as { requiredRoles?: string[] }).requiredRoles;
+		const requiredRoles = (context as unknown as { requiredRoles?: string[] })
+			.requiredRoles;
 
 		// If no roles are required, allow access
 		if (!requiredRoles || requiredRoles.length === 0) {
@@ -316,7 +325,7 @@ export interface GuardExecutorOptions {
 
 /**
  * Execute guards in order and return whether the request should proceed
- * 
+ *
  * @param context - Request context
  * @param options - Guard executor options
  * @returns true if all guards pass, false otherwise
@@ -325,7 +334,12 @@ export async function executeGuards(
 	context: Context,
 	options: GuardExecutorOptions,
 ): Promise<boolean> {
-	const { globalGuards = [], classGuards = [], methodGuards = [], resolveGuard } = options;
+	const {
+		globalGuards = [],
+		classGuards = [],
+		methodGuards = [],
+		resolveGuard,
+	} = options;
 
 	// Combine all guards in execution order
 	const allGuards = [...globalGuards, ...classGuards, ...methodGuards];
@@ -338,8 +352,11 @@ export async function executeGuards(
 		if (typeof guard === "function") {
 			// Check if it's a guard function or a class constructor
 			const funcGuard = guard as { prototype?: unknown; canActivate?: unknown };
-			if (funcGuard.prototype && typeof funcGuard.prototype === "object" &&
-				"canActivate" in (funcGuard.prototype as object)) {
+			if (
+				funcGuard.prototype &&
+				typeof funcGuard.prototype === "object" &&
+				"canActivate" in (funcGuard.prototype as object)
+			) {
 				// It's a class constructor - try to resolve from container or create instance
 				guardInstance = resolveGuard ? resolveGuard(guard) : null;
 				if (!guardInstance) {
@@ -355,7 +372,10 @@ export async function executeGuards(
 		} else if (typeof guard === "object" && guard !== null) {
 			// It's a token or already an instance
 			const objGuard = guard as { canActivate?: unknown };
-			if ("canActivate" in objGuard && typeof objGuard.canActivate === "function") {
+			if (
+				"canActivate" in objGuard &&
+				typeof objGuard.canActivate === "function"
+			) {
 				// It's already a CanActivate instance
 				guardInstance = guard as CanActivate;
 			} else {
@@ -392,14 +412,17 @@ export async function executeGuards(
  * Create a 403 Forbidden response
  */
 export function createForbiddenResponse(): Response {
-	return new Response(JSON.stringify({
-		statusCode: 403,
-		error: "Forbidden",
-		message: "Access denied",
-	}), {
-		status: 403,
-		headers: {
-			"Content-Type": "application/json",
+	return new Response(
+		JSON.stringify({
+			statusCode: 403,
+			error: "Forbidden",
+			message: "Access denied",
+		}),
+		{
+			status: 403,
+			headers: {
+				"Content-Type": "application/json",
+			},
 		},
-	});
+	);
 }

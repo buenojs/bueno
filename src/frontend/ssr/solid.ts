@@ -8,10 +8,10 @@
  */
 
 import type {
+	FrameworkSSRRenderer,
 	SSRContext,
 	SSRElement,
 	SSRPage,
-	FrameworkSSRRenderer,
 } from "../types.js";
 
 // Solid types (dynamically imported)
@@ -20,9 +20,7 @@ interface SolidElement {
 	props: Record<string, unknown>;
 }
 
-interface SolidComponent {
-	(props: Record<string, unknown>): SolidElement | null;
-}
+type SolidComponent = (props: Record<string, unknown>) => SolidElement | null;
 
 interface SolidRenderResult {
 	html: string;
@@ -74,7 +72,7 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 			this.initialized = true;
 		} catch (error) {
 			throw new Error(
-				"Solid is not installed. Install it with: bun add solid-js"
+				"Solid is not installed. Install it with: bun add solid-js",
 			);
 		}
 	}
@@ -82,7 +80,10 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Render a component to HTML string
 	 */
-	async renderToString(component: unknown, context: SSRContext): Promise<string> {
+	async renderToString(
+		component: unknown,
+		context: SSRContext,
+	): Promise<string> {
 		await this.init();
 
 		if (!this.solidWeb) {
@@ -101,7 +102,8 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 			const html = renderToString(() => wrappedComponent);
 			return html;
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			throw new Error(`Solid renderToString failed: ${errorMessage}`);
 		}
 	}
@@ -109,7 +111,10 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Render a component to a stream
 	 */
-	renderToStream(component: unknown, context: SSRContext): ReadableStream<Uint8Array> {
+	renderToStream(
+		component: unknown,
+		context: SSRContext,
+	): ReadableStream<Uint8Array> {
 		const encoder = new TextEncoder();
 
 		return new ReadableStream<Uint8Array>({
@@ -154,8 +159,11 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 						controller.close();
 					}
 				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error";
-					controller.error(new Error(`Solid renderToStream failed: ${errorMessage}`));
+					const errorMessage =
+						error instanceof Error ? error.message : "Unknown error";
+					controller.error(
+						new Error(`Solid renderToStream failed: ${errorMessage}`),
+					);
 				}
 			},
 		});
@@ -181,7 +189,10 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Wrap component with context provider
 	 */
-	private wrapWithContext(component: unknown, context: SSRContext): () => unknown {
+	private wrapWithContext(
+		component: unknown,
+		context: SSRContext,
+	): () => unknown {
 		return () => {
 			// In a real implementation, this would use Solid's context API
 			// to provide the SSR context to child components
@@ -216,7 +227,8 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 			const html = await renderToStringAsync(() => wrappedComponent);
 			return html;
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			throw new Error(`Solid renderAsync failed: ${errorMessage}`);
 		}
 	}
@@ -227,7 +239,7 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 	async renderWithSuspense(
 		component: unknown,
 		context: SSRContext,
-		fallback: string = "<div>Loading...</div>"
+		fallback = "<div>Loading...</div>",
 	): Promise<string> {
 		await this.init();
 
@@ -258,7 +270,8 @@ export class SolidSSRRenderer implements FrameworkSSRRenderer {
 			const html = await renderToStringAsync(wrappedComponent);
 			return html;
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			throw new Error(`Solid renderWithSuspense failed: ${errorMessage}`);
 		}
 	}
@@ -291,7 +304,11 @@ export class SolidMeta {
 
 	setTitle(title: string): this {
 		this.title = title;
-		addHeadElement({ tag: "title", attrs: {}, children: [{ tag: "#text", attrs: {}, innerHTML: title }] });
+		addHeadElement({
+			tag: "title",
+			attrs: {},
+			children: [{ tag: "#text", attrs: {}, innerHTML: title }],
+		});
 		return this;
 	}
 
@@ -380,7 +397,22 @@ export function ssrElementToString(element: SSRElement): string {
 	}
 
 	// Self-closing tags
-	const voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"];
+	const voidElements = [
+		"area",
+		"base",
+		"br",
+		"col",
+		"embed",
+		"hr",
+		"img",
+		"input",
+		"link",
+		"meta",
+		"param",
+		"source",
+		"track",
+		"wbr",
+	];
 	if (voidElements.includes(element.tag)) {
 		return attrs ? `<${element.tag} ${attrs}>` : `<${element.tag}>`;
 	}
@@ -405,7 +437,7 @@ function escapeHtml(str: string): string {
  */
 export function createSolidSSRContext(
 	request: Request,
-	initialState: Record<string, unknown> = {}
+	initialState: Record<string, unknown> = {},
 ): SSRContext {
 	const url = new URL(request.url);
 
@@ -432,7 +464,7 @@ export function createRouteData<T>(
 	options: {
 		key?: () => unknown[];
 		deferStream?: boolean;
-	} = {}
+	} = {},
 ): {
 	data: T | undefined;
 	loading: boolean;
@@ -500,7 +532,9 @@ export class SolidResource<T> {
 /**
  * Create a Solid resource
  */
-export function createSolidResource<T>(fetcher: () => Promise<T>): SolidResource<T> {
+export function createSolidResource<T>(
+	fetcher: () => Promise<T>,
+): SolidResource<T> {
 	return new SolidResource(fetcher);
 }
 

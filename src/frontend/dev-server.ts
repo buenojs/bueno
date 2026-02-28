@@ -10,33 +10,37 @@
  * - Graceful shutdown handling
  */
 
-import { Router, type RouteMatch } from "../router/index.js";
-import { Logger, createLogger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
+import type { RouteMatch, Router } from "../router/index.js";
 import type { HTTPMethod } from "../types/index.js";
-import type {
-	DevServerConfig,
-	PartialDevServerConfig,
-	DevServerState,
-	FrontendFramework,
-	FrameworkDetectionResult,
-	PackageDependencies,
-	FileResolution,
-	DevServerMiddleware,
-	DevServerEventListener,
-	DevServerEvent,
-	TransformResult,
-	TransformOptions,
-	HMRConfig,
-	ConsoleStreamConfig,
-	PartialConsoleStreamConfig,
-	SSRConfig,
-	PartialSSRConfig,
-	BuildManifest,
-} from "./types.js";
-import { HMRManager, createHMRManager } from "./hmr.js";
+import {
+	type ConsoleStreamManager,
+	createConsoleStreamManager,
+	injectConsoleScript,
+} from "./console-stream.js";
 import { injectHMRScript } from "./hmr-client.js";
-import { ConsoleStreamManager, createConsoleStreamManager, injectConsoleScript } from "./console-stream.js";
-import { SSRRenderer, createSSRRenderer } from "./ssr.js";
+import { type HMRManager, createHMRManager } from "./hmr.js";
+import { type SSRRenderer, createSSRRenderer } from "./ssr.js";
+import type {
+	BuildManifest,
+	ConsoleStreamConfig,
+	DevServerConfig,
+	DevServerEvent,
+	DevServerEventListener,
+	DevServerMiddleware,
+	DevServerState,
+	FileResolution,
+	FrameworkDetectionResult,
+	FrontendFramework,
+	HMRConfig,
+	PackageDependencies,
+	PartialConsoleStreamConfig,
+	PartialDevServerConfig,
+	PartialSSRConfig,
+	SSRConfig,
+	TransformOptions,
+	TransformResult,
+} from "./types.js";
 
 // ============= Constants =============
 
@@ -101,7 +105,9 @@ function detectFramework(rootDir: string): FrameworkDetectionResult {
 		}
 
 		// Read package.json synchronously using Bun's sync read
-		const packageJson = JSON.parse(require("fs").readFileSync(packageJsonPath, "utf-8"));
+		const packageJson = JSON.parse(
+			require("fs").readFileSync(packageJsonPath, "utf-8"),
+		);
 		const dependencies: PackageDependencies = {
 			...packageJson.dependencies,
 			...packageJson.devDependencies,
@@ -109,7 +115,12 @@ function detectFramework(rootDir: string): FrameworkDetectionResult {
 
 		// Check for each framework in order of specificity
 		// Solid and Svelte are more specific than React/Vue
-		const frameworkOrder: FrontendFramework[] = ["solid", "svelte", "vue", "react"];
+		const frameworkOrder: FrontendFramework[] = [
+			"solid",
+			"svelte",
+			"vue",
+			"react",
+		];
 
 		for (const framework of frameworkOrder) {
 			const indicators = FRAMEWORK_INDICATORS[framework];
@@ -192,7 +203,7 @@ export class DevServer {
 		if (this.config.hmr) {
 			this.hmrManager = createHMRManager(
 				frameworkResult.framework,
-				this.config.port
+				this.config.port,
 			);
 			this.logger.info("HMR enabled");
 		}
@@ -201,7 +212,7 @@ export class DevServer {
 		if (this.config.consoleStream?.enabled !== false) {
 			this.consoleStreamManager = createConsoleStreamManager(
 				this.config.port,
-				this.config.consoleStream
+				this.config.consoleStream,
 			);
 			this.logger.info("Console streaming enabled");
 		}
@@ -341,7 +352,9 @@ export class DevServer {
 	/**
 	 * Transform a file based on its type
 	 */
-	private async transformFile(options: TransformOptions): Promise<TransformResult> {
+	private async transformFile(
+		options: TransformOptions,
+	): Promise<TransformResult> {
 		const { filePath, content, framework } = options;
 
 		// For JSX/TSX files, Bun handles transpilation automatically
@@ -387,17 +400,17 @@ export class DevServer {
 		// Inject HMR and Console scripts for HTML files
 		if (resolution.contentType === "text/html; charset=utf-8") {
 			let html = await file.text();
-			
+
 			// Inject HMR script
 			if (this.hmrManager) {
 				html = injectHMRScript(html, this.hmrManager.getPort());
 			}
-			
+
 			// Inject Console Stream script
 			if (this.consoleStreamManager) {
 				html = injectConsoleScript(html, this.consoleStreamManager.getPort());
 			}
-			
+
 			return new Response(html, {
 				headers: {
 					"Content-Type": "text/html; charset=utf-8",
@@ -407,7 +420,8 @@ export class DevServer {
 
 		return new Response(file, {
 			headers: {
-				"Content-Type": resolution.contentType || this.getContentType(resolution.filePath),
+				"Content-Type":
+					resolution.contentType || this.getContentType(resolution.filePath),
 			},
 		});
 	}
@@ -461,7 +475,7 @@ export class DevServer {
 					error: "Internal Server Error",
 					statusCode: 500,
 				},
-				{ status: 500 }
+				{ status: 500 },
 			);
 		}
 	}
@@ -544,7 +558,7 @@ export class DevServer {
 					error: "Not Found",
 					statusCode: 404,
 				},
-				{ status: 404 }
+				{ status: 404 },
 			);
 		} catch (error) {
 			this.logger.error(`Request error: ${pathname}`, error);
@@ -552,9 +566,12 @@ export class DevServer {
 				{
 					error: "Internal Server Error",
 					statusCode: 500,
-					stack: process.env.NODE_ENV !== "production" && error instanceof Error ? error.stack : undefined,
+					stack:
+						process.env.NODE_ENV !== "production" && error instanceof Error
+							? error.stack
+							: undefined,
 				},
-				{ status: 500 }
+				{ status: 500 },
 			);
 		} finally {
 			this.state.activeConnections--;
@@ -607,7 +624,7 @@ export class DevServer {
 				}
 
 				this.logger.info(
-					`Development server started at http://${this.config.hostname}:${this.config.port}`
+					`Development server started at http://${this.config.hostname}:${this.config.port}`,
 				);
 
 				this.emitEvent({
@@ -650,7 +667,9 @@ export class DevServer {
 				this.state.running = false;
 				this.state.startTime = null;
 
-				this.logger.info(`Development server stopped${reason ? `: ${reason}` : ""}`);
+				this.logger.info(
+					`Development server stopped${reason ? `: ${reason}` : ""}`,
+				);
 
 				this.emitEvent({
 					type: "stop",
@@ -720,14 +739,19 @@ export class DevServer {
 	 * Check if console streaming is enabled
 	 */
 	isConsoleStreamEnabled(): boolean {
-		return this.consoleStreamManager !== null && this.consoleStreamManager.isEnabled();
+		return (
+			this.consoleStreamManager !== null &&
+			this.consoleStreamManager.isEnabled()
+		);
 	}
 
 	/**
 	 * Get Console Stream WebSocket URL
 	 */
 	getConsoleStreamUrl(): string | null {
-		return this.consoleStreamManager ? this.consoleStreamManager.getWebSocketUrl() : null;
+		return this.consoleStreamManager
+			? this.consoleStreamManager.getWebSocketUrl()
+			: null;
 	}
 
 	// ============= SSR Methods =============
@@ -741,7 +765,9 @@ export class DevServer {
 			framework: config.framework || this.state.framework,
 		});
 		this.ssrEnabled = true;
-		this.logger.info("SSR enabled", { framework: config.framework || this.state.framework });
+		this.logger.info("SSR enabled", {
+			framework: config.framework || this.state.framework,
+		});
 	}
 
 	/**
@@ -826,21 +852,43 @@ export class DevServer {
 	 */
 	private isStaticAsset(pathname: string): boolean {
 		const staticExtensions = [
-			".js", ".mjs", ".css", ".json",
-			".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp", ".avif",
-			".woff", ".woff2", ".ttf", ".eot",
-			".mp4", ".webm", ".mp3", ".wav",
-			".pdf", ".zip", ".wasm",
+			".js",
+			".mjs",
+			".css",
+			".json",
+			".png",
+			".jpg",
+			".jpeg",
+			".gif",
+			".svg",
+			".ico",
+			".webp",
+			".avif",
+			".woff",
+			".woff2",
+			".ttf",
+			".eot",
+			".mp4",
+			".webm",
+			".mp3",
+			".wav",
+			".pdf",
+			".zip",
+			".wasm",
 		];
-		return staticExtensions.some(ext => pathname.endsWith(ext));
+		return staticExtensions.some((ext) => pathname.endsWith(ext));
 	}
 }
 
 // ============= Factory Function =============
 
 /**
-	* Create a development server
-	*/
-export function createDevServer(config: PartialDevServerConfig & { consoleStream?: PartialConsoleStreamConfig }): DevServer {
+ * Create a development server
+ */
+export function createDevServer(
+	config: PartialDevServerConfig & {
+		consoleStream?: PartialConsoleStreamConfig;
+	},
+): DevServer {
 	return new DevServer(config);
 }

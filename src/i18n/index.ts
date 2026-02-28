@@ -27,7 +27,11 @@ export { I18n, createI18n } from "./engine";
 export { TranslationLoader } from "./loader";
 
 // Negotiator (advanced use)
-export { LocaleNegotiator, parseAcceptLanguage, normaliseLocale } from "./negotiator";
+export {
+	LocaleNegotiator,
+	parseAcceptLanguage,
+	normaliseLocale,
+} from "./negotiator";
 
 // Middleware
 export { i18nMiddleware, getLocale, getT } from "./middleware";

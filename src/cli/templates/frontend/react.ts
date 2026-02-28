@@ -2,13 +2,13 @@
  * React Frontend Template
  */
 
-import type { FrontendTemplateResult } from '../project/types';
+import type { FrontendTemplateResult } from "../project/types";
 
 export function reactTemplate(): FrontendTemplateResult {
 	return {
 		files: [
 			{
-				path: 'client/index.html',
+				path: "client/index.html",
 				content: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +24,7 @@ export function reactTemplate(): FrontendTemplateResult {
 `,
 			},
 			{
-				path: 'client/src/main.tsx',
+				path: "client/src/main.tsx",
 				content: `import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
@@ -40,7 +40,7 @@ root.render(
 `,
 			},
 			{
-				path: 'client/src/App.tsx',
+				path: "client/src/App.tsx",
 				content: `import { useState } from 'react';
 
 export function App() {
@@ -93,7 +93,7 @@ export function App() {
 `,
 			},
 			{
-				path: 'client/src/styles/globals.css',
+				path: "client/src/styles/globals.css",
 				content: `@tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -117,24 +117,24 @@ body {
 			},
 		],
 		directories: [
-			'client/src/components',
-			'client/src/styles',
-			'client/public',
+			"client/src/components",
+			"client/src/styles",
+			"client/public",
 		],
 		dependencies: {
-			react: '^18.3.0',
-			'react-dom': '^18.3.0',
+			react: "^18.3.0",
+			"react-dom": "^18.3.0",
 		},
 		devDependencies: {
-			'@types/react': '^18.3.0',
-			'@types/react-dom': '^18.3.0',
-			tailwindcss: '^3.4.0',
-			postcss: '^8.4.0',
-			autoprefixer: '^10.4.0',
+			"@types/react": "^18.3.0",
+			"@types/react-dom": "^18.3.0",
+			tailwindcss: "^3.4.0",
+			postcss: "^8.4.0",
+			autoprefixer: "^10.4.0",
 		},
 		scripts: {
-			'dev:client': 'bun run --watch client/index.html',
-			'build:client': 'bun build ./client/src/main.tsx --outdir ./dist/client',
+			"dev:client": "bun run --watch client/index.html",
+			"build:client": "bun build ./client/src/main.tsx --outdir ./dist/client",
 		},
 	};
 }

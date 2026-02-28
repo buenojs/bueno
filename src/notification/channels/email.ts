@@ -5,7 +5,7 @@
  * (SMTP, Sendgrid, Brevo, Resend)
  */
 
-import type { EmailMessage, EmailChannelConfig } from "../types";
+import type { EmailChannelConfig, EmailMessage } from "../types";
 import { BaseChannelService } from "./base";
 
 // ============= Email Channel Service =============
@@ -46,7 +46,9 @@ export class EmailChannelService extends BaseChannelService<EmailMessage> {
 
 		// Check that at least one of html or text is present
 		if (!msg.html && !msg.text) {
-			throw new Error("Invalid email message: either html or text must be provided");
+			throw new Error(
+				"Invalid email message: either html or text must be provided",
+			);
 		}
 	}
 
@@ -65,7 +67,9 @@ export class EmailChannelService extends BaseChannelService<EmailMessage> {
 			// In a real implementation, delegate to appropriate driver
 			// For now, simulate sending
 			const messageId = this._generateMessageId();
-			console.log(`[EmailChannel] Email sent: ${messageId} to ${message.recipient}`);
+			console.log(
+				`[EmailChannel] Email sent: ${messageId} to ${message.recipient}`,
+			);
 			this.sentCount++;
 
 			return messageId;

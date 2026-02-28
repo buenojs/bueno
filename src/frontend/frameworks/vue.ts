@@ -5,7 +5,7 @@
  * including Vue SFC support, JSX configuration, and Vue-specific defines.
  */
 
-import type { FrameworkBuildConfig, BuildPlugin } from "../types.js";
+import type { BuildPlugin, FrameworkBuildConfig } from "../types.js";
 
 /**
  * Vue-specific build plugins
@@ -20,26 +20,28 @@ export function getVueBuildConfig(): FrameworkBuildConfig {
 	return {
 		// Vue uses classic JSX runtime
 		jsxRuntime: "classic",
-		
+
 		// Vue-specific file extensions
 		extensions: [".vue", ".jsx", ".tsx", ".js", ".ts"],
-		
+
 		// Vue-specific plugins
 		plugins: vuePlugins,
-		
+
 		// Vue-specific global defines
 		define: {
 			// Vue production mode flag
-			"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development"),
+			"process.env.NODE_ENV": JSON.stringify(
+				process.env.NODE_ENV || "development",
+			),
 			// Vue 3 specific features
-			"__VUE_OPTIONS_API__": "true",
-			"__VUE_PROD_DEVTOOLS__": "false",
-			"__VUE_PROD_HYDRATION_MISMATCH_DETAILS__": "false",
+			__VUE_OPTIONS_API__: "true",
+			__VUE_PROD_DEVTOOLS__: "false",
+			__VUE_PROD_HYDRATION_MISMATCH_DETAILS__: "false",
 		},
-		
+
 		// External dependencies
 		external: [],
-		
+
 		// Loader configurations for Vue files
 		loaders: {
 			".vue": "js", // Vue SFCs are compiled to JS

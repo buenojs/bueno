@@ -7,22 +7,27 @@
 /**
  * Project templates
  */
-export type ProjectTemplate = 'default' | 'minimal' | 'fullstack' | 'api' | 'website';
+export type ProjectTemplate =
+	| "default"
+	| "minimal"
+	| "fullstack"
+	| "api"
+	| "website";
 
 /**
  * Frontend frameworks
  */
-export type FrontendFramework = 'react' | 'vue' | 'svelte' | 'solid' | 'none';
+export type FrontendFramework = "react" | "vue" | "svelte" | "solid" | "none";
 
 /**
  * Database drivers
  */
-export type DatabaseDriver = 'sqlite' | 'postgresql' | 'mysql' | 'none';
+export type DatabaseDriver = "sqlite" | "postgresql" | "mysql" | "none";
 
 /**
  * Deploy platforms
  */
-export type DeployPlatform = 'render' | 'fly' | 'railway';
+export type DeployPlatform = "render" | "fly" | "railway";
 
 /**
  * Project configuration interface

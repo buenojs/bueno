@@ -10,19 +10,15 @@
 
 import type { Database } from "../index";
 import { OrmQueryBuilder } from "./builder";
-import { CastRegistry, type CastDefinition } from "./casts";
-import { HookRunner, type ModelHookName, type ModelHookCallback } from "./hooks";
+import { type CastDefinition, CastRegistry } from "./casts";
 import {
-	getModelDatabase,
-	registerModelDatabase,
-} from "./model-registry";
-import { ScopeRegistry, type ScopeDefinition } from "./scopes";
-import {
-	HasOne,
-	HasMany,
-	BelongsTo,
-	BelongsToMany,
-} from "./relationships";
+	HookRunner,
+	type ModelHookCallback,
+	type ModelHookName,
+} from "./hooks";
+import { getModelDatabase, registerModelDatabase } from "./model-registry";
+import { BelongsTo, BelongsToMany, HasMany, HasOne } from "./relationships";
+import type { ScopeDefinition, ScopeRegistry } from "./scopes";
 
 export class ModelNotFoundError extends Error {
 	constructor(message: string) {
@@ -43,7 +39,9 @@ export class ModelOperationAbortedError extends Error {
  *
  * Generic over TAttributes (the shape of model attributes)
  */
-export abstract class Model<TAttributes extends Record<string, unknown> = Record<string, unknown>> {
+export abstract class Model<
+	TAttributes extends Record<string, unknown> = Record<string, unknown>,
+> {
 	// ============= Static Configuration =============
 
 	static readonly table: string;
@@ -58,14 +56,17 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	static readonly casts: Record<string, CastDefinition> = {};
 
 	private static scopeRegistry = new Map<string, ScopeRegistry<any>>();
-	private static hookRegistry = new Map<string, Map<ModelHookName, ModelHookCallback<any>[]>>();
+	private static hookRegistry = new Map<
+		string,
+		Map<ModelHookName, ModelHookCallback<any>[]>
+	>();
 
 	// ============= Instance State =============
 
 	protected _attributes: TAttributes = {} as TAttributes;
 	protected _original: TAttributes = {} as TAttributes;
 	protected _relations: Map<string, unknown> = new Map();
-	protected _exists: boolean = false;
+	protected _exists = false;
 	protected _isDirty = false;
 
 	// ============= Constructor / Initialization =============
@@ -125,7 +126,9 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	/**
 	 * Create a query builder for this model
 	 */
-	static query<M extends Model>(this: { new(): M } & typeof Model): ModelQueryBuilder<M> {
+	static query<M extends Model>(
+		this: { new (): M } & typeof Model,
+	): ModelQueryBuilder<M> {
 		return new ModelQueryBuilder<M>(this);
 	}
 
@@ -133,7 +136,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Find a model by ID
 	 */
 	static async find<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		id: unknown,
 	): Promise<M | null> {
 		return this.query().where("id", id).first();
@@ -143,7 +146,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Find a model by ID or throw
 	 */
 	static async findOrFail<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		id: unknown,
 	): Promise<M> {
 		const result = await this.find(id);
@@ -157,7 +160,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Create a where clause
 	 */
 	static where<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		column: string,
 		operator: unknown,
 		value?: unknown,
@@ -169,7 +172,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Get all records
 	 */
 	static async all<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 	): Promise<M[]> {
 		return this.query().get();
 	}
@@ -178,7 +181,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Create and persist a new model
 	 */
 	static async create<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		data: Record<string, unknown>,
 	): Promise<M> {
 		// @ts-expect-error - Abstract class instantiation is valid here; this is the concrete subclass
@@ -192,7 +195,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * First or create — get or create based on conditions
 	 */
 	static async firstOrCreate<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		conditions: Partial<TAttributes>,
 		values?: Partial<TAttributes>,
 	): Promise<M> {
@@ -211,7 +214,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Update or create — update or create based on conditions
 	 */
 	static async updateOrCreate<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		conditions: Partial<TAttributes>,
 		values: Partial<TAttributes>,
 	): Promise<M> {
@@ -241,7 +244,10 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	/**
 	 * Set an attribute value
 	 */
-	setAttribute<K extends keyof TAttributes>(key: K, value: TAttributes[K]): void {
+	setAttribute<K extends keyof TAttributes>(
+		key: K,
+		value: TAttributes[K],
+	): void {
 		this._attributes[key] = value;
 		this._isDirty = true;
 	}
@@ -258,7 +264,10 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 			if (guarded.includes(key)) continue;
 			if (fillable.length > 0 && !fillable.includes(key)) continue;
 
-			this.setAttribute(key as keyof TAttributes, value as TAttributes[keyof TAttributes]);
+			this.setAttribute(
+				key as keyof TAttributes,
+				value as TAttributes[keyof TAttributes],
+			);
 		}
 
 		return this;
@@ -269,7 +278,10 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 */
 	forceFill(data: Partial<TAttributes>): this {
 		for (const [key, value] of Object.entries(data)) {
-			this.setAttribute(key as keyof TAttributes, value as TAttributes[keyof TAttributes]);
+			this.setAttribute(
+				key as keyof TAttributes,
+				value as TAttributes[keyof TAttributes],
+			);
 		}
 		return this;
 	}
@@ -295,7 +307,10 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 */
 	isDirty(key?: string): boolean {
 		if (key) {
-			return this._attributes[key as keyof TAttributes] !== this._original[key as keyof TAttributes];
+			return (
+				this._attributes[key as keyof TAttributes] !==
+				this._original[key as keyof TAttributes]
+			);
 		}
 		return this._isDirty;
 	}
@@ -314,7 +329,8 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 		const dirty: Partial<TAttributes> = {};
 		for (const [key, value] of Object.entries(this._attributes)) {
 			if (value !== this._original[key as keyof TAttributes]) {
-				dirty[key as keyof TAttributes] = value as TAttributes[keyof TAttributes];
+				dirty[key as keyof TAttributes] =
+					value as TAttributes[keyof TAttributes];
 			}
 		}
 		return dirty;
@@ -323,7 +339,9 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	/**
 	 * Get original attribute values
 	 */
-	getOriginal<K extends keyof TAttributes>(key?: K): TAttributes[K] | Partial<TAttributes> {
+	getOriginal<K extends keyof TAttributes>(
+		key?: K,
+	): TAttributes[K] | Partial<TAttributes> {
 		if (key) {
 			return this._original[key];
 		}
@@ -346,13 +364,18 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 			const dirty = this.getDirty();
 			if (modelClass.timestamps) {
 				const now = new Date().toISOString();
-				dirty[modelClass.updatedAtColumn as keyof TAttributes] = now as TAttributes[keyof TAttributes];
+				dirty[modelClass.updatedAtColumn as keyof TAttributes] =
+					now as TAttributes[keyof TAttributes];
 				// Also update the in-memory attribute so model.updated_at reflects the new value
-				this._attributes[modelClass.updatedAtColumn as keyof TAttributes] = now as TAttributes[keyof TAttributes];
+				this._attributes[modelClass.updatedAtColumn as keyof TAttributes] =
+					now as TAttributes[keyof TAttributes];
 			}
 
 			const builder = new OrmQueryBuilder(db, modelClass.table);
-			builder.where(modelClass.primaryKey, this.getAttribute(modelClass.primaryKey as keyof TAttributes));
+			builder.where(
+				modelClass.primaryKey,
+				this.getAttribute(modelClass.primaryKey as keyof TAttributes),
+			);
 			await builder.update(dirty);
 
 			this._original = { ...this._attributes };
@@ -363,8 +386,10 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 
 			if (modelClass.timestamps) {
 				const now = new Date().toISOString();
-				data[modelClass.createdAtColumn as keyof TAttributes] = now as TAttributes[keyof TAttributes];
-				data[modelClass.updatedAtColumn as keyof TAttributes] = now as TAttributes[keyof TAttributes];
+				data[modelClass.createdAtColumn as keyof TAttributes] =
+					now as TAttributes[keyof TAttributes];
+				data[modelClass.updatedAtColumn as keyof TAttributes] =
+					now as TAttributes[keyof TAttributes];
 			}
 
 			const builder = new OrmQueryBuilder<TAttributes>(db, modelClass.table);
@@ -394,7 +419,10 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 		} else {
 			// Hard delete
 			const builder = new OrmQueryBuilder(db, modelClass.table);
-			builder.where(modelClass.primaryKey, this.getAttribute(modelClass.primaryKey as keyof TAttributes));
+			builder.where(
+				modelClass.primaryKey,
+				this.getAttribute(modelClass.primaryKey as keyof TAttributes),
+			);
 			await builder.delete();
 		}
 	}
@@ -408,7 +436,10 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 			throw new Error(`Model ${modelClass.name} does not use soft deletes`);
 		}
 
-		this.setAttribute(modelClass.deletedAtColumn as keyof TAttributes, null as TAttributes[keyof TAttributes]);
+		this.setAttribute(
+			modelClass.deletedAtColumn as keyof TAttributes,
+			null as TAttributes[keyof TAttributes],
+		);
 		await this.save();
 	}
 
@@ -441,39 +472,29 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Define a one-to-one relationship
 	 */
 	hasOne<TRelated extends Model>(
-		relatedClass: { new(): TRelated } & typeof Model,
+		relatedClass: { new (): TRelated } & typeof Model,
 		foreignKey: string,
 		localKey?: string,
 	): HasOne<TRelated> {
-		return new HasOne(
-			this as any,
-			relatedClass,
-			foreignKey,
-			localKey ?? "id",
-		);
+		return new HasOne(this as any, relatedClass, foreignKey, localKey ?? "id");
 	}
 
 	/**
 	 * Define a one-to-many relationship
 	 */
 	hasMany<TRelated extends Model>(
-		relatedClass: { new(): TRelated } & typeof Model,
+		relatedClass: { new (): TRelated } & typeof Model,
 		foreignKey: string,
 		localKey?: string,
 	): HasMany<TRelated> {
-		return new HasMany(
-			this as any,
-			relatedClass,
-			foreignKey,
-			localKey ?? "id",
-		);
+		return new HasMany(this as any, relatedClass, foreignKey, localKey ?? "id");
 	}
 
 	/**
 	 * Define the inverse of a one-to-one or one-to-many relationship
 	 */
 	belongsTo<TRelated extends Model>(
-		relatedClass: { new(): TRelated } & typeof Model,
+		relatedClass: { new (): TRelated } & typeof Model,
 		foreignKey: string,
 		ownerKey?: string,
 	): BelongsTo<TRelated> {
@@ -489,7 +510,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Define a many-to-many relationship
 	 */
 	belongsToMany<TRelated extends Model>(
-		relatedClass: { new(): TRelated } & typeof Model,
+		relatedClass: { new (): TRelated } & typeof Model,
 		pivotTable: string,
 		foreignPivotKey: string,
 		relatedPivotKey: string,
@@ -513,7 +534,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Create model instances from database rows
 	 */
 	static hydrate<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		rows: Record<string, unknown>[],
 	): M[] {
 		return rows.map((row) => {
@@ -539,7 +560,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Register a hook callback
 	 */
 	static on<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		hookName: ModelHookName,
 		callback: ModelHookCallback<M>,
 	): void {
@@ -557,7 +578,7 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
 	 * Get all callbacks for a hook
 	 */
 	static getHookCallbacks<M extends Model>(
-		this: { new(): M } & typeof Model,
+		this: { new (): M } & typeof Model,
 		hookName: ModelHookName,
 	): ModelHookCallback<M>[] {
 		const registry = Model.hookRegistry.get(this.name);
@@ -576,10 +597,11 @@ export abstract class Model<TAttributes extends Record<string, unknown> = Record
  * ModelQueryBuilder — extended OrmQueryBuilder with Model-specific features
  */
 export class ModelQueryBuilder<M extends Model> extends OrmQueryBuilder<any> {
-	private modelClass: { new(): M } & typeof Model;
-	private eagerLoads: Map<string, ((q: OrmQueryBuilder<any>) => void) | null> = new Map();
+	private modelClass: { new (): M } & typeof Model;
+	private eagerLoads: Map<string, ((q: OrmQueryBuilder<any>) => void) | null> =
+		new Map();
 
-	constructor(modelClass: { new(): M } & typeof Model) {
+	constructor(modelClass: { new (): M } & typeof Model) {
 		const db = getModelDatabase(modelClass.name);
 		super(db, modelClass.table as string);
 		this.modelClass = modelClass;
@@ -588,10 +610,7 @@ export class ModelQueryBuilder<M extends Model> extends OrmQueryBuilder<any> {
 	/**
 	 * Eager load a relationship
 	 */
-	with(
-		relation: string,
-		callback?: (q: OrmQueryBuilder<any>) => void,
-	): this {
+	with(relation: string, callback?: (q: OrmQueryBuilder<any>) => void): this {
 		this.eagerLoads.set(relation, callback ?? null);
 		return this;
 	}
@@ -637,10 +656,7 @@ export class ModelQueryBuilder<M extends Model> extends OrmQueryBuilder<any> {
 	 * Note: super.paginate() calls get() which already hydrates,
 	 * so we just need to return the result as-is
 	 */
-	override async paginate(
-		page: number,
-		limit: number,
-	) {
+	override async paginate(page: number, limit: number) {
 		const offset = (page - 1) * limit;
 		const [data, total] = await Promise.all([
 			this.clone().offset(offset).limit(limit).get(),
@@ -734,7 +750,8 @@ export class ModelQueryBuilder<M extends Model> extends OrmQueryBuilder<any> {
 			if (intermediates.length === 0) return;
 
 			// Load nested relation on intermediate models
-			const intermediateModelClass = intermediates[0].constructor as typeof Model;
+			const intermediateModelClass = intermediates[0]
+				.constructor as typeof Model;
 			const intermediateBuilder = new ModelQueryBuilder(intermediateModelClass);
 			await intermediateBuilder.loadRelation(intermediates, tail, callback);
 			return;
@@ -768,7 +785,9 @@ export class ModelQueryBuilder<M extends Model> extends OrmQueryBuilder<any> {
 		const rawRows = await relationship.query.get();
 
 		// Hydrate raw rows into model instances
-		const related = (relationship.relatedClass as typeof Model).hydrate(rawRows);
+		const related = (relationship.relatedClass as typeof Model).hydrate(
+			rawRows,
+		);
 
 		// Match relationship results back to parent models
 		relationship.match(models, related, relation);
@@ -778,7 +797,7 @@ export class ModelQueryBuilder<M extends Model> extends OrmQueryBuilder<any> {
 	 * Support local scopes via Proxy
 	 */
 	static createScoped<M extends Model>(
-		modelClass: { new(): M } & typeof Model,
+		modelClass: { new (): M } & typeof Model,
 	): ModelQueryBuilder<M> {
 		const builder = new ModelQueryBuilder(modelClass);
 

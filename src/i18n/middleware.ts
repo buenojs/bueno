@@ -7,7 +7,7 @@
 
 import type { Context } from "../context";
 import type { Middleware } from "../middleware";
-import { I18n, createI18n } from "./engine";
+import { type I18n, createI18n } from "./engine";
 import type { I18nConfig, TranslationFunction } from "./types";
 
 // ============= Typed Context Helpers =============
@@ -107,13 +107,18 @@ export interface I18nMiddlewareOptions extends I18nConfig {
  * @param options Configuration options
  * @returns Koa-style middleware function
  */
-export function i18nMiddleware(options: I18nMiddlewareOptions = {}): Middleware {
+export function i18nMiddleware(
+	options: I18nMiddlewareOptions = {},
+): Middleware {
 	const engine = options.i18n ?? createI18n(options);
 	const negotiator = engine.getNegotiator();
 	const cookieName = engine.config.cookieName;
 	const cookieMaxAge = engine.config.cookieMaxAge;
 
-	return async (ctx: Context, next: () => Promise<Response>): Promise<Response> => {
+	return async (
+		ctx: Context,
+		next: () => Promise<Response>,
+	): Promise<Response> => {
 		// --- Step 1: Detect locale ---
 		let locale: string;
 
@@ -151,7 +156,7 @@ export function i18nMiddleware(options: I18nMiddlewareOptions = {}): Middleware 
 		const existing = response.headers.get("Vary");
 		response.headers.set(
 			"Vary",
-			existing ? `${existing}, Accept-Language` : "Accept-Language"
+			existing ? `${existing}, Accept-Language` : "Accept-Language",
 		);
 
 		return response;

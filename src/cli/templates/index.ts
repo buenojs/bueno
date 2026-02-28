@@ -10,7 +10,7 @@ export {
 	getDockerignoreTemplate,
 	getDockerComposeTemplate,
 	getDockerEnvTemplate,
-} from './docker';
+} from "./docker";
 
 // Cloud platform deployment templates
 export {
@@ -21,7 +21,7 @@ export {
 	getDeployTemplate,
 	getDeployFilename,
 	getDeployPlatformName,
-} from './deploy';
+} from "./deploy";
 
 // Project templates
 export {
@@ -31,19 +31,19 @@ export {
 	type DatabaseDriver,
 	getProjectTemplate,
 	getTemplateOptions,
-} from './project';
+} from "./project";
 
 // Database templates
 export {
 	getDatabaseTemplate,
 	getDatabaseOptions,
-} from './database';
+} from "./database";
 
 // Frontend templates
 export {
 	getFrontendTemplate,
 	getFrontendOptions,
-} from './frontend';
+} from "./frontend";
 
 // Generator templates
 export {
@@ -54,4 +54,4 @@ export {
 	getGeneratorTypes,
 	getDefaultDirectory,
 	getFileExtension,
-} from './generators';
+} from "./generators";

@@ -47,7 +47,10 @@ export interface TranslationParams {
  * @example
  * t('greeting', { name: 'Alice' }) → "Hello, Alice!"
  */
-export type TranslationFunction = (key: string, params?: TranslationParams) => string;
+export type TranslationFunction = (
+	key: string,
+	params?: TranslationParams,
+) => string;
 
 // ============= Locale Negotiation =============
 

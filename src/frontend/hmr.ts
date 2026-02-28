@@ -7,29 +7,35 @@
  * @module frontend/hmr
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
+import { HMR_CLIENT_SCRIPT } from "./hmr-client.js";
 import type {
-	HMRClient,
-	HMRConfig,
-	HMRUpdate,
-	HMRUpdateError,
-	HMRDependencyNode,
-	HMRClientMessage,
-	HMRServerMessage,
 	FileChangeEvent,
 	FrontendFramework,
+	HMRClient,
+	HMRClientMessage,
+	HMRConfig,
+	HMRDependencyNode,
+	HMRServerMessage,
+	HMRUpdate,
+	HMRUpdateError,
 } from "./types.js";
-import { HMR_CLIENT_SCRIPT } from "./hmr-client.js";
 
 // ============= Constants =============
 
 const DEFAULT_DEBOUNCE_MS = 100;
-const DEFAULT_IGNORE_PATTERNS = ["node_modules", ".git", "dist", "build", ".bun"];
+const DEFAULT_IGNORE_PATTERNS = [
+	"node_modules",
+	".git",
+	"dist",
+	"build",
+	".bun",
+];
 
 // ============= File Watcher Types =============
 
 interface FileWatchEvent {
-	event: 'create' | 'update' | 'delete';
+	event: "create" | "update" | "delete";
 	filePath: string;
 }
 
@@ -56,9 +62,13 @@ export class HMRManager {
 	private debounceTimer: ReturnType<typeof setTimeout> | null = null;
 	private framework: FrontendFramework;
 	private devServerPort: number;
-	private watcher: ReturnType<typeof import('fs').watch> | null = null;
+	private watcher: ReturnType<typeof import("fs").watch> | null = null;
 
-	constructor(framework: FrontendFramework, devServerPort: number, config?: Partial<HMRConfig>) {
+	constructor(
+		framework: FrontendFramework,
+		devServerPort: number,
+		config?: Partial<HMRConfig>,
+	) {
 		this.framework = framework;
 		this.devServerPort = devServerPort;
 		this.config = this.normalizeConfig(config);
@@ -114,7 +124,7 @@ export class HMRManager {
 	 */
 	handleUpgrade(request: Request): WebSocket | null {
 		const url = new URL(request.url);
-		
+
 		if (url.pathname !== "/_hmr") {
 			return null;
 		}
@@ -136,17 +146,22 @@ export class HMRManager {
 			},
 		});
 
-		this.logger.info(`HMR WebSocket server started on port ${this.config.port}`);
-		
+		this.logger.info(
+			`HMR WebSocket server started on port ${this.config.port}`,
+		);
+
 		return null; // The server handles the WebSocket directly
 	}
 
 	/**
 	 * Handle fetch requests for WebSocket server
 	 */
-	private handleWebSocketFetch(request: Request, server: any): Response | undefined {
+	private handleWebSocketFetch(
+		request: Request,
+		server: any,
+	): Response | undefined {
 		const url = new URL(request.url);
-		
+
 		if (url.pathname === "/_hmr") {
 			const success = server.upgrade(request);
 			if (success) {
@@ -154,7 +169,7 @@ export class HMRManager {
 			}
 			return new Response("WebSocket upgrade failed", { status: 400 });
 		}
-		
+
 		return new Response("Not found", { status: 404 });
 	}
 
@@ -168,12 +183,12 @@ export class HMRManager {
 			ws: ws,
 			subscribedFiles: new Set(),
 		};
-		
+
 		this.clients.set(clientId, client);
 		ws.data = { clientId };
-		
+
 		this.logger.debug(`HMR client connected: ${clientId}`);
-		
+
 		// Send connected message
 		this.sendToClient(ws, {
 			type: "connected",
@@ -199,31 +214,33 @@ export class HMRManager {
 		try {
 			const data: HMRClientMessage = JSON.parse(message.toString());
 			const clientId = ws.data?.clientId;
-			
+
 			if (!clientId) {
 				return;
 			}
-			
+
 			const client = this.clients.get(clientId);
 			if (!client) {
 				return;
 			}
-			
+
 			switch (data.type) {
 				case "subscribe":
 					client.subscribedFiles.add(data.fileId);
 					this.logger.debug(`Client ${clientId} subscribed to: ${data.fileId}`);
 					break;
-					
+
 				case "unsubscribe":
 					client.subscribedFiles.delete(data.fileId);
-					this.logger.debug(`Client ${clientId} unsubscribed from: ${data.fileId}`);
+					this.logger.debug(
+						`Client ${clientId} unsubscribed from: ${data.fileId}`,
+					);
 					break;
-					
+
 				case "ping":
 					this.sendToClient(ws, { type: "pong" });
 					break;
-					
+
 				case "module-accepted":
 					this.handleModuleAccepted(data.moduleId, data.dependencies);
 					break;
@@ -247,21 +264,23 @@ export class HMRManager {
 	 */
 	broadcastUpdate(update: HMRUpdate): void {
 		const message = JSON.stringify(update);
-		
+
 		for (const client of this.clients.values()) {
 			// Check if client is subscribed to any of the changed files
-			const isSubscribed = update.changes.some(
-				(file) => client.subscribedFiles.has(file)
+			const isSubscribed = update.changes.some((file) =>
+				client.subscribedFiles.has(file),
 			);
-			
+
 			if (isSubscribed || update.type === "reload" || update.type === "error") {
 				if (client.ws.readyState === WebSocket.OPEN) {
 					client.ws.send(message);
 				}
 			}
 		}
-		
-		this.logger.debug(`Broadcasted ${update.type} update for: ${update.fileId}`);
+
+		this.logger.debug(
+			`Broadcasted ${update.type} update for: ${update.fileId}`,
+		);
 	}
 
 	/**
@@ -271,32 +290,36 @@ export class HMRManager {
 		if (!this.config.enabled) {
 			return;
 		}
-		
+
 		this.logger.info(`Starting file watcher for: ${rootDir}`);
-		
+
 		// Use Node's fs.watch for file watching
-		const fs = require('fs');
-		const path = require('path');
-		
+		const fs = require("fs");
+		const path = require("path");
+
 		try {
-			this.watcher = fs.watch(rootDir, { recursive: true }, (eventType: string, filename: string | null) => {
-				if (!filename) return;
-				
-				const filePath = path.join(rootDir, filename);
-				
-				if (eventType === 'rename') {
-					// Check if file exists to determine if it's create or delete
-					try {
-						fs.accessSync(filePath, fs.constants.F_OK);
-						this.handleFileChange(filePath, "create");
-					} catch {
-						this.handleFileChange(filePath, "delete");
+			this.watcher = fs.watch(
+				rootDir,
+				{ recursive: true },
+				(eventType: string, filename: string | null) => {
+					if (!filename) return;
+
+					const filePath = path.join(rootDir, filename);
+
+					if (eventType === "rename") {
+						// Check if file exists to determine if it's create or delete
+						try {
+							fs.accessSync(filePath, fs.constants.F_OK);
+							this.handleFileChange(filePath, "create");
+						} catch {
+							this.handleFileChange(filePath, "delete");
+						}
+					} else if (eventType === "change") {
+						this.handleFileChange(filePath, "update");
 					}
-				} else if (eventType === 'change') {
-					this.handleFileChange(filePath, "update");
-				}
-			});
-			
+				},
+			);
+
 			this.logger.info("File watcher started");
 		} catch (error) {
 			this.logger.error("Failed to start file watcher", error);
@@ -317,21 +340,24 @@ export class HMRManager {
 	/**
 	 * Handle a file change event
 	 */
-	private handleFileChange(filePath: string, event: "create" | "update" | "delete"): void {
+	private handleFileChange(
+		filePath: string,
+		event: "create" | "update" | "delete",
+	): void {
 		// Check if file should be ignored
 		if (this.shouldIgnoreFile(filePath)) {
 			return;
 		}
-		
+
 		this.logger.debug(`File ${event}: ${filePath}`);
-		
+
 		// Add to pending updates
 		this.pendingUpdates.set(filePath, {
 			path: filePath,
 			event,
 			timestamp: Date.now(),
 		});
-		
+
 		// Debounce updates
 		this.scheduleDebouncedUpdate();
 	}
@@ -346,11 +372,22 @@ export class HMRManager {
 				return true;
 			}
 		}
-		
+
 		// Only watch relevant file types
-		const relevantExtensions = [".js", ".jsx", ".ts", ".tsx", ".css", ".scss", ".sass", ".less", ".vue", ".svelte"];
+		const relevantExtensions = [
+			".js",
+			".jsx",
+			".ts",
+			".tsx",
+			".css",
+			".scss",
+			".sass",
+			".less",
+			".vue",
+			".svelte",
+		];
 		const ext = filePath.substring(filePath.lastIndexOf("."));
-		
+
 		return !relevantExtensions.includes(ext);
 	}
 
@@ -361,7 +398,7 @@ export class HMRManager {
 		if (this.debounceTimer) {
 			clearTimeout(this.debounceTimer);
 		}
-		
+
 		this.debounceTimer = setTimeout(() => {
 			this.processPendingUpdates();
 		}, this.config.debounceMs);
@@ -374,16 +411,16 @@ export class HMRManager {
 		if (this.pendingUpdates.size === 0) {
 			return;
 		}
-		
+
 		const updates = Array.from(this.pendingUpdates.values());
 		this.pendingUpdates.clear();
-		
+
 		// Group updates by type
 		const changedFiles = updates.map((u) => u.path);
-		
+
 		// Determine update type based on file changes
 		const updateType = this.determineUpdateType(changedFiles);
-		
+
 		// Create and broadcast update
 		const update: HMRUpdate = {
 			type: updateType,
@@ -391,7 +428,7 @@ export class HMRManager {
 			timestamp: Date.now(),
 			changes: changedFiles,
 		};
-		
+
 		this.broadcastUpdate(update);
 	}
 
@@ -402,17 +439,21 @@ export class HMRManager {
 		// Check if any changed file requires a full reload
 		for (const file of changedFiles) {
 			const ext = file.substring(file.lastIndexOf("."));
-			
+
 			// Configuration files always require full reload
-			if (file.includes("config") || file.endsWith(".config.js") || file.endsWith(".config.ts")) {
+			if (
+				file.includes("config") ||
+				file.endsWith(".config.js") ||
+				file.endsWith(".config.ts")
+			) {
 				return "reload";
 			}
-			
+
 			// HTML files require full reload
 			if (ext === ".html") {
 				return "reload";
 			}
-			
+
 			// Check dependency graph for breaking changes
 			const node = this.dependencyGraph.get(file);
 			if (node && node.importedBy.size > 0) {
@@ -421,7 +462,7 @@ export class HMRManager {
 				// In a full implementation, we'd analyze the actual changes
 			}
 		}
-		
+
 		return "update";
 	}
 
@@ -434,7 +475,7 @@ export class HMRManager {
 		if (node) {
 			// Update imports
 			node.imports = new Set(dependencies);
-			
+
 			// Update reverse dependencies
 			for (const dep of dependencies) {
 				const depNode = this.dependencyGraph.get(dep);
@@ -443,7 +484,7 @@ export class HMRManager {
 				}
 			}
 		}
-		
+
 		this.logger.debug(`Module accepted: ${moduleId}`);
 	}
 
@@ -457,7 +498,7 @@ export class HMRManager {
 			importedBy: new Set(),
 			lastModified: Date.now(),
 		};
-		
+
 		// Update reverse dependencies
 		for (const imp of imports) {
 			const importedNode = this.dependencyGraph.get(imp);
@@ -465,7 +506,7 @@ export class HMRManager {
 				importedNode.importedBy.add(filePath);
 			}
 		}
-		
+
 		this.dependencyGraph.set(filePath, node);
 	}
 
@@ -477,7 +518,7 @@ export class HMRManager {
 		if (!node) {
 			return [];
 		}
-		
+
 		return Array.from(node.importedBy);
 	}
 
@@ -489,7 +530,7 @@ export class HMRManager {
 		if (!node) {
 			return [];
 		}
-		
+
 		return Array.from(node.imports);
 	}
 
@@ -497,13 +538,14 @@ export class HMRManager {
 	 * Broadcast an error to all clients
 	 */
 	broadcastError(error: Error | HMRUpdateError): void {
-		const updateError: HMRUpdateError = error instanceof Error
-			? {
-					message: error.message,
-					stack: error.stack,
-				}
-			: error;
-		
+		const updateError: HMRUpdateError =
+			error instanceof Error
+				? {
+						message: error.message,
+						stack: error.stack,
+					}
+				: error;
+
 		const update: HMRUpdate = {
 			type: "error",
 			fileId: updateError.file || "unknown",
@@ -511,7 +553,7 @@ export class HMRManager {
 			changes: [],
 			error: updateError,
 		};
-		
+
 		this.broadcastUpdate(update);
 	}
 
@@ -553,7 +595,7 @@ export class HMRManager {
 				client.ws.close();
 			}
 		}
-		
+
 		this.clients.clear();
 		this.logger.info("All HMR clients disconnected");
 	}
@@ -566,12 +608,12 @@ export class HMRManager {
 		this.disconnectAll();
 		this.dependencyGraph.clear();
 		this.pendingUpdates.clear();
-		
+
 		if (this.debounceTimer) {
 			clearTimeout(this.debounceTimer);
 			this.debounceTimer = null;
 		}
-		
+
 		this.logger.info("HMR manager stopped");
 	}
 
@@ -658,7 +700,7 @@ export class HMRManager {
 export function createHMRManager(
 	framework: FrontendFramework,
 	devServerPort: number,
-	config?: Partial<HMRConfig>
+	config?: Partial<HMRConfig>,
 ): HMRManager {
 	return new HMRManager(framework, devServerPort, config);
 }
@@ -676,7 +718,7 @@ export function isHMRBoundary(filePath: string, content: string): boolean {
 		/import\.meta\.hot\.accept/,
 		/if\s*\(\s*import\.meta\.hot\s*\)/,
 	];
-	
+
 	return patterns.some((pattern) => pattern.test(content));
 }
 
@@ -685,29 +727,30 @@ export function isHMRBoundary(filePath: string, content: string): boolean {
  */
 export function parseImports(content: string, filePath: string): string[] {
 	const imports: string[] = [];
-	
+
 	// Match ES6 imports
-	const es6Pattern = /import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"]+)['"]/g;
+	const es6Pattern =
+		/import\s+(?:(?:\{[^}]*\}|\*\s+as\s+\w+|\w+)\s+from\s+)?['"]([^'"]+)['"]/g;
 	let match;
-	
+
 	while ((match = es6Pattern.exec(content)) !== null) {
 		imports.push(resolveImport(match[1], filePath));
 	}
-	
+
 	// Match dynamic imports
 	const dynamicPattern = /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
-	
+
 	while ((match = dynamicPattern.exec(content)) !== null) {
 		imports.push(resolveImport(match[1], filePath));
 	}
-	
+
 	// Match CommonJS requires
 	const requirePattern = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
-	
+
 	while ((match = requirePattern.exec(content)) !== null) {
 		imports.push(resolveImport(match[1], filePath));
 	}
-	
+
 	return imports;
 }
 
@@ -719,10 +762,10 @@ function resolveImport(importPath: string, fromFile: string): string {
 	if (!importPath.startsWith(".") && !importPath.startsWith("/")) {
 		return importPath;
 	}
-	
+
 	// Resolve relative paths
 	const dir = fromFile.substring(0, fromFile.lastIndexOf("/"));
 	const resolved = new URL(importPath, `file://${dir}/`).pathname;
-	
+
 	return resolved;
 }

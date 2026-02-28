@@ -155,16 +155,12 @@ export class QueryCompiler {
 				}
 
 				if (w.operator === "IN" && Array.isArray(w.value)) {
-					const placeholders = w.value
-						.map((v) => this.addParam(v))
-						.join(", ");
+					const placeholders = w.value.map((v) => this.addParam(v)).join(", ");
 					return `${prefix}${w.column} IN (${placeholders})`;
 				}
 
 				if (w.operator === "NOT IN" && Array.isArray(w.value)) {
-					const placeholders = w.value
-						.map((v) => this.addParam(v))
-						.join(", ");
+					const placeholders = w.value.map((v) => this.addParam(v)).join(", ");
 					return `${prefix}${w.column} NOT IN (${placeholders})`;
 				}
 
@@ -195,8 +191,7 @@ export class QueryCompiler {
 		const columns = keys.join(", ");
 		const placeholders = keys.map((k) => this.addParam(data[k])).join(", ");
 
-		const returning =
-			this.dialect === "postgresql" ? " RETURNING *" : "";
+		const returning = this.dialect === "postgresql" ? " RETURNING *" : "";
 		return {
 			sql: `INSERT INTO ${table} (${columns}) VALUES (${placeholders})${returning}`,
 			params: [...this.params],
@@ -206,7 +201,10 @@ export class QueryCompiler {
 	/**
 	 * Compile a batch INSERT query
 	 */
-	compileBatchInsert(table: string, rows: Record<string, unknown>[]): CompiledQuery {
+	compileBatchInsert(
+		table: string,
+		rows: Record<string, unknown>[],
+	): CompiledQuery {
 		this.reset();
 
 		if (rows.length === 0) {
@@ -221,8 +219,7 @@ export class QueryCompiler {
 			return `(${placeholders})`;
 		});
 
-		const returning =
-			this.dialect === "postgresql" ? " RETURNING *" : "";
+		const returning = this.dialect === "postgresql" ? " RETURNING *" : "";
 		return {
 			sql: `INSERT INTO ${table} (${columns}) VALUES ${valueRows.join(", ")}${returning}`,
 			params: [...this.params],
@@ -232,17 +229,21 @@ export class QueryCompiler {
 	/**
 	 * Compile an UPDATE query
 	 */
-	compileUpdate(state: QueryState, data: Record<string, unknown>): CompiledQuery {
+	compileUpdate(
+		state: QueryState,
+		data: Record<string, unknown>,
+	): CompiledQuery {
 		this.reset();
 		const sets = Object.entries(data)
 			.map(([col, val]) => `${col} = ${this.addParam(val)}`)
 			.join(", ");
 
 		const whereStr =
-			state.wheres.length > 0 ? ` WHERE ${this.compileWheres(state.wheres)}` : "";
+			state.wheres.length > 0
+				? ` WHERE ${this.compileWheres(state.wheres)}`
+				: "";
 
-		const returning =
-			this.dialect === "postgresql" ? " RETURNING *" : "";
+		const returning = this.dialect === "postgresql" ? " RETURNING *" : "";
 		return {
 			sql: `UPDATE ${state.table} SET ${sets}${whereStr}${returning}`,
 			params: [...this.params],
@@ -255,7 +256,9 @@ export class QueryCompiler {
 	compileDelete(state: QueryState): CompiledQuery {
 		this.reset();
 		const whereStr =
-			state.wheres.length > 0 ? ` WHERE ${this.compileWheres(state.wheres)}` : "";
+			state.wheres.length > 0
+				? ` WHERE ${this.compileWheres(state.wheres)}`
+				: "";
 		return {
 			sql: `DELETE FROM ${state.table}${whereStr}`,
 			params: [...this.params],
@@ -288,7 +291,11 @@ export class QueryCompiler {
 	 * Compile an EXISTS query
 	 */
 	compileExists(state: QueryState): CompiledQuery {
-		const selectCompiled = this.compileSelect({ ...state, selects: ["1"], limitVal: 1 });
+		const selectCompiled = this.compileSelect({
+			...state,
+			selects: ["1"],
+			limitVal: 1,
+		});
 		return {
 			sql: `SELECT EXISTS(${selectCompiled.sql}) as exists`,
 			params: selectCompiled.params,

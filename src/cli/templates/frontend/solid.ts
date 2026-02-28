@@ -2,13 +2,13 @@
  * SolidJS Frontend Template
  */
 
-import type { FrontendTemplateResult } from '../project/types';
+import type { FrontendTemplateResult } from "../project/types";
 
 export function solidTemplate(): FrontendTemplateResult {
 	return {
 		files: [
 			{
-				path: 'client/index.html',
+				path: "client/index.html",
 				content: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +24,7 @@ export function solidTemplate(): FrontendTemplateResult {
 `,
 			},
 			{
-				path: 'client/src/main.tsx',
+				path: "client/src/main.tsx",
 				content: `import { render } from 'solid-js/web';
 import { App } from './App';
 import './styles/globals.css';
@@ -37,7 +37,7 @@ if (root) {
 `,
 			},
 			{
-				path: 'client/src/App.tsx',
+				path: "client/src/App.tsx",
 				content: `import { createSignal } from 'solid-js';
 
 export function App() {
@@ -90,7 +90,7 @@ export function App() {
 `,
 			},
 			{
-				path: 'client/src/styles/globals.css',
+				path: "client/src/styles/globals.css",
 				content: `@tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -114,21 +114,21 @@ body {
 			},
 		],
 		directories: [
-			'client/src/components',
-			'client/src/styles',
-			'client/public',
+			"client/src/components",
+			"client/src/styles",
+			"client/public",
 		],
 		dependencies: {
-			'solid-js': '^1.8.0',
+			"solid-js": "^1.8.0",
 		},
 		devDependencies: {
-			tailwindcss: '^3.4.0',
-			postcss: '^8.4.0',
-			autoprefixer: '^10.4.0',
+			tailwindcss: "^3.4.0",
+			postcss: "^8.4.0",
+			autoprefixer: "^10.4.0",
 		},
 		scripts: {
-			'dev:client': 'bun run --watch client/index.html',
-			'build:client': 'bun build ./client/src/main.tsx --outdir ./dist/client',
+			"dev:client": "bun run --watch client/index.html",
+			"build:client": "bun build ./client/src/main.tsx --outdir ./dist/client",
 		},
 	};
 }

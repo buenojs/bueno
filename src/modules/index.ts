@@ -7,108 +7,108 @@
 
 import {
 	Container,
+	type ForwardRef,
 	type Provider,
 	type Token,
-	type ForwardRef,
 	forwardRef,
+	getContainerMetadata,
+	getInjectTokens,
 	isForwardRef,
 	resolveForwardRef,
-	getInjectTokens,
 	setContainerMetadata,
-	getContainerMetadata,
 } from "../container";
-import {
-	type LazyModuleLoader,
-	type Constructor as LazyConstructor,
-	type ModuleLoaderFn,
-	type LazyModuleMetadata,
-	LazyModuleLoaderImpl,
-	LazyModule,
-	ModuleLoader,
-	MODULE_LOADER_TOKEN,
-	getLazyMetadata,
-	isLazyModule,
-	LazyModuleRegistry,
-} from "./lazy";
 import type { Context } from "../context";
 import { Router } from "../router";
 import type { RouteHandler } from "../types";
 import {
-	LifecycleHookManager,
-	ShutdownSignalHandler,
-	type OnModuleInit,
-	type OnApplicationBootstrap,
-	type OnModuleDestroy,
+	AllExceptionsFilter,
+	Catch,
+	type ExceptionFilter,
+	type ExecuteFiltersOptions,
+	type Filter,
+	type FilterFn,
+	HttpExceptionFilter,
+	NotFoundFilter,
+	UseFilters,
+	ValidationFilter,
+	canHandleException,
+	createDefaultErrorResponse,
+	createInternalErrorResponse,
+	executeFilter,
+	findAndExecuteFilter,
+	getCatchType,
+	getClassFilters,
+	getMethodFilters,
+	isExceptionFilter,
+	isFilterFn,
+} from "./filters";
+import {
+	type CanActivate,
+	type Guard,
+	type GuardFn,
+	createForbiddenResponse,
+	executeGuards,
+	getClassGuards,
+	getMethodGuards,
+} from "./guards";
+import {
+	type CallHandler,
+	type Interceptor,
+	type InterceptorFn,
+	type NestInterceptor,
+	executeInterceptors,
+	getClassInterceptors,
+	getMethodInterceptors,
+	isInterceptorFn,
+	isNestInterceptor,
+} from "./interceptors";
+import {
+	type Constructor as LazyConstructor,
+	LazyModule,
+	type LazyModuleLoader,
+	LazyModuleLoaderImpl,
+	type LazyModuleMetadata,
+	LazyModuleRegistry,
+	MODULE_LOADER_TOKEN,
+	ModuleLoader,
+	type ModuleLoaderFn,
+	getLazyMetadata,
+	isLazyModule,
+} from "./lazy";
+import {
+	type ApplicationLifecycle,
 	type BeforeApplicationShutdown,
+	type FullLifecycle,
+	LifecycleHookManager,
+	type OnAfterRequest,
+	type OnApplicationBootstrap,
 	type OnApplicationShutdown,
 	type OnBeforeRequest,
-	type OnAfterRequest,
+	type OnModuleDestroy,
+	type OnModuleInit,
 	type OnRequestError,
-	type ApplicationLifecycle,
 	type RequestLifecycle,
-	type FullLifecycle,
-	isOnModuleInit,
-	isOnApplicationBootstrap,
-	isOnModuleDestroy,
+	ShutdownSignalHandler,
 	isBeforeApplicationShutdown,
+	isOnAfterRequest,
+	isOnApplicationBootstrap,
 	isOnApplicationShutdown,
 	isOnBeforeRequest,
-	isOnAfterRequest,
+	isOnModuleDestroy,
+	isOnModuleInit,
 	isOnRequestError,
 } from "./lifecycle";
 import {
-	type Guard,
-	type CanActivate,
-	type GuardFn,
-	getClassGuards,
-	getMethodGuards,
-	executeGuards,
-	createForbiddenResponse,
-} from "./guards";
-import {
-	type Interceptor,
-	type NestInterceptor,
-	type InterceptorFn,
-	type CallHandler,
-	getClassInterceptors,
-	getMethodInterceptors,
-	executeInterceptors,
-	isNestInterceptor,
-	isInterceptorFn,
-} from "./interceptors";
-import {
-	type Pipe,
-	type PipeTransform,
-	type PipeFn,
-	type PipeContext,
 	type ParameterPipeMetadata,
-	getMethodPipes,
+	type Pipe,
+	type PipeContext,
+	type PipeFn,
+	type PipeTransform,
+	createBadRequestResponse,
 	executePipes,
 	extractParameterValue,
-	createBadRequestResponse,
+	getMethodPipes,
 } from "./pipes";
-import {
-	type Filter,
-	type ExceptionFilter,
-	type FilterFn,
-	type ExecuteFiltersOptions,
-	UseFilters,
-	Catch,
-	getClassFilters,
-	getMethodFilters,
-	getCatchType,
-	canHandleException,
-	isExceptionFilter,
-	isFilterFn,
-	executeFilter,
-	findAndExecuteFilter,
-	HttpExceptionFilter,
-	ValidationFilter,
-	NotFoundFilter,
-	AllExceptionsFilter,
-	createDefaultErrorResponse,
-	createInternalErrorResponse,
-} from "./filters";
 
 // ============= Types =============
 
@@ -129,14 +129,14 @@ export interface LifecycleHooks {
 // ============= Metadata Storage =============
 // Import metadata storage and decorators from isolated module to avoid circular dependencies
 import {
-	setMetadata,
-	getMetadata,
-	setPrototypeMetadata,
-	getPrototypeMetadata,
-	Injectable,
 	Controller,
+	Injectable,
 	Module,
 	type ModuleMetadata,
+	getMetadata,
+	getPrototypeMetadata,
+	setMetadata,
+	setPrototypeMetadata,
 } from "./metadata";
 
 // Re-export decorators and types for external use
@@ -166,7 +166,10 @@ export function Inject(token: Token | ForwardRef<Token>): ParameterDecorator {
 	) => {
 		const targetObj = target as object;
 		const existingTokens: Array<Token | ForwardRef<Token>> =
-			getContainerMetadata<Array<Token | ForwardRef<Token>>>(targetObj, "inject:tokens") ?? [];
+			getContainerMetadata<Array<Token | ForwardRef<Token>>>(
+				targetObj,
+				"inject:tokens",
+			) ?? [];
 		existingTokens[parameterIndex] = token;
 		setContainerMetadata(targetObj, "inject:tokens", existingTokens);
 	};
@@ -250,9 +253,9 @@ export class AppModule {
 
 		// Add providers (normalize class references to provider objects)
 		if (metadata.providers) {
-			const normalizedProviders = metadata.providers.map(p => {
+			const normalizedProviders = metadata.providers.map((p) => {
 				// If it's a class constructor (function) without token, normalize it
-				if (typeof p === 'function' && !p.token) {
+				if (typeof p === "function" && !p.token) {
 					return { token: p, useClass: p };
 				}
 				return p;
@@ -349,7 +352,8 @@ export class Application {
 	private routeGuardMetadata: Map<string, RouteGuardMetadata> = new Map();
 	private routePipeMetadata: Map<string, RoutePipeMetadata> = new Map();
 	private routeFilterMetadata: Map<string, RouteFilterMetadata> = new Map();
-	private routeInterceptorMetadata: Map<string, RouteInterceptorMetadata> = new Map();
+	private routeInterceptorMetadata: Map<string, RouteInterceptorMetadata> =
+		new Map();
 	private moduleLoader: ModuleLoader;
 	private loadedLazyModules = new Set<Constructor>();
 
@@ -454,8 +458,13 @@ export class Application {
 
 		for (const provider of providers) {
 			const token = provider.token;
-			const instance = this.container.resolve(token as import("../container").Token);
-			this.providerInstances.set(token as import("../container").Token, instance);
+			const instance = this.container.resolve(
+				token as import("../container").Token,
+			);
+			this.providerInstances.set(
+				token as import("../container").Token,
+				instance,
+			);
 			this.lifecycleManager.registerInstance(instance);
 		}
 	}
@@ -486,21 +495,35 @@ export class Application {
 		// Create controller instance
 		// First, check for explicit injection tokens from @Inject decorator
 		let injectTokens =
-			getInjectTokens<Array<Token | ForwardRef<Token>>>(controllerClass, "inject:tokens") ?? [];
-		
+			getInjectTokens<Array<Token | ForwardRef<Token>>>(
+				controllerClass,
+				"inject:tokens",
+			) ?? [];
+
 		// If no explicit tokens, try to use TypeScript's design:paramtypes metadata
 		// This requires the reflect-metadata polyfill to be imported by the user
-		if (injectTokens.length === 0 && typeof Reflect !== 'undefined' && typeof Reflect.getMetadata === 'function') {
-			const paramTypes = Reflect.getMetadata('design:paramtypes', controllerClass) as Array<new (...args: unknown[]) => unknown> | undefined;
+		if (
+			injectTokens.length === 0 &&
+			typeof Reflect !== "undefined" &&
+			typeof Reflect.getMetadata === "function"
+		) {
+			const paramTypes = Reflect.getMetadata(
+				"design:paramtypes",
+				controllerClass,
+			) as Array<new (...args: unknown[]) => unknown> | undefined;
 			if (paramTypes) {
 				// Use the constructor parameter types as injection tokens
-				injectTokens = paramTypes.map((paramType) => paramType as unknown as Token);
+				injectTokens = paramTypes.map(
+					(paramType) => paramType as unknown as Token,
+				);
 			}
 		}
-		
+
 		const deps = injectTokens.map((tokenOrRef) => {
 			// Resolve forward reference if needed
-			const token = isForwardRef(tokenOrRef) ? resolveForwardRef(tokenOrRef) : tokenOrRef;
+			const token = isForwardRef(tokenOrRef)
+				? resolveForwardRef(tokenOrRef)
+				: tokenOrRef;
 			return this.container.resolve(token);
 		});
 		const instance = new controllerClass(...deps);
@@ -530,19 +553,23 @@ export class Application {
 					| "options";
 
 				// Get method-level guards
-				const methodGuards = getMethodGuards(controllerClass.prototype, route.handler) ?? [];
+				const methodGuards =
+					getMethodGuards(controllerClass.prototype, route.handler) ?? [];
 
 				// Get method-level pipes
-				const parameterPipes = getMethodPipes(controllerClass.prototype, route.handler) ?? [];
+				const parameterPipes =
+					getMethodPipes(controllerClass.prototype, route.handler) ?? [];
 
 				// Get class-level filters
 				const classFilters = getClassFilters(controllerClass) ?? [];
 
 				// Get method-level filters
-				const methodFilters = getMethodFilters(controllerClass.prototype, route.handler) ?? [];
+				const methodFilters =
+					getMethodFilters(controllerClass.prototype, route.handler) ?? [];
 
 				// Get method-level interceptors
-				const methodInterceptors = getMethodInterceptors(controllerClass.prototype, route.handler) ?? [];
+				const methodInterceptors =
+					getMethodInterceptors(controllerClass.prototype, route.handler) ?? [];
 
 				// Store guard metadata for this route
 				const routeKey = `${method.toUpperCase()}:${fullPath}`;
@@ -663,8 +690,13 @@ export class Application {
 		if (metadata.providers) {
 			for (const provider of metadata.providers) {
 				this.container.register(provider);
-				const instance = this.container.resolve(provider.token as import("../container").Token);
-				this.providerInstances.set(provider.token as import("../container").Token, instance);
+				const instance = this.container.resolve(
+					provider.token as import("../container").Token,
+				);
+				this.providerInstances.set(
+					provider.token as import("../container").Token,
+					instance,
+				);
 				this.lifecycleManager.registerInstance(instance);
 			}
 
@@ -706,7 +738,7 @@ export class Application {
 
 	/**
 	 * Perform graceful shutdown
-	 * 
+	 *
 	 * Execution order:
 	 * 1. Stop accepting new requests
 	 * 2. beforeApplicationShutdown(signal)
@@ -787,7 +819,7 @@ export class Application {
 				// Execute guards (before interceptors and pipes)
 				const routeKey = `${request.method}:${url.pathname}`;
 				const guardMetadata = this.routeGuardMetadata.get(routeKey);
-				
+
 				if (guardMetadata || this.globalGuards.length > 0) {
 					const guardsPassed = await executeGuards(context, {
 						globalGuards: this.globalGuards,
@@ -795,7 +827,11 @@ export class Application {
 						methodGuards: guardMetadata?.methodGuards ?? [],
 						resolveGuard: (guard: Guard) => {
 							// Try to resolve from container if it's a token
-							if (typeof guard === "object" && guard !== null && !("canActivate" in guard)) {
+							if (
+								typeof guard === "object" &&
+								guard !== null &&
+								!("canActivate" in guard)
+							) {
 								try {
 									return this.container.resolve(guard as Token) as CanActivate;
 								} catch {
@@ -810,120 +846,155 @@ export class Application {
 						return createForbiddenResponse();
 					}
 				}
-	
-					// Get interceptor metadata
-					const interceptorMetadata = this.routeInterceptorMetadata.get(routeKey);
-	
-					// Create the handler function that executes pipes and middleware
-					const executeHandler = async (): Promise<Response> => {
-						// Execute pipes (after guards, before handler)
-						const pipeMetadata = this.routePipeMetadata.get(routeKey);
-						if (pipeMetadata || this.globalPipes.length > 0) {
-							try {
-								// Process each parameter with pipes
-								const params = pipeMetadata?.parameterPipes ?? [];
-								for (const paramMeta of params) {
-									// Extract the initial value for this parameter
-									const initialValue = await extractParameterValue(context, paramMeta);
-									
-									// Create pipe context
-									const pipeContext: PipeContext = {
-										context,
-										metadata: {
-											index: paramMeta.index,
-											name: paramMeta.key,
-											decorator: paramMeta.decorator,
-										},
-									};
-									
-									// Execute pipes for this parameter
-									const transformedValue = await executePipes(initialValue, pipeContext, {
+
+				// Get interceptor metadata
+				const interceptorMetadata = this.routeInterceptorMetadata.get(routeKey);
+
+				// Create the handler function that executes pipes and middleware
+				const executeHandler = async (): Promise<Response> => {
+					// Execute pipes (after guards, before handler)
+					const pipeMetadata = this.routePipeMetadata.get(routeKey);
+					if (pipeMetadata || this.globalPipes.length > 0) {
+						try {
+							// Process each parameter with pipes
+							const params = pipeMetadata?.parameterPipes ?? [];
+							for (const paramMeta of params) {
+								// Extract the initial value for this parameter
+								const initialValue = await extractParameterValue(
+									context,
+									paramMeta,
+								);
+
+								// Create pipe context
+								const pipeContext: PipeContext = {
+									context,
+									metadata: {
+										index: paramMeta.index,
+										name: paramMeta.key,
+										decorator: paramMeta.decorator,
+									},
+								};
+
+								// Execute pipes for this parameter
+								const transformedValue = await executePipes(
+									initialValue,
+									pipeContext,
+									{
 										globalPipes: this.globalPipes,
 										parameterPipes: paramMeta.pipes,
 										resolvePipe: (pipe: Pipe) => {
 											// Try to resolve from container if it's a token
-											if (typeof pipe === "object" && pipe !== null && !("transform" in pipe)) {
+											if (
+												typeof pipe === "object" &&
+												pipe !== null &&
+												!("transform" in pipe)
+											) {
 												try {
-													return this.container.resolve(pipe as Token) as PipeTransform;
+													return this.container.resolve(
+														pipe as Token,
+													) as PipeTransform;
 												} catch {
 													return null;
 												}
 											}
 											return null;
 										},
-									});
-									
-									// Store the transformed value in context for handler access
-									context.set(`pipe:param:${paramMeta.index}`, transformedValue);
-								}
-							} catch (error) {
-								// Pipe transformation failed - return 400 Bad Request
-								if (error instanceof Error) {
-									return createBadRequestResponse(error);
-								}
-								return createBadRequestResponse(new Error("Pipe transformation failed"));
+									},
+								);
+
+								// Store the transformed value in context for handler access
+								context.set(`pipe:param:${paramMeta.index}`, transformedValue);
 							}
-						}
-	
-						// Execute middleware and handler
-						const pipeline = compose((match.middleware ?? []) as import("../middleware").Middleware[]);
-						return pipeline(context, match.handler as import("../middleware").Handler);
-					};
-	
-					// Execute interceptors wrapping around the handler
-					// Interceptors run after guards, before pipes
-					try {
-						const response = await executeInterceptors(context, executeHandler, {
-							globalInterceptors: this.globalInterceptors,
-							classInterceptors: interceptorMetadata?.classInterceptors ?? [],
-							methodInterceptors: interceptorMetadata?.methodInterceptors ?? [],
-							resolveInterceptor: (interceptor: Interceptor): NestInterceptor | InterceptorFn | null => {
-								// Try to resolve from container if it's a token
-								if (typeof interceptor === "object" && interceptor !== null && !isNestInterceptor(interceptor) && !isInterceptorFn(interceptor)) {
-									try {
-										return this.container.resolve(interceptor as Token) as NestInterceptor;
-									} catch {
-										return null;
-									}
-								}
-								// Try to instantiate if it's a class constructor
-								if (typeof interceptor === "function" && !isInterceptorFn(interceptor)) {
-									try {
-										const Constructor = interceptor as new () => NestInterceptor;
-										const instance = new Constructor();
-										if (isNestInterceptor(instance)) {
-											return instance;
-										}
-									} catch {
-										// Cannot instantiate
-									}
-								}
-								return null;
-							},
-						});
-	
-						// Execute onAfterRequest hooks
-						try {
-							await this.lifecycleManager.executeOnAfterRequest(context, response as Response);
 						} catch (error) {
-							console.error("Error in onAfterRequest hook:", error);
-						}
-	
-						return response as Response;
-					} catch (error) {
-						// Execute onRequestError hooks
-						try {
-							await this.lifecycleManager.executeOnRequestError(
-								context,
-								error as Error,
+							// Pipe transformation failed - return 400 Bad Request
+							if (error instanceof Error) {
+								return createBadRequestResponse(error);
+							}
+							return createBadRequestResponse(
+								new Error("Pipe transformation failed"),
 							);
-						} catch (hookError) {
-							console.error("Error in onRequestError hook:", hookError);
 						}
-	
-						// Handle exception with filters
-						return this.handleException(error as Error, context, routeKey);
 					}
+
+					// Execute middleware and handler
+					const pipeline = compose(
+						(match.middleware ?? []) as import("../middleware").Middleware[],
+					);
+					return pipeline(
+						context,
+						match.handler as import("../middleware").Handler,
+					);
+				};
+
+				// Execute interceptors wrapping around the handler
+				// Interceptors run after guards, before pipes
+				try {
+					const response = await executeInterceptors(context, executeHandler, {
+						globalInterceptors: this.globalInterceptors,
+						classInterceptors: interceptorMetadata?.classInterceptors ?? [],
+						methodInterceptors: interceptorMetadata?.methodInterceptors ?? [],
+						resolveInterceptor: (
+							interceptor: Interceptor,
+						): NestInterceptor | InterceptorFn | null => {
+							// Try to resolve from container if it's a token
+							if (
+								typeof interceptor === "object" &&
+								interceptor !== null &&
+								!isNestInterceptor(interceptor) &&
+								!isInterceptorFn(interceptor)
+							) {
+								try {
+									return this.container.resolve(
+										interceptor as Token,
+									) as NestInterceptor;
+								} catch {
+									return null;
+								}
+							}
+							// Try to instantiate if it's a class constructor
+							if (
+								typeof interceptor === "function" &&
+								!isInterceptorFn(interceptor)
+							) {
+								try {
+									const Constructor = interceptor as new () => NestInterceptor;
+									const instance = new Constructor();
+									if (isNestInterceptor(instance)) {
+										return instance;
+									}
+								} catch {
+									// Cannot instantiate
+								}
+							}
+							return null;
+						},
+					});
+
+					// Execute onAfterRequest hooks
+					try {
+						await this.lifecycleManager.executeOnAfterRequest(
+							context,
+							response as Response,
+						);
+					} catch (error) {
+						console.error("Error in onAfterRequest hook:", error);
+					}
+
+					return response as Response;
+				} catch (error) {
+					// Execute onRequestError hooks
+					try {
+						await this.lifecycleManager.executeOnRequestError(
+							context,
+							error as Error,
+						);
+					} catch (hookError) {
+						console.error("Error in onRequestError hook:", hookError);
+					}
+
+					// Handle exception with filters
+					return this.handleException(error as Error, context, routeKey);
+				}
 			},
 		});
 
@@ -949,7 +1020,7 @@ export class Application {
 		// Execute guards (before interceptors and pipes)
 		const routeKey = `${request.method}:${url.pathname}`;
 		const guardMetadata = this.routeGuardMetadata.get(routeKey);
-		
+
 		if (guardMetadata || this.globalGuards.length > 0) {
 			const guardsPassed = await executeGuards(context, {
 				globalGuards: this.globalGuards,
@@ -957,7 +1028,11 @@ export class Application {
 				methodGuards: guardMetadata?.methodGuards ?? [],
 				resolveGuard: (guard: Guard) => {
 					// Try to resolve from container if it's a token
-					if (typeof guard === "object" && guard !== null && !("canActivate" in guard)) {
+					if (
+						typeof guard === "object" &&
+						guard !== null &&
+						!("canActivate" in guard)
+					) {
 						try {
 							return this.container.resolve(guard as Token) as CanActivate;
 						} catch {
@@ -972,123 +1047,155 @@ export class Application {
 				return createForbiddenResponse();
 			}
 		}
-	
-			// Get interceptor metadata
-			const interceptorMetadata = this.routeInterceptorMetadata.get(routeKey);
-	
-			// Create the handler function that executes pipes and middleware
-			const executeHandler = async (): Promise<Response> => {
-				// Execute pipes (after guards, before handler)
-				const pipeMetadata = this.routePipeMetadata.get(routeKey);
-				if (pipeMetadata || this.globalPipes.length > 0) {
-					try {
-						// Process each parameter with pipes
-						const params = pipeMetadata?.parameterPipes ?? [];
-						for (const paramMeta of params) {
-							// Extract the initial value for this parameter
-							const initialValue = await extractParameterValue(context, paramMeta);
-							
-							// Create pipe context
-							const pipeContext: PipeContext = {
-								context,
-								metadata: {
-									index: paramMeta.index,
-									name: paramMeta.key,
-									decorator: paramMeta.decorator,
-								},
-							};
-							
-							// Execute pipes for this parameter
-							const transformedValue = await executePipes(initialValue, pipeContext, {
+
+		// Get interceptor metadata
+		const interceptorMetadata = this.routeInterceptorMetadata.get(routeKey);
+
+		// Create the handler function that executes pipes and middleware
+		const executeHandler = async (): Promise<Response> => {
+			// Execute pipes (after guards, before handler)
+			const pipeMetadata = this.routePipeMetadata.get(routeKey);
+			if (pipeMetadata || this.globalPipes.length > 0) {
+				try {
+					// Process each parameter with pipes
+					const params = pipeMetadata?.parameterPipes ?? [];
+					for (const paramMeta of params) {
+						// Extract the initial value for this parameter
+						const initialValue = await extractParameterValue(
+							context,
+							paramMeta,
+						);
+
+						// Create pipe context
+						const pipeContext: PipeContext = {
+							context,
+							metadata: {
+								index: paramMeta.index,
+								name: paramMeta.key,
+								decorator: paramMeta.decorator,
+							},
+						};
+
+						// Execute pipes for this parameter
+						const transformedValue = await executePipes(
+							initialValue,
+							pipeContext,
+							{
 								globalPipes: this.globalPipes,
 								parameterPipes: paramMeta.pipes,
 								resolvePipe: (pipe: Pipe) => {
 									// Try to resolve from container if it's a token
-									if (typeof pipe === "object" && pipe !== null && !("transform" in pipe)) {
+									if (
+										typeof pipe === "object" &&
+										pipe !== null &&
+										!("transform" in pipe)
+									) {
 										try {
-											return this.container.resolve(pipe as Token) as PipeTransform;
+											return this.container.resolve(
+												pipe as Token,
+											) as PipeTransform;
 										} catch {
 											return null;
 										}
 									}
 									return null;
 								},
-							});
-							
-							// Store the transformed value in context for handler access
-							context.set(`pipe:param:${paramMeta.index}`, transformedValue);
-						}
-					} catch (error) {
-						// Pipe transformation failed - return 400 Bad Request
-						if (error instanceof Error) {
-							return createBadRequestResponse(error);
-						}
-						return createBadRequestResponse(new Error("Pipe transformation failed"));
+							},
+						);
+
+						// Store the transformed value in context for handler access
+						context.set(`pipe:param:${paramMeta.index}`, transformedValue);
 					}
-				}
-	
-				// Execute middleware and handler
-				const pipeline = compose((match.middleware ?? []) as import("../middleware").Middleware[]);
-				return pipeline(context, match.handler as import("../middleware").Handler);
-			};
-	
-			// Execute interceptors wrapping around the handler
-			// Interceptors run after guards, before pipes
-			try {
-				const response = await executeInterceptors(context, executeHandler, {
-					globalInterceptors: this.globalInterceptors,
-					classInterceptors: interceptorMetadata?.classInterceptors ?? [],
-					methodInterceptors: interceptorMetadata?.methodInterceptors ?? [],
-					resolveInterceptor: (interceptor: Interceptor): NestInterceptor | InterceptorFn | null => {
-						// Try to resolve from container if it's a token
-						if (typeof interceptor === "object" && interceptor !== null && !isNestInterceptor(interceptor) && !isInterceptorFn(interceptor)) {
-							try {
-								return this.container.resolve(interceptor as Token) as NestInterceptor;
-							} catch {
-								return null;
-							}
-						}
-						// Try to instantiate if it's a class constructor
-						if (typeof interceptor === "function" && !isInterceptorFn(interceptor)) {
-							try {
-								const Constructor = interceptor as new () => NestInterceptor;
-								const instance = new Constructor();
-								if (isNestInterceptor(instance)) {
-									return instance;
-								}
-							} catch {
-								// Cannot instantiate
-							}
-						}
-						return null;
-					},
-				});
-	
-				return response as Response;
 				} catch (error) {
-					// Handle exception with filters
-					return this.handleException(error as Error, context, routeKey);
+					// Pipe transformation failed - return 400 Bad Request
+					if (error instanceof Error) {
+						return createBadRequestResponse(error);
+					}
+					return createBadRequestResponse(
+						new Error("Pipe transformation failed"),
+					);
 				}
+			}
+
+			// Execute middleware and handler
+			const pipeline = compose(
+				(match.middleware ?? []) as import("../middleware").Middleware[],
+			);
+			return pipeline(
+				context,
+				match.handler as import("../middleware").Handler,
+			);
+		};
+
+		// Execute interceptors wrapping around the handler
+		// Interceptors run after guards, before pipes
+		try {
+			const response = await executeInterceptors(context, executeHandler, {
+				globalInterceptors: this.globalInterceptors,
+				classInterceptors: interceptorMetadata?.classInterceptors ?? [],
+				methodInterceptors: interceptorMetadata?.methodInterceptors ?? [],
+				resolveInterceptor: (
+					interceptor: Interceptor,
+				): NestInterceptor | InterceptorFn | null => {
+					// Try to resolve from container if it's a token
+					if (
+						typeof interceptor === "object" &&
+						interceptor !== null &&
+						!isNestInterceptor(interceptor) &&
+						!isInterceptorFn(interceptor)
+					) {
+						try {
+							return this.container.resolve(
+								interceptor as Token,
+							) as NestInterceptor;
+						} catch {
+							return null;
+						}
+					}
+					// Try to instantiate if it's a class constructor
+					if (
+						typeof interceptor === "function" &&
+						!isInterceptorFn(interceptor)
+					) {
+						try {
+							const Constructor = interceptor as new () => NestInterceptor;
+							const instance = new Constructor();
+							if (isNestInterceptor(instance)) {
+								return instance;
+							}
+						} catch {
+							// Cannot instantiate
+						}
+					}
+					return null;
+				},
+			});
+
+			return response as Response;
+		} catch (error) {
+			// Handle exception with filters
+			return this.handleException(error as Error, context, routeKey);
 		}
-	
-		/**
-			* Get the lifecycle manager for this application
-			*/
+	}
+
+	/**
+	 * Get the lifecycle manager for this application
+	 */
 	getLifecycleManager(): LifecycleHookManager {
 		return this.lifecycleManager;
 	}
 
 	/**
-		* Check if the application is shutting down
-		*/
+	 * Check if the application is shutting down
+	 */
 	isShuttingDownNow(): boolean {
 		return this.isShuttingDown;
 	}
 
 	/**
-		* Handle an exception using the filters system
-		* Filters are checked in order: method → class → global
-		*/
+	 * Handle an exception using the filters system
+	 * Filters are checked in order: method → class → global
+	 */
 	private async handleException(
 		exception: Error,
 		context: Context,
@@ -1102,7 +1209,11 @@ export class Application {
 			methodFilters: filterMetadata?.methodFilters ?? [],
 			resolveFilter: (filter: Filter): ExceptionFilter | null => {
 				// Try to resolve from container if it's a token
-				if (typeof filter === "object" && filter !== null && !isExceptionFilter(filter)) {
+				if (
+					typeof filter === "object" &&
+					filter !== null &&
+					!isExceptionFilter(filter)
+				) {
 					try {
 						return this.container.resolve(filter as Token) as ExceptionFilter;
 					} catch {
@@ -1138,17 +1249,17 @@ export function createApp(moduleClass: Constructor): Application {
 export {
 	LifecycleHookManager,
 	ShutdownSignalHandler,
-	OnModuleInit,
-	OnApplicationBootstrap,
-	OnModuleDestroy,
-	BeforeApplicationShutdown,
-	OnApplicationShutdown,
-	OnBeforeRequest,
-	OnAfterRequest,
-	OnRequestError,
-	ApplicationLifecycle,
-	RequestLifecycle,
-	FullLifecycle,
+	type OnModuleInit,
+	type OnApplicationBootstrap,
+	type OnModuleDestroy,
+	type BeforeApplicationShutdown,
+	type OnApplicationShutdown,
+	type OnBeforeRequest,
+	type OnAfterRequest,
+	type OnRequestError,
+	type ApplicationLifecycle,
+	type RequestLifecycle,
+	type FullLifecycle,
 	isOnModuleInit,
 	isOnApplicationBootstrap,
 	isOnModuleDestroy,

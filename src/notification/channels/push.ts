@@ -5,7 +5,7 @@
  * (Firebase, APNS, custom)
  */
 
-import type { PushNotificationMessage, PushChannelConfig } from "../types";
+import type { PushChannelConfig, PushNotificationMessage } from "../types";
 import { BaseChannelService } from "./base";
 
 // ============= Push Notification Channel Service =============
@@ -36,7 +36,9 @@ export class PushNotificationChannelService extends BaseChannelService<PushNotif
 		}
 
 		if (typeof msg.recipient !== "string" || msg.recipient.length === 0) {
-			throw new Error("Invalid push message: recipient (device token) is required");
+			throw new Error(
+				"Invalid push message: recipient (device token) is required",
+			);
 		}
 
 		if (typeof msg.title !== "string" || msg.title.length === 0) {
@@ -64,7 +66,9 @@ export class PushNotificationChannelService extends BaseChannelService<PushNotif
 			// In a real implementation, delegate to appropriate driver
 			// For now, simulate sending
 			const messageId = this._generateMessageId();
-			console.log(`[PushChannel] Push sent: ${messageId} to ${message.recipient}`);
+			console.log(
+				`[PushChannel] Push sent: ${messageId} to ${message.recipient}`,
+			);
 			this.sentCount++;
 
 			return messageId;

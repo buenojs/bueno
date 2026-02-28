@@ -167,9 +167,7 @@ export async function measureEventLoopLag(): Promise<number> {
 /**
  * Measure event loop lag multiple times and return average
  */
-export async function measureEventLoopLagAverage(
-	samples: number = 5,
-): Promise<number> {
+export async function measureEventLoopLagAverage(samples = 5): Promise<number> {
 	const measurements: number[] = [];
 
 	for (let i = 0; i < samples; i++) {
@@ -243,7 +241,7 @@ export class MetricsCollector {
 	 * Start collecting metrics at regular intervals
 	 * @param intervalMs Interval in milliseconds (default: 5000)
 	 */
-	startPeriodicCollection(intervalMs: number = 5000): void {
+	startPeriodicCollection(intervalMs = 5000): void {
 		if (this.periodicTimer !== null) {
 			throw new Error("Periodic collection is already running");
 		}
@@ -310,7 +308,7 @@ export class MetricsCollector {
 		let sumCpuUser = 0;
 		let sumCpuSystem = 0;
 		let sumEventLoopLag = 0;
-		let minHeapUsed = Infinity;
+		let minHeapUsed = Number.POSITIVE_INFINITY;
 		let maxHeapUsed = 0;
 
 		for (const m of this.history) {
@@ -333,7 +331,8 @@ export class MetricsCollector {
 			avgCpuUser: Math.round(sumCpuUser / count),
 			avgCpuSystem: Math.round(sumCpuSystem / count),
 			avgEventLoopLag: Math.round((sumEventLoopLag / count) * 100) / 100,
-			minMemoryHeapUsed: minHeapUsed === Infinity ? 0 : minHeapUsed,
+			minMemoryHeapUsed:
+				minHeapUsed === Number.POSITIVE_INFINITY ? 0 : minHeapUsed,
 			maxMemoryHeapUsed: maxHeapUsed,
 			sampleCount: count,
 			timeRange: {
@@ -377,7 +376,9 @@ export function toPrometheusFormat(metrics: RuntimeMetrics): string {
 		`process_memory_heap_used_bytes ${metrics.memoryHeapUsed} ${timestamp}`,
 	);
 
-	lines.push("# HELP process_memory_heap_total_bytes Total heap memory in bytes");
+	lines.push(
+		"# HELP process_memory_heap_total_bytes Total heap memory in bytes",
+	);
 	lines.push("# TYPE process_memory_heap_total_bytes gauge");
 	lines.push(
 		`process_memory_heap_total_bytes ${metrics.memoryHeapTotal} ${timestamp}`,
@@ -409,7 +410,9 @@ export function toPrometheusFormat(metrics: RuntimeMetrics): string {
 	// Runtime metrics
 	lines.push("# HELP process_uptime_seconds Process uptime in seconds");
 	lines.push("# TYPE process_uptime_seconds gauge");
-	lines.push(`process_uptime_seconds ${metrics.uptime.toFixed(2)} ${timestamp}`);
+	lines.push(
+		`process_uptime_seconds ${metrics.uptime.toFixed(2)} ${timestamp}`,
+	);
 
 	lines.push("# HELP nodejs_eventloop_lag_ms Event loop lag in milliseconds");
 	lines.push("# TYPE nodejs_eventloop_lag_ms gauge");
@@ -423,25 +426,29 @@ export function toPrometheusFormat(metrics: RuntimeMetrics): string {
 /**
  * Export averaged metrics in Prometheus format
  */
-export function averagedMetricsToPrometheus(
-	averaged: AveragedMetrics,
-): string {
+export function averagedMetricsToPrometheus(averaged: AveragedMetrics): string {
 	const timestamp = Date.now();
 	const lines: string[] = [];
 
-	lines.push("# HELP process_memory_heap_used_avg_bytes Average heap memory used");
+	lines.push(
+		"# HELP process_memory_heap_used_avg_bytes Average heap memory used",
+	);
 	lines.push("# TYPE process_memory_heap_used_avg_bytes gauge");
 	lines.push(
 		`process_memory_heap_used_avg_bytes ${averaged.avgMemoryHeapUsed} ${timestamp}`,
 	);
 
-	lines.push("# HELP process_memory_heap_used_min_bytes Minimum heap memory used");
+	lines.push(
+		"# HELP process_memory_heap_used_min_bytes Minimum heap memory used",
+	);
 	lines.push("# TYPE process_memory_heap_used_min_bytes gauge");
 	lines.push(
 		`process_memory_heap_used_min_bytes ${averaged.minMemoryHeapUsed} ${timestamp}`,
 	);
 
-	lines.push("# HELP process_memory_heap_used_max_bytes Maximum heap memory used");
+	lines.push(
+		"# HELP process_memory_heap_used_max_bytes Maximum heap memory used",
+	);
 	lines.push("# TYPE process_memory_heap_used_max_bytes gauge");
 	lines.push(
 		`process_memory_heap_used_max_bytes ${averaged.maxMemoryHeapUsed} ${timestamp}`,
@@ -455,7 +462,9 @@ export function averagedMetricsToPrometheus(
 
 	lines.push("# HELP process_metrics_sample_count Number of samples collected");
 	lines.push("# TYPE process_metrics_sample_count gauge");
-	lines.push(`process_metrics_sample_count ${averaged.sampleCount} ${timestamp}`);
+	lines.push(
+		`process_metrics_sample_count ${averaged.sampleCount} ${timestamp}`,
+	);
 
 	return lines.join("\n");
 }

@@ -9,11 +9,11 @@ export type {
 	GeneratorType,
 	GeneratorConfig,
 	GeneratorResult,
-} from './types';
+} from "./types";
 
-export { GENERATOR_ALIASES } from './types';
+export { GENERATOR_ALIASES } from "./types";
 
-import type { GeneratorType, GeneratorConfig, GeneratorResult } from './types';
+import type { GeneratorConfig, GeneratorResult, GeneratorType } from "./types";
 
 /**
  * Generator template function type
@@ -55,25 +55,25 @@ export function getGeneratorTypes(): GeneratorType[] {
  */
 export function getDefaultDirectory(type: GeneratorType): string {
 	switch (type) {
-		case 'controller':
-		case 'service':
-		case 'module':
-		case 'dto':
-			return 'modules';
-		case 'guard':
-			return 'common/guards';
-		case 'interceptor':
-			return 'common/interceptors';
-		case 'pipe':
-			return 'common/pipes';
-		case 'filter':
-			return 'common/filters';
-		case 'middleware':
-			return 'common/middleware';
-		case 'migration':
-			return 'database/migrations';
+		case "controller":
+		case "service":
+		case "module":
+		case "dto":
+			return "modules";
+		case "guard":
+			return "common/guards";
+		case "interceptor":
+			return "common/interceptors";
+		case "pipe":
+			return "common/pipes";
+		case "filter":
+			return "common/filters";
+		case "middleware":
+			return "common/middleware";
+		case "migration":
+			return "database/migrations";
 		default:
-			return '';
+			return "";
 	}
 }
 
@@ -81,7 +81,7 @@ export function getDefaultDirectory(type: GeneratorType): string {
  * Get file extension for generator type
  */
 export function getFileExtension(type: GeneratorType): string {
-	return type === 'dto' ? '.dto.ts' : '.ts';
+	return type === "dto" ? ".dto.ts" : ".ts";
 }
 
 // ============= Template Functions =============
@@ -330,10 +330,10 @@ export default createMigration('${migrationId}', '{{migrationName}}')
 function generateMigrationId(): string {
 	const now = new Date();
 	const year = now.getFullYear();
-	const month = String(now.getMonth() + 1).padStart(2, '0');
-	const day = String(now.getDate()).padStart(2, '0');
-	const hour = String(now.getHours()).padStart(2, '0');
-	const minute = String(now.getMinutes()).padStart(2, '0');
-	const second = String(now.getSeconds()).padStart(2, '0');
+	const month = String(now.getMonth() + 1).padStart(2, "0");
+	const day = String(now.getDate()).padStart(2, "0");
+	const hour = String(now.getHours()).padStart(2, "0");
+	const minute = String(now.getMinutes()).padStart(2, "0");
+	const second = String(now.getSeconds()).padStart(2, "0");
 	return `${year}${month}${day}${hour}${minute}${second}`;
 }

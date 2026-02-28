@@ -4,7 +4,7 @@
  * Manages command registration and execution
  */
 
-import type { CommandDefinition, ParsedArgs } from '../core/args';
+import type { CommandDefinition, ParsedArgs } from "../core/args";
 
 /**
  * Command handler function type
@@ -29,10 +29,7 @@ class CommandRegistry {
 	/**
 	 * Register a command
 	 */
-	register(
-		definition: CommandDefinition,
-		handler: CommandHandler,
-	): void {
+	register(definition: CommandDefinition, handler: CommandHandler): void {
 		this.commands.set(definition.name, {
 			definition,
 			handler,

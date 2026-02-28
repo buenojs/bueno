@@ -372,9 +372,7 @@ export class PerformanceLogger {
 	/**
 	 * Get metric statistics
 	 */
-	stats(
-		name: string,
-	): {
+	stats(name: string): {
 		count: number;
 		min: number;
 		max: number;

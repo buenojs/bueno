@@ -4,56 +4,56 @@
  * Generate code artifacts (controllers, services, modules, etc.)
  */
 
-import { defineCommand } from './index';
-import { getOption, hasFlag, type ParsedArgs } from '../core/args';
-import { cliConsole, colors } from '../core/console';
-import { confirm, isInteractive } from '../core/prompt';
-import { spinner } from '../core/spinner';
+import { type ParsedArgs, getOption, hasFlag } from "../core/args";
+import { cliConsole, colors } from "../core/console";
+import { confirm, isInteractive } from "../core/prompt";
+import { spinner } from "../core/spinner";
+import { CLIError, CLIErrorType } from "../index";
 import {
 	fileExists,
-	writeFile,
-	readFile,
 	getProjectRoot,
 	isBuenoProject,
 	joinPaths,
 	processTemplate,
-} from '../utils/fs';
-import { kebabCase, pascalCase, camelCase } from '../utils/strings';
-import { CLIError, CLIErrorType } from '../index';
+	readFile,
+	writeFile,
+} from "../utils/fs";
+import { camelCase, kebabCase, pascalCase } from "../utils/strings";
+import { defineCommand } from "./index";
 
 /**
  * Generator types
  */
 type GeneratorType =
-	| 'controller'
-	| 'service'
-	| 'module'
-	| 'guard'
-	| 'interceptor'
-	| 'pipe'
-	| 'filter'
-	| 'dto'
-	| 'middleware'
-	| 'migration'
-	| 'job'
-	| 'job-handler';
+	| "controller"
+	| "service"
+	| "module"
+	| "guard"
+	| "interceptor"
+	| "pipe"
+	| "filter"
+	| "dto"
+	| "middleware"
+	| "migration"
+	| "job"
+	| "job-handler";
 
 /**
  * Generator aliases
  */
 const GENERATOR_ALIASES: Record<string, GeneratorType> = {
-	c: 'controller',
-	s: 'service',
-	m: 'module',
-	gu: 'guard',
-	i: 'interceptor',
-	p: 'pipe',
-	f: 'filter',
-	d: 'dto',
-	mw: 'middleware',
-	mi: 'migration',
-	j: 'job',
-	jh: 'job-handler',
+	c: "controller",
+	s: "service",
+	m: "module",
+	gu: "guard",
+	i: "interceptor",
+	p: "pipe",
+	f: "filter",
+	d: "dto",
+	mw: "middleware",
+	mi: "migration",
+	j: "job",
+	jh: "job-handler",
 };
 
 /**
@@ -292,7 +292,7 @@ export const {{camelCase name}} = (data: {{pascalCase name}}JobData) => ({
   data,
 });
 `,
-		'job-handler': `import { type JobHandler } from '@buenojs/bueno/jobs';
+		"job-handler": `import { type JobHandler } from '@buenojs/bueno/jobs';
 import type { {{pascalCase name}}JobData } from './{{kebabCase name}}.job';
 
 export const handle{{pascalCase name}}: JobHandler<{{pascalCase name}}JobData> = async (job) => {
@@ -309,10 +309,10 @@ export const handle{{pascalCase name}}: JobHandler<{{pascalCase name}}JobData> =
  * Get file extension for generator type
  */
 function getFileExtension(type: GeneratorType): string {
-	if (type === 'dto') return '.dto.ts';
-	if (type === 'job') return '.job.ts';
-	if (type === 'job-handler') return '.handler.ts';
-	return '.ts';
+	if (type === "dto") return ".dto.ts";
+	if (type === "job") return ".job.ts";
+	if (type === "job-handler") return ".handler.ts";
+	return ".ts";
 }
 
 /**
@@ -320,29 +320,29 @@ function getFileExtension(type: GeneratorType): string {
  */
 function getDefaultDirectory(type: GeneratorType): string {
 	switch (type) {
-		case 'controller':
-		case 'service':
-		case 'module':
-		case 'dto':
-			return 'modules';
-		case 'guard':
-			return 'common/guards';
-		case 'interceptor':
-			return 'common/interceptors';
-		case 'pipe':
-			return 'common/pipes';
-		case 'filter':
-			return 'common/filters';
-		case 'middleware':
-			return 'common/middleware';
-		case 'migration':
-			return 'database/migrations';
-		case 'job':
-			return 'modules/jobs';
-		case 'job-handler':
-			return 'modules/jobs/handlers';
+		case "controller":
+		case "service":
+		case "module":
+		case "dto":
+			return "modules";
+		case "guard":
+			return "common/guards";
+		case "interceptor":
+			return "common/interceptors";
+		case "pipe":
+			return "common/pipes";
+		case "filter":
+			return "common/filters";
+		case "middleware":
+			return "common/middleware";
+		case "migration":
+			return "database/migrations";
+		case "job":
+			return "modules/jobs";
+		case "job-handler":
+			return "modules/jobs/handlers";
 		default:
-			return '';
+			return "";
 	}
 }
 
@@ -356,7 +356,7 @@ async function generateFile(config: GeneratorConfig): Promise<string> {
 	const projectRoot = await getProjectRoot();
 	if (!projectRoot) {
 		throw new CLIError(
-			'Not in a Bueno project directory',
+			"Not in a Bueno project directory",
 			CLIErrorType.NOT_FOUND,
 		);
 	}
@@ -369,20 +369,21 @@ async function generateFile(config: GeneratorConfig): Promise<string> {
 	if (customPath) {
 		targetDir = joinPaths(projectRoot, customPath);
 	} else if (module) {
-		targetDir = joinPaths(projectRoot, 'server', defaultDir, kebabCase(module));
-	} else if (type === 'migration') {
-		targetDir = joinPaths(projectRoot, 'server', defaultDir);
+		targetDir = joinPaths(projectRoot, "server", defaultDir, kebabCase(module));
+	} else if (type === "migration") {
+		targetDir = joinPaths(projectRoot, "server", defaultDir);
 	} else {
-		targetDir = joinPaths(projectRoot, 'server', defaultDir, kebabName);
+		targetDir = joinPaths(projectRoot, "server", defaultDir, kebabName);
 	}
 
-	const fileName = type === 'migration'
-		? `${generateMigrationId()}_${kebabName}${getFileExtension(type)}`
-		: `${kebabName}${getFileExtension(type)}`;
+	const fileName =
+		type === "migration"
+			? `${generateMigrationId()}_${kebabName}${getFileExtension(type)}`
+			: `${kebabName}${getFileExtension(type)}`;
 	const filePath = joinPaths(targetDir, fileName);
 
 	// Check if file exists
-	if (!force && await fileExists(filePath)) {
+	if (!force && (await fileExists(filePath))) {
 		if (isInteractive()) {
 			const shouldOverwrite = await confirm(
 				`File ${colors.cyan(filePath)} already exists. Overwrite?`,
@@ -390,7 +391,7 @@ async function generateFile(config: GeneratorConfig): Promise<string> {
 			);
 			if (!shouldOverwrite) {
 				throw new CLIError(
-					'File already exists. Use --force to overwrite.',
+					"File already exists. Use --force to overwrite.",
 					CLIErrorType.FILE_EXISTS,
 				);
 			}
@@ -406,9 +407,9 @@ async function generateFile(config: GeneratorConfig): Promise<string> {
 	const template = getTemplate(type);
 	const content = processTemplate(template, {
 		name,
-		module: module ?? '',
+		module: module ?? "",
 		path: customPath ?? kebabName,
-		service: type === 'controller' ? name : '',
+		service: type === "controller" ? name : "",
 		migrationId: generateMigrationId(),
 		migrationName: name,
 		tableName: kebabName,
@@ -416,10 +417,10 @@ async function generateFile(config: GeneratorConfig): Promise<string> {
 
 	// Write file or show dry run
 	if (dryRun) {
-		cliConsole.log(`\n${colors.bold('File:')} ${filePath}`);
-		cliConsole.log(colors.bold('Content:'));
+		cliConsole.log(`\n${colors.bold("File:")} ${filePath}`);
+		cliConsole.log(colors.bold("Content:"));
 		cliConsole.log(content);
-		cliConsole.log('');
+		cliConsole.log("");
 	} else {
 		await writeFile(filePath, content);
 	}
@@ -433,11 +434,11 @@ async function generateFile(config: GeneratorConfig): Promise<string> {
 function generateMigrationId(): string {
 	const now = new Date();
 	const year = now.getFullYear();
-	const month = String(now.getMonth() + 1).padStart(2, '0');
-	const day = String(now.getDate()).padStart(2, '0');
-	const hour = String(now.getHours()).padStart(2, '0');
-	const minute = String(now.getMinutes()).padStart(2, '0');
-	const second = String(now.getSeconds()).padStart(2, '0');
+	const month = String(now.getMonth() + 1).padStart(2, "0");
+	const day = String(now.getDate()).padStart(2, "0");
+	const hour = String(now.getHours()).padStart(2, "0");
+	const minute = String(now.getMinutes()).padStart(2, "0");
+	const second = String(now.getSeconds()).padStart(2, "0");
 	return `${year}${month}${day}${hour}${minute}${second}`;
 }
 
@@ -449,12 +450,12 @@ async function handleGenerate(args: ParsedArgs): Promise<void> {
 	const typeArg = args.positionals[0];
 	if (!typeArg) {
 		throw new CLIError(
-			'Generator type is required. Usage: bueno generate <type> <name>',
+			"Generator type is required. Usage: bueno generate <type> <name>",
 			CLIErrorType.INVALID_ARGS,
 		);
 	}
 
-	const type = GENERATOR_ALIASES[typeArg] ?? typeArg as GeneratorType;
+	const type = GENERATOR_ALIASES[typeArg] ?? (typeArg as GeneratorType);
 	if (!getTemplate(type)) {
 		throw new CLIError(
 			`Unknown generator type: ${typeArg}. Available types: controller, service, module, guard, interceptor, pipe, filter, dto, middleware, migration`,
@@ -466,7 +467,7 @@ async function handleGenerate(args: ParsedArgs): Promise<void> {
 	const name = args.positionals[1];
 	if (!name) {
 		throw new CLIError(
-			'Name is required. Usage: bueno generate <type> <name>',
+			"Name is required. Usage: bueno generate <type> <name>",
 			CLIErrorType.INVALID_ARGS,
 		);
 	}
@@ -475,24 +476,24 @@ async function handleGenerate(args: ParsedArgs): Promise<void> {
 	const config: GeneratorConfig = {
 		type,
 		name,
-		module: getOption<string>(args, 'module', {
-			name: 'module',
-			type: 'string',
-			description: '',
+		module: getOption<string>(args, "module", {
+			name: "module",
+			type: "string",
+			description: "",
 		}),
-		path: getOption<string>(args, 'path', {
-			name: 'path',
-			type: 'string',
-			description: '',
+		path: getOption<string>(args, "path", {
+			name: "path",
+			type: "string",
+			description: "",
 		}),
-		dryRun: hasFlag(args, 'dry-run'),
-		force: hasFlag(args, 'force'),
+		dryRun: hasFlag(args, "dry-run"),
+		force: hasFlag(args, "force"),
 	};
 
 	// Check if in a Bueno project
 	if (!config.dryRun && !(await isBuenoProject())) {
 		throw new CLIError(
-			'Not in a Bueno project directory. Run this command from a Bueno project.',
+			"Not in a Bueno project directory. Run this command from a Bueno project.",
 			CLIErrorType.NOT_FOUND,
 		);
 	}
@@ -504,7 +505,7 @@ async function handleGenerate(args: ParsedArgs): Promise<void> {
 		const filePath = await generateFile(config);
 
 		if (config.dryRun) {
-			s.info('Dry run complete');
+			s.info("Dry run complete");
 		} else {
 			s.success(`Created ${colors.green(filePath)}`);
 		}
@@ -517,52 +518,54 @@ async function handleGenerate(args: ParsedArgs): Promise<void> {
 // Register the command
 defineCommand(
 	{
-		name: 'generate',
-		alias: 'g',
-		description: 'Generate code artifacts (controllers, services, modules, etc.)',
+		name: "generate",
+		alias: "g",
+		description:
+			"Generate code artifacts (controllers, services, modules, etc.)",
 		positionals: [
 			{
-				name: 'type',
+				name: "type",
 				required: true,
-				description: 'Type of artifact to generate (controller, service, module, guard, interceptor, pipe, filter, dto, middleware, migration)',
+				description:
+					"Type of artifact to generate (controller, service, module, guard, interceptor, pipe, filter, dto, middleware, migration)",
 			},
 			{
-				name: 'name',
+				name: "name",
 				required: true,
-				description: 'Name of the artifact',
+				description: "Name of the artifact",
 			},
 		],
 		options: [
 			{
-				name: 'module',
-				alias: 'm',
-				type: 'string',
-				description: 'Parent module to register with',
+				name: "module",
+				alias: "m",
+				type: "string",
+				description: "Parent module to register with",
 			},
 			{
-				name: 'path',
-				type: 'string',
-				description: 'Custom path for controller routes',
+				name: "path",
+				type: "string",
+				description: "Custom path for controller routes",
 			},
 			{
-				name: 'dry-run',
-				type: 'boolean',
+				name: "dry-run",
+				type: "boolean",
 				default: false,
-				description: 'Show what would be created without writing',
+				description: "Show what would be created without writing",
 			},
 			{
-				name: 'force',
-				type: 'boolean',
+				name: "force",
+				type: "boolean",
 				default: false,
-				description: 'Overwrite existing files',
+				description: "Overwrite existing files",
 			},
 		],
 		examples: [
-			'bueno generate controller users',
-			'bueno g service auth',
-			'bueno g module posts',
-			'bueno g guard auth-guard --module auth',
-			'bueno g dto create-user --module users',
+			"bueno generate controller users",
+			"bueno g service auth",
+			"bueno g module posts",
+			"bueno g guard auth-guard --module auth",
+			"bueno g dto create-user --module users",
 		],
 	},
 	handleGenerate,

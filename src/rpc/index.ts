@@ -262,7 +262,9 @@ class OptimisticStore {
 			previousData,
 			timestamp: Date.now(),
 			status: "pending",
-			onRollback: callbacks?.onRollback as ((previousData: unknown) => void) | undefined,
+			onRollback: callbacks?.onRollback as
+				| ((previousData: unknown) => void)
+				| undefined,
 			onConfirm: callbacks?.onConfirm as ((data: unknown) => void) | undefined,
 		});
 		return id;

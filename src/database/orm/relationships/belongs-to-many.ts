@@ -18,12 +18,12 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 
 	constructor(
 		parentModel: Model,
-		relatedClass: { new(): TRelated } & typeof Model,
+		relatedClass: { new (): TRelated } & typeof Model,
 		private pivotTable: string,
 		private foreignPivotKey: string,
 		private relatedPivotKey: string,
-		private parentKey: string = "id",
-		private relatedKey: string = "id",
+		private parentKey = "id",
+		private relatedKey = "id",
 	) {
 		super(parentModel, relatedClass, foreignPivotKey, parentKey);
 		// Private fields are assigned after super() returns, so we must
@@ -41,18 +41,12 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 			this.pivotTable,
 			`${this.pivotTable}.${this.relatedPivotKey} = ${(this.relatedClass as any).table}.${this.relatedKey}`,
 		);
-		this.query.where(
-			`${this.pivotTable}.${this.foreignPivotKey}`,
-			parentId,
-		);
+		this.query.where(`${this.pivotTable}.${this.foreignPivotKey}`, parentId);
 	}
 
 	addEagerConstraints(parents: Model[]): void {
 		const ids = parents.map((p) => p.getAttribute(this.parentKey as any));
-		this.query.whereIn(
-			`${this.pivotTable}.${this.foreignPivotKey}`,
-			ids,
-		);
+		this.query.whereIn(`${this.pivotTable}.${this.foreignPivotKey}`, ids);
 	}
 
 	match(parents: Model[], results: TRelated[], relation: string): void {
@@ -60,9 +54,7 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 
 		for (const result of results) {
 			// The JOIN puts the pivot FK column in the result row as a regular attribute
-			const parentId = result.getAttribute(
-				this.foreignPivotKey as any,
-			);
+			const parentId = result.getAttribute(this.foreignPivotKey as any);
 			if (!grouped.has(parentId)) {
 				grouped.set(parentId, []);
 			}
@@ -94,9 +86,7 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 		pivotData?: Record<string, unknown>,
 	): Promise<void> {
 		const idArray = Array.isArray(ids) ? ids : [ids];
-		const parentId = this.parentModel.getAttribute(
-			this.parentKey as any,
-		);
+		const parentId = this.parentModel.getAttribute(this.parentKey as any);
 
 		const db = getModelDatabase(this.relatedClass.name);
 
@@ -110,7 +100,9 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 			// Use raw insert to avoid OrmQueryBuilder.insert()'s SELECT-by-id fetch-back,
 			// which fails on pivot tables that have no 'id' primary key column.
 			const columns = Object.keys(data).join(", ");
-			const placeholders = Object.keys(data).map(() => "?").join(", ");
+			const placeholders = Object.keys(data)
+				.map(() => "?")
+				.join(", ");
 			const values = Object.values(data);
 			await db.raw(
 				`INSERT INTO ${this.pivotTable} (${columns}) VALUES (${placeholders})`,
@@ -123,9 +115,7 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 	 * Detach related models from the pivot table
 	 */
 	async detach(ids?: unknown | unknown[]): Promise<void> {
-		const parentId = this.parentModel.getAttribute(
-			this.parentKey as any,
-		);
+		const parentId = this.parentModel.getAttribute(this.parentKey as any);
 
 		const db = getModelDatabase(this.relatedClass.name);
 		let builder = new OrmQueryBuilder(db, this.pivotTable).where(
@@ -164,10 +154,7 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 		const toAttach = idArray.filter((id) => !attachedIds.includes(id));
 		const toDetach = attachedIds.filter((id) => idArray.includes(id));
 
-		await Promise.all([
-			this.attach(toAttach),
-			this.detach(toDetach),
-		]);
+		await Promise.all([this.attach(toAttach), this.detach(toDetach)]);
 	}
 
 	/**
@@ -177,9 +164,7 @@ export class BelongsToMany<TRelated extends Model> extends Relationship<
 		id: unknown,
 		data: Record<string, unknown>,
 	): Promise<void> {
-		const parentId = this.parentModel.getAttribute(
-			this.parentKey as any,
-		);
+		const parentId = this.parentModel.getAttribute(this.parentKey as any);
 
 		const db = getModelDatabase(this.relatedClass.name);
 		await new OrmQueryBuilder(db, this.pivotTable)

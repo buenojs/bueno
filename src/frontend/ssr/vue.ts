@@ -8,10 +8,10 @@
  */
 
 import type {
+	FrameworkSSRRenderer,
 	SSRContext,
 	SSRElement,
 	SSRPage,
-	FrameworkSSRRenderer,
 } from "../types.js";
 
 // Vue types (dynamically imported)
@@ -21,7 +21,9 @@ interface VueApp {
 	provide(key: string | symbol, value: unknown): VueApp;
 	config: {
 		globalProperties: Record<string, unknown>;
-		errorHandler: ((err: unknown, instance: unknown, info: string) => void) | null;
+		errorHandler:
+			| ((err: unknown, instance: unknown, info: string) => void)
+			| null;
 	};
 	mount(selector: string): unknown;
 	unmount(): void;
@@ -104,9 +106,7 @@ export class VueSSRRenderer implements FrameworkSSRRenderer {
 			this.vueServerRenderer = await import("vue/server-renderer");
 			this.initialized = true;
 		} catch (error) {
-			throw new Error(
-				"Vue is not installed. Install it with: bun add vue"
-			);
+			throw new Error("Vue is not installed. Install it with: bun add vue");
 		}
 	}
 
@@ -134,7 +134,10 @@ export class VueSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Render a component to HTML string
 	 */
-	async renderToString(component: unknown, context: SSRContext): Promise<string> {
+	async renderToString(
+		component: unknown,
+		context: SSRContext,
+	): Promise<string> {
 		await this.init();
 
 		if (!this.vueServerRenderer) {
@@ -161,7 +164,8 @@ export class VueSSRRenderer implements FrameworkSSRRenderer {
 			const html = await this.vueServerRenderer.renderToString(app);
 			return html;
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			throw new Error(`Vue renderToString failed: ${errorMessage}`);
 		}
 	}
@@ -169,7 +173,10 @@ export class VueSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Render a component to a stream
 	 */
-	renderToStream(component: unknown, context: SSRContext): ReadableStream<Uint8Array> {
+	renderToStream(
+		component: unknown,
+		context: SSRContext,
+	): ReadableStream<Uint8Array> {
 		const encoder = new TextEncoder();
 
 		return new ReadableStream<Uint8Array>({
@@ -212,8 +219,11 @@ export class VueSSRRenderer implements FrameworkSSRRenderer {
 						controller.close();
 					}
 				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error";
-					controller.error(new Error(`Vue renderToStream failed: ${errorMessage}`));
+					const errorMessage =
+						error instanceof Error ? error.message : "Unknown error";
+					controller.error(
+						new Error(`Vue renderToStream failed: ${errorMessage}`),
+					);
 				}
 			},
 		});
@@ -281,7 +291,7 @@ export class VueSSRRenderer implements FrameworkSSRRenderer {
 			return { router: router as unknown as VueRouter, app };
 		} catch (error) {
 			throw new Error(
-				"Vue Router is not installed. Install it with: bun add vue-router"
+				"Vue Router is not installed. Install it with: bun add vue-router",
 			);
 		}
 	}
@@ -293,7 +303,7 @@ export class VueSSRRenderer implements FrameworkSSRRenderer {
 		app: VueApp,
 		router: VueRouter,
 		url: string,
-		context: SSRContext
+		context: SSRContext,
 	): Promise<string> {
 		await this.init();
 
@@ -315,7 +325,8 @@ export class VueSSRRenderer implements FrameworkSSRRenderer {
 			const html = await this.vueServerRenderer.renderToString(app);
 			return html;
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			throw new Error(`Vue renderWithRouter failed: ${errorMessage}`);
 		}
 	}
@@ -348,7 +359,11 @@ export class VueMeta {
 
 	setTitle(title: string): this {
 		this.title = title;
-		addHeadElement({ tag: "title", attrs: {}, children: [{ tag: "#text", attrs: {}, innerHTML: title }] });
+		addHeadElement({
+			tag: "title",
+			attrs: {},
+			children: [{ tag: "#text", attrs: {}, innerHTML: title }],
+		});
 		return this;
 	}
 
@@ -437,7 +452,22 @@ export function ssrElementToString(element: SSRElement): string {
 	}
 
 	// Self-closing tags
-	const voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"];
+	const voidElements = [
+		"area",
+		"base",
+		"br",
+		"col",
+		"embed",
+		"hr",
+		"img",
+		"input",
+		"link",
+		"meta",
+		"param",
+		"source",
+		"track",
+		"wbr",
+	];
 	if (voidElements.includes(element.tag)) {
 		return attrs ? `<${element.tag} ${attrs}>` : `<${element.tag}>`;
 	}
@@ -476,7 +506,9 @@ export function useHead(head: {
 	head.meta?.forEach((attrs) => meta.addMeta(attrs));
 	head.link?.forEach((attrs) => meta.addLink(attrs));
 	head.script?.forEach((attrs) => meta.addScript(attrs));
-	head.style?.forEach(({ innerHTML, attrs }) => meta.addStyle(innerHTML, attrs));
+	head.style?.forEach(({ innerHTML, attrs }) =>
+		meta.addStyle(innerHTML, attrs),
+	);
 }
 
 /**
@@ -484,7 +516,7 @@ export function useHead(head: {
  */
 export function createVueSSRContext(
 	request: Request,
-	initialState: Record<string, unknown> = {}
+	initialState: Record<string, unknown> = {},
 ): SSRContext {
 	const url = new URL(request.url);
 

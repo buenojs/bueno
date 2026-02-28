@@ -5,7 +5,7 @@
  * (Twilio, custom)
  */
 
-import type { WhatsAppMessage, WhatsAppChannelConfig } from "../types";
+import type { WhatsAppChannelConfig, WhatsAppMessage } from "../types";
 import { BaseChannelService } from "./base";
 
 // ============= WhatsApp Channel Service =============
@@ -36,7 +36,9 @@ export class WhatsAppChannelService extends BaseChannelService<WhatsAppMessage> 
 		}
 
 		if (typeof msg.recipient !== "string" || msg.recipient.length === 0) {
-			throw new Error("Invalid WhatsApp message: recipient (phone number) is required");
+			throw new Error(
+				"Invalid WhatsApp message: recipient (phone number) is required",
+			);
 		}
 
 		if (typeof msg.templateId !== "string" || msg.templateId.length === 0) {
@@ -50,9 +52,13 @@ export class WhatsAppChannelService extends BaseChannelService<WhatsAppMessage> 
 	async send(message: WhatsAppMessage): Promise<string | undefined> {
 		try {
 			if (this.config.dryRun) {
-				console.log(`[WhatsAppChannel] Would send WhatsApp to: ${message.recipient}`);
+				console.log(
+					`[WhatsAppChannel] Would send WhatsApp to: ${message.recipient}`,
+				);
 				console.log(`  Template: ${message.templateId}`);
-				console.log(`  Parameters: ${JSON.stringify(message.parameters || {})}`);
+				console.log(
+					`  Parameters: ${JSON.stringify(message.parameters || {})}`,
+				);
 				this.sentCount++;
 				return this._generateMessageId();
 			}
@@ -60,7 +66,9 @@ export class WhatsAppChannelService extends BaseChannelService<WhatsAppMessage> 
 			// In a real implementation, delegate to appropriate driver
 			// For now, simulate sending
 			const messageId = this._generateMessageId();
-			console.log(`[WhatsAppChannel] WhatsApp sent: ${messageId} to ${message.recipient}`);
+			console.log(
+				`[WhatsAppChannel] WhatsApp sent: ${messageId} to ${message.recipient}`,
+			);
 			this.sentCount++;
 
 			return messageId;

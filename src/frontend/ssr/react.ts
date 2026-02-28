@@ -8,11 +8,11 @@
  */
 
 import type {
+	FrameworkSSRRenderer,
 	SSRContext,
 	SSRElement,
-	SSRPage,
-	FrameworkSSRRenderer,
 	SSRHydrationData,
+	SSRPage,
 } from "../types.js";
 
 // React types (dynamically imported)
@@ -22,9 +22,7 @@ interface ReactElement {
 	key: string | null;
 }
 
-interface ReactComponent {
-	(props: Record<string, unknown>): ReactElement | null;
-}
+type ReactComponent = (props: Record<string, unknown>) => ReactElement | null;
 
 // Head element storage (similar to React Helmet)
 let headElements: SSRElement[] = [];
@@ -54,7 +52,11 @@ export function addHeadElement(element: SSRElement): void {
  * Create a title element for head
  */
 export function title(text: string): SSRElement {
-	return { tag: "title", attrs: {}, children: [{ tag: "#text", attrs: {}, innerHTML: text }] };
+	return {
+		tag: "title",
+		attrs: {},
+		children: [{ tag: "#text", attrs: {}, innerHTML: text }],
+	};
 }
 
 /**
@@ -74,14 +76,20 @@ export function link(attrs: Record<string, string>): SSRElement {
 /**
  * Create a script element for head
  */
-export function script(attrs: Record<string, string>, innerHTML?: string): SSRElement {
+export function script(
+	attrs: Record<string, string>,
+	innerHTML?: string,
+): SSRElement {
 	return { tag: "script", attrs, innerHTML };
 }
 
 /**
  * Create a style element for head
  */
-export function style(innerHTML: string, attrs?: Record<string, string>): SSRElement {
+export function style(
+	innerHTML: string,
+	attrs?: Record<string, string>,
+): SSRElement {
 	return { tag: "style", attrs: attrs || {}, innerHTML };
 }
 
@@ -107,7 +115,7 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 			this.initialized = true;
 		} catch (error) {
 			throw new Error(
-				"React is not installed. Install it with: bun add react react-dom"
+				"React is not installed. Install it with: bun add react react-dom",
 			);
 		}
 	}
@@ -115,7 +123,10 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Render a component to HTML string
 	 */
-	async renderToString(component: unknown, context: SSRContext): Promise<string> {
+	async renderToString(
+		component: unknown,
+		context: SSRContext,
+	): Promise<string> {
 		await this.init();
 
 		if (!this.reactDomServer) {
@@ -126,11 +137,16 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 
 		try {
 			// Use renderToString for non-streaming
-			const renderToStringFn = (this.reactDomServer as unknown as { renderToString: (el: unknown) => string }).renderToString;
+			const renderToStringFn = (
+				this.reactDomServer as unknown as {
+					renderToString: (el: unknown) => string;
+				}
+			).renderToString;
 			const html = renderToStringFn(component as ReactElement);
 			return html;
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			throw new Error(`React renderToString failed: ${errorMessage}`);
 		}
 	}
@@ -138,7 +154,10 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 	/**
 	 * Render a component to a stream
 	 */
-	renderToStream(component: unknown, context: SSRContext): ReadableStream<Uint8Array> {
+	renderToStream(
+		component: unknown,
+		context: SSRContext,
+	): ReadableStream<Uint8Array> {
 		// Create a promise-based initialization
 		const encoder = new TextEncoder();
 
@@ -163,7 +182,7 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 								onError: (error: Error) => {
 									console.error("React streaming error:", error);
 								},
-							}
+							},
 						);
 
 						const reader = stream.getReader();
@@ -178,13 +197,18 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 						}
 					} else {
 						// Fallback to renderToString for older React versions
-						const html = this.reactDomServer.renderToString(component as ReactElement);
+						const html = this.reactDomServer.renderToString(
+							component as ReactElement,
+						);
 						controller.enqueue(encoder.encode(html));
 						controller.close();
 					}
 				} catch (error) {
-					const errorMessage = error instanceof Error ? error.message : "Unknown error";
-					controller.error(new Error(`React renderToStream failed: ${errorMessage}`));
+					const errorMessage =
+						error instanceof Error ? error.message : "Unknown error";
+					controller.error(
+						new Error(`React renderToStream failed: ${errorMessage}`),
+					);
 				}
 			},
 		});
@@ -214,7 +238,7 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 	async renderWithSuspense(
 		component: unknown,
 		context: SSRContext,
-		fallback: string = "<div>Loading...</div>"
+		fallback = "<div>Loading...</div>",
 	): Promise<string> {
 		await this.init();
 
@@ -229,13 +253,14 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 			const suspenseWrapper = this.react.createElement(
 				this.react.Suspense,
 				{ fallback },
-				component as ReactElement
+				component as ReactElement,
 			);
 
 			const html = this.reactDomServer.renderToString(suspenseWrapper);
 			return html;
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error";
+			const errorMessage =
+				error instanceof Error ? error.message : "Unknown error";
 			throw new Error(`React renderWithSuspense failed: ${errorMessage}`);
 		}
 	}
@@ -251,7 +276,7 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 			onShellReady?: () => void;
 			onShellError?: (error: Error) => void;
 			onError?: (error: Error) => void;
-		} = {}
+		} = {},
 	): Promise<ReadableStream<Uint8Array>> {
 		await this.init();
 
@@ -275,7 +300,7 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 									options.onError?.(error);
 									console.error("React streaming error:", error);
 								},
-							}
+							},
 						);
 
 						// Wait for shell to be ready
@@ -294,13 +319,16 @@ export class ReactSSRRenderer implements FrameworkSSRRenderer {
 						}
 					} else {
 						// Fallback
-						const html = this.reactDomServer!.renderToString(component as ReactElement);
+						const html = this.reactDomServer!.renderToString(
+							component as ReactElement,
+						);
 						options.onAllReady?.();
 						controller.enqueue(encoder.encode(html));
 						controller.close();
 					}
 				} catch (error) {
-					const err = error instanceof Error ? error : new Error("Unknown error");
+					const err =
+						error instanceof Error ? error : new Error("Unknown error");
 					options.onShellError?.(err);
 					controller.error(err);
 				}
@@ -340,7 +368,22 @@ export function ssrElementToString(element: SSRElement): string {
 	}
 
 	// Self-closing tags
-	const voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"];
+	const voidElements = [
+		"area",
+		"base",
+		"br",
+		"col",
+		"embed",
+		"hr",
+		"img",
+		"input",
+		"link",
+		"meta",
+		"param",
+		"source",
+		"track",
+		"wbr",
+	];
 	if (voidElements.includes(element.tag)) {
 		return attrs ? `<${element.tag} ${attrs}>` : `<${element.tag}>`;
 	}
@@ -380,7 +423,11 @@ export class ReactHelmet {
 
 	setTitle(title: string): this {
 		this.title = title;
-		addHeadElement({ tag: "title", attrs: {}, children: [{ tag: "#text", attrs: {}, innerHTML: title }] });
+		addHeadElement({
+			tag: "title",
+			attrs: {},
+			children: [{ tag: "#text", attrs: {}, innerHTML: title }],
+		});
 		return this;
 	}
 

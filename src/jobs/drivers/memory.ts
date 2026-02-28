@@ -139,10 +139,7 @@ export class MemoryJobQueueDriver implements JobQueueDriver {
 		return jobId;
 	}
 
-	async claim(
-		count: number,
-		timeout: number,
-	): Promise<Job[]> {
+	async claim(count: number, timeout: number): Promise<Job[]> {
 		const now = Date.now();
 		const claimed: Job[] = [];
 
@@ -200,8 +197,7 @@ export class MemoryJobQueueDriver implements JobQueueDriver {
 		// Calculate duration
 		if (job.startedAt) {
 			job.duration =
-				new Date(job.completedAt).getTime() -
-				new Date(job.startedAt).getTime();
+				new Date(job.completedAt).getTime() - new Date(job.startedAt).getTime();
 			this.metrics.totalLatency += job.duration;
 		}
 

@@ -9,24 +9,32 @@
  * - Type-safe response helpers
  */
 
-import { createLogger, type Logger } from "../logger/index.js";
+import { type Logger, createLogger } from "../logger/index.js";
 import type {
+	APIContext,
+	APIMiddleware,
+	APIResponse,
 	APIRouteConfig,
-	PartialAPIRouteConfig,
 	APIRouteDefinition,
 	APIRouteHandler,
-	APIContext,
-	APIResponse,
-	APIMiddleware,
 	APIRouteModule,
 	HTTPMethod,
+	PartialAPIRouteConfig,
 } from "./types.js";
 
 // ============= Constants =============
 
 const DEFAULT_API_DIR = "pages/api";
 const SUPPORTED_EXTENSIONS = [".ts", ".js"];
-const SUPPORTED_METHODS: HTTPMethod[] = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
+const SUPPORTED_METHODS: HTTPMethod[] = [
+	"GET",
+	"POST",
+	"PUT",
+	"PATCH",
+	"DELETE",
+	"HEAD",
+	"OPTIONS",
+];
 
 // ============= API Route Manager Class =============
 
@@ -102,7 +110,10 @@ export class APIRouteManager {
 	/**
 	 * Process a single API file
 	 */
-	private async processAPIFile(filePath: string, basePath: string): Promise<void> {
+	private async processAPIFile(
+		filePath: string,
+		basePath: string,
+	): Promise<void> {
 		const fullPath = `${basePath}/${filePath}`;
 		const routePath = this.filePathToRoute(filePath);
 
@@ -136,14 +147,18 @@ export class APIRouteManager {
 		};
 
 		this.routes.set(routePath, route);
-		this.logger.debug(`Processed API route: ${routePath} [${methods.join(", ")}]`);
+		this.logger.debug(
+			`Processed API route: ${routePath} [${methods.join(", ")}]`,
+		);
 	}
 
 	/**
 	 * Load middlewares from _middleware.ts files
 	 */
 	private async loadMiddlewares(basePath: string): Promise<void> {
-		const glob = new Bun.Glob(`**/_middleware{${this.config.extensions.join(",")}}`);
+		const glob = new Bun.Glob(
+			`**/_middleware{${this.config.extensions.join(",")}}`,
+		);
 
 		try {
 			for await (const file of glob.scan(basePath)) {
@@ -261,7 +276,10 @@ export class APIRouteManager {
 	/**
 	 * Match a request to an API route
 	 */
-	match(method: string, pathname: string): { route: APIRouteDefinition; params: Record<string, string> } | null {
+	match(
+		method: string,
+		pathname: string,
+	): { route: APIRouteDefinition; params: Record<string, string> } | null {
 		for (const route of this.routes.values()) {
 			const match = pathname.match(route.regex);
 			if (match) {
@@ -316,8 +334,11 @@ export class APIRouteManager {
 		} catch (error) {
 			this.logger.error(`API error: ${pathname}`, error);
 			return this.jsonResponse(
-				{ error: "Internal Server Error", message: error instanceof Error ? error.message : "Unknown error" },
-				500
+				{
+					error: "Internal Server Error",
+					message: error instanceof Error ? error.message : "Unknown error",
+				},
+				500,
 			);
 		}
 	}
@@ -339,7 +360,7 @@ export class APIRouteManager {
 	 */
 	private async createContext(
 		request: Request,
-		params: Record<string, string>
+		params: Record<string, string>,
 	): Promise<APIContext> {
 		const url = new URL(request.url);
 
@@ -361,7 +382,10 @@ export class APIRouteManager {
 					body = await request.text();
 				}
 			} catch (error) {
-				this.logger.warn("Failed to parse request body", error as Record<string, unknown>);
+				this.logger.warn(
+					"Failed to parse request body",
+					error as Record<string, unknown>,
+				);
 			}
 		}
 
@@ -419,7 +443,7 @@ export class APIRouteManager {
 		context: APIContext,
 		middlewares: APIMiddleware[],
 		route: APIRouteDefinition,
-		method: HTTPMethod
+		method: HTTPMethod,
 	): Promise<Response> {
 		let index = 0;
 
@@ -509,7 +533,9 @@ export class APIRouteManager {
 /**
  * Create an API route manager
  */
-export function createAPIRouteManager(config: PartialAPIRouteConfig = {}): APIRouteManager {
+export function createAPIRouteManager(
+	config: PartialAPIRouteConfig = {},
+): APIRouteManager {
 	return new APIRouteManager(config);
 }
 
@@ -518,7 +544,11 @@ export function createAPIRouteManager(config: PartialAPIRouteConfig = {}): APIRo
 /**
  * Create a JSON response
  */
-export function json(data: unknown, status = 200, headers?: Record<string, string>): Response {
+export function json(
+	data: unknown,
+	status = 200,
+	headers?: Record<string, string>,
+): Response {
 	return new Response(JSON.stringify(data), {
 		status,
 		headers: {
@@ -531,7 +561,11 @@ export function json(data: unknown, status = 200, headers?: Record<string, strin
 /**
  * Create a text response
  */
-export function text(data: string, status = 200, headers?: Record<string, string>): Response {
+export function text(
+	data: string,
+	status = 200,
+	headers?: Record<string, string>,
+): Response {
 	return new Response(data, {
 		status,
 		headers: {
@@ -544,7 +578,11 @@ export function text(data: string, status = 200, headers?: Record<string, string
 /**
  * Create an HTML response
  */
-export function html(data: string, status = 200, headers?: Record<string, string>): Response {
+export function html(
+	data: string,
+	status = 200,
+	headers?: Record<string, string>,
+): Response {
 	return new Response(data, {
 		status,
 		headers: {
@@ -621,8 +659,10 @@ export function noContent(): Response {
  * Check if a file is an API route file
  */
 export function isAPIRouteFile(filename: string): boolean {
-	return SUPPORTED_EXTENSIONS.some(ext => filename.endsWith(ext)) && 
-		!filename.includes("_middleware");
+	return (
+		SUPPORTED_EXTENSIONS.some((ext) => filename.endsWith(ext)) &&
+		!filename.includes("_middleware")
+	);
 }
 
 /**
@@ -636,5 +676,7 @@ export function isMiddlewareFile(filename: string): boolean {
  * Get HTTP methods from module
  */
 export function getModuleMethods(module: APIRouteModule): HTTPMethod[] {
-	return SUPPORTED_METHODS.filter(method => typeof module[method] === "function");
+	return SUPPORTED_METHODS.filter(
+		(method) => typeof module[method] === "function",
+	);
 }

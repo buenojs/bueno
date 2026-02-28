@@ -4,12 +4,17 @@
  * Abstract base class for all channel implementations
  */
 
-import type { ChannelService, NotificationMessage, ChannelHealth } from "../types";
+import type {
+	ChannelHealth,
+	ChannelService,
+	NotificationMessage,
+} from "../types";
 
 // ============= Abstract Base Channel Service =============
 
-export abstract class BaseChannelService<T extends NotificationMessage = NotificationMessage>
-	implements ChannelService<T>
+export abstract class BaseChannelService<
+	T extends NotificationMessage = NotificationMessage,
+> implements ChannelService<T>
 {
 	abstract readonly name: string;
 	readonly configSchema?: unknown;
@@ -39,7 +44,11 @@ export abstract class BaseChannelService<T extends NotificationMessage = Notific
 	/**
 	 * Validate that value matches expected type
 	 */
-	protected validateField(value: unknown, expectedType: string, fieldName: string): void {
+	protected validateField(
+		value: unknown,
+		expectedType: string,
+		fieldName: string,
+	): void {
 		const actualType = typeof value;
 		if (actualType !== expectedType) {
 			throw new Error(
@@ -53,9 +62,7 @@ export abstract class BaseChannelService<T extends NotificationMessage = Notific
 	 */
 	protected validateRequired(value: unknown, fieldName: string): void {
 		if (value === undefined || value === null) {
-			throw new Error(
-				`Invalid ${this.name} message: ${fieldName} is required`,
-			);
+			throw new Error(`Invalid ${this.name} message: ${fieldName} is required`);
 		}
 	}
 }
