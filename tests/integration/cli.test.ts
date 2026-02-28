@@ -119,7 +119,7 @@ function createMinimalBuenoProject(projectDir: string): void {
 	);
 
 	// Create main.ts
-	const mainTs = `import { BuenoFactory } from 'bueno';
+	const mainTs = `import { BuenoFactory } from '@buenojs/bueno';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -133,7 +133,7 @@ bootstrap();
 	fs.writeFileSync(path.join(projectDir, 'server', 'main.ts'), mainTs);
 
 	// Create app.module.ts
-	const appModule = `import { Module } from 'bueno';
+	const appModule = `import { Module } from '@buenojs/bueno';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -149,8 +149,8 @@ export class AppModule {}
 	);
 
 	// Create app.controller.ts
-	const appController = `import { Controller, Get } from 'bueno';
-import type { Context } from 'bueno';
+	const appController = `import { Controller, Get } from '@buenojs/bueno';
+import type { Context } from '@buenojs/bueno';
 
 @Controller()
 export class AppController {
@@ -166,7 +166,7 @@ export class AppController {
 	);
 
 	// Create app.service.ts
-	const appService = `import { Injectable } from 'bueno';
+	const appService = `import { Injectable } from '@buenojs/bueno';
 
 @Injectable()
 export class AppService {
@@ -181,7 +181,7 @@ export class AppService {
 	);
 
 	// Create bueno.config.ts
-	const buenoConfig = `import { defineConfig } from 'bueno';
+	const buenoConfig = `import { defineConfig } from '@buenojs/bueno';
 
 export default defineConfig({
   server: {
@@ -320,8 +320,8 @@ describe('Code Generation', () => {
 			);
 
 			// Generate controller using template
-			const template = `import { Controller, Get, Post, Put, Delete } from 'bueno';
-import type { Context } from 'bueno';
+			const template = `import { Controller, Get, Post, Put, Delete } from '@buenojs/bueno';
+import type { Context } from '@buenojs/bueno';
 
 @Controller('{{path}}')
 export class {{pascalCase name}}Controller {
@@ -387,7 +387,7 @@ export class {{pascalCase name}}Controller {}`;
 				'users.service.ts',
 			);
 
-			const template = `import { Injectable } from 'bueno';
+			const template = `import { Injectable } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Service {
@@ -418,7 +418,7 @@ export class {{pascalCase name}}Service {
 				'posts.module.ts',
 			);
 
-			const template = `import { Module } from 'bueno';
+			const template = `import { Module } from '@buenojs/bueno';
 import { {{pascalCase name}}Controller } from './{{kebabCase name}}.controller';
 import { {{pascalCase name}}Service } from './{{kebabCase name}}.service';
 
@@ -452,7 +452,7 @@ export class {{pascalCase name}}Module {}`;
 				'auth.guard.ts',
 			);
 
-			const template = `import { Injectable, type CanActivate, type Context } from 'bueno';
+			const template = `import { Injectable, type CanActivate, type Context } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Guard implements CanActivate {
@@ -483,7 +483,7 @@ export class {{pascalCase name}}Guard implements CanActivate {
 				'logging.interceptor.ts',
 			);
 
-			const template = `import { Injectable, type NestInterceptor, type CallHandler, type Context } from 'bueno';
+			const template = `import { Injectable, type NestInterceptor, type CallHandler, type Context } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Interceptor implements NestInterceptor {
@@ -513,7 +513,7 @@ export class {{pascalCase name}}Interceptor implements NestInterceptor {
 				'validation.pipe.ts',
 			);
 
-			const template = `import { Injectable, type PipeTransform, type Context } from 'bueno';
+			const template = `import { Injectable, type PipeTransform, type Context } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Pipe implements PipeTransform {
@@ -543,7 +543,7 @@ export class {{pascalCase name}}Pipe implements PipeTransform {
 				'http-exception.filter.ts',
 			);
 
-			const template = `import { Injectable, type ExceptionFilter, type Context } from 'bueno';
+			const template = `import { Injectable, type ExceptionFilter, type Context } from '@buenojs/bueno';
 
 @Injectable()
 export class {{pascalCase name}}Filter implements ExceptionFilter {
@@ -606,7 +606,7 @@ export interface Update{{pascalCase name}}Dto extends Partial<Create{{pascalCase
 				'logger.middleware.ts',
 			);
 
-			const template = `import type { Middleware, Context, Handler } from 'bueno';
+			const template = `import type { Middleware, Context, Handler } from '@buenojs/bueno';
 
 export const {{camelCase name}}Middleware: Middleware = async (ctx: Context, next: Handler) => {
   return next();
@@ -639,7 +639,7 @@ export const {{camelCase name}}Middleware: Middleware = async (ctx: Context, nex
 
 			const expectedFileName = `${migrationId}_${kebabCase(migrationName)}.ts`;
 
-			const template = `import { createMigration, type MigrationRunner } from 'bueno';
+			const template = `import { createMigration, type MigrationRunner } from '@buenojs/bueno';
 
 export default createMigration('{{migrationId}}', '{{migrationName}}')
   .up(async (db: MigrationRunner) => {
@@ -730,8 +730,8 @@ describe('File Structure', () => {
 
 describe('Template Processing Integration', () => {
 	test('should process complex controller template', () => {
-		const template = `import { Controller{{#if path}}, Get, Post{{/if}} } from 'bueno';
-import type { Context } from 'bueno';
+		const template = `import { Controller{{#if path}}, Get, Post{{/if}} } from '@buenojs/bueno';
+import type { Context } from '@buenojs/bueno';
 {{#if service}}
 import { {{pascalCase service}}Service } from './{{kebabCase service}}.service';
 {{/if}}
@@ -763,7 +763,7 @@ export class {{pascalCase name}}Controller {
 	});
 
 	test('should process module template with multiple dependencies', () => {
-		const template = `import { Module } from 'bueno';
+		const template = `import { Module } from '@buenojs/bueno';
 import { {{pascalCase name}}Controller } from './{{kebabCase name}}.controller';
 import { {{pascalCase name}}Service } from './{{kebabCase name}}.service';
 

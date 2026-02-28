@@ -485,6 +485,13 @@ export class BuiltinGraphQLEngine implements GraphQLEngine {
 
 		// If sub-selections, recursively resolve object fields
 		if (sel.selections.length > 0 && rawResult !== null && rawResult !== undefined) {
+			if (Array.isArray(rawResult)) {
+				return Promise.all(
+					rawResult.map((item) =>
+						this.resolveObject(item, sel.selections, variables, context),
+					),
+				);
+			}
 			return this.resolveObject(rawResult, sel.selections, variables, context);
 		}
 

@@ -388,6 +388,37 @@ export class Application {
 	}
 
 	/**
+	 * Get the list of global guards (live reference).
+	 * Used by the GraphQL module to run guards on resolver methods.
+	 */
+	getGlobalGuards(): Guard[] {
+		return this.globalGuards;
+	}
+
+	/**
+	 * Get the list of global interceptors (live reference).
+	 * Used by the GraphQL module to run interceptors on resolver methods.
+	 */
+	getGlobalInterceptors(): Interceptor[] {
+		return this.globalInterceptors;
+	}
+
+	/**
+	 * Register a WebSocket handler to be used when the server starts.
+	 * Called by the GraphQL module to enable subscriptions on the same port.
+	 *
+	 * @example
+	 * ```typescript
+	 * app.setWebSocketHandler(subscriptionHandler.getWebSocketConfig());
+	 * await app.listen(3000);
+	 * ```
+	 */
+	// biome-ignore lint/suspicious/noExplicitAny: WebSocket data type is user-defined
+	setWebSocketHandler(handler: Bun.WebSocketHandler<any>): void {
+		this.websocketHandler = handler;
+	}
+
+	/**
 	 * Add global pipes that apply to all parameters
 	 * Global pipes run before parameter decorator pipes
 	 *
@@ -795,7 +826,21 @@ export class Application {
 		this.server = Bun.serve({
 			port,
 			hostname,
-			fetch: async (request: Request) => {
+			...(this.websocketHandler ? { websocket: this.websocketHandler } : {}),
+			fetch: async (request: Request, server: Bun.Server) => {
+				// Handle WebSocket upgrade requests for subscriptions
+				if (
+					this.websocketHandler &&
+					request.headers.get("upgrade")?.toLowerCase() === "websocket"
+				) {
+					// The GraphQL subscription handler may have registered an upgrade callback
+					const wsUpgradeHandler = (this.websocketHandler as unknown as { __upgradeHandler?: (req: Request, srv: Bun.Server) => Response | undefined }).__upgradeHandler;
+					if (wsUpgradeHandler) {
+						const response = wsUpgradeHandler(request, server);
+						if (response) return response;
+					}
+				}
+
 				// Reject new requests during shutdown
 				if (this.isShuttingDown) {
 					return new Response("Service Unavailable", { status: 503 });

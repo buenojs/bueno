@@ -85,11 +85,13 @@ export class SubscriptionHandler {
 	) {}
 
 	/**
-	 * Returns a Bun WebSocketHandler to register on the server.
-	 * Pass the returned config to app.setWebSocketHandler().
+	 * Returns a Bun WebSocketHandler to register on the server via app.setWebSocketHandler().
+	 * Attaches an __upgradeHandler so Application.listen() can delegate WebSocket upgrades.
 	 */
-	getWebSocketConfig(): Bun.WebSocketHandler<WsData> {
+	getWebSocketConfig(): Bun.WebSocketHandler<WsData> & { __upgradeHandler: (req: Request, srv: Bun.Server) => Response | undefined } {
+		const upgradeHandler = this.handleUpgrade.bind(this);
 		return {
+			__upgradeHandler: upgradeHandler,
 			open: (ws) => {
 				this.connections.set(ws.data.connectionId, {
 					subscriptions: new Map(),

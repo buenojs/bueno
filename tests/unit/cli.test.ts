@@ -1086,7 +1086,7 @@ describe('processTemplate', () => {
 	});
 
 	test('should handle complex template', () => {
-		const template = `import { Controller{{#if path}}, Get{{/if}} } from 'bueno';
+		const template = `import { Controller{{#if path}}, Get{{/if}} } from '@buenojs/bueno';
 
 @Controller('{{path}}')
 export class {{pascalCase name}}Controller {

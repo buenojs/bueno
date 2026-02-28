@@ -418,6 +418,9 @@ export {
 	type ObservabilityConfig,
 } from "./observability";
 
+// GraphQL
+export type { GraphQLConfig } from "./graphql/types";
+
 // Types
 export type {
 	HTTPMethod,
