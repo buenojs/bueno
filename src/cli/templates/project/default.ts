@@ -68,7 +68,7 @@ export class AppController {
   </ul>
   
   <h2>Documentation</h2>
-  <p>Visit <a href="https://bueno.github.io">https://bueno.github.io</a> for full documentation.</p>
+  <p>Visit <a href="https://buenojs.github.io">https://buenojs.github.io</a> for full documentation.</p>
   
   <h2>Quick Example</h2>
   <pre><code>@Controller('/api')

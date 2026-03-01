@@ -140,7 +140,7 @@ layout: default
 
 # Welcome to ${config.name}
 
-This is a static website built with [Bueno Framework](https://bueno.github.io).
+This is a static website built with [Bueno Framework](https://buenojs.github.io).
 
 ## Getting Started
 
@@ -159,7 +159,7 @@ layout: default
 
 # About This Website
 
-This is a static website built with [Bueno Framework](https://bueno.github.io).
+This is a static website built with [Bueno Framework](https://buenojs.github.io).
 
 ## Features
 
@@ -170,7 +170,7 @@ This is a static website built with [Bueno Framework](https://bueno.github.io).
 
 ## Getting Started
 
-Visit the [Bueno documentation](https://bueno.github.io) to learn more.
+Visit the [Bueno documentation](https://buenojs.github.io) to learn more.
 `,
 			},
 			{

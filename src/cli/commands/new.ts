@@ -235,7 +235,7 @@ bun run start
 
 ## Learn More
 
-- [Bueno Documentation](https://bueno.github.io)
+- [Bueno Documentation](https://buenojs.github.io)
 - [Bun Documentation](https://bun.sh/docs)
 `;
 }

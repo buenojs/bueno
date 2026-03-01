@@ -71,7 +71,7 @@ export function App() {
 
           <div className="mt-8 grid grid-cols-2 gap-4 text-left">
             <a
-              href="https://bueno.github.io"
+              href="https://buenojs.github.io"
               className="p-4 bg-slate-800/50 rounded-lg border border-slate-700 hover:border-blue-500 transition-colors"
             >
               <h3 className="font-semibold text-blue-400">Documentation</h3>

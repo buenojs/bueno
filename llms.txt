@@ -198,7 +198,7 @@ describe('UserController', () => {
 ```
 
 ## Documentation
-- **Main Documentation**: https://bueno.github.io
+- **Main Documentation**: https://buenojs.github.io
 - **GitHub Repository**: https://github.com/buenojs/bueno
 - **NPM Package**: https://www.npmjs.com/package/@buenojs/bueno
 

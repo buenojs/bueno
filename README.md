@@ -1246,7 +1246,7 @@ bun dev
 
 ## Links
 
-- **Documentation**: [https://bueno.github.io](https://bueno.github.io)
+- **Documentation**: [https://buenojs.github.io](https://buenojs.github.io)
 - **GitHub**: [https://github.com/buenojs/bueno](https://github.com/buenojs/bueno)
 - **Issues**: [https://github.com/buenojs/bueno/issues](https://github.com/buenojs/bueno/issues)
 - **npm**: [https://www.npmjs.com/package/@buenojs/bueno](https://www.npmjs.com/package/@buenojs/bueno)

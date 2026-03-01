@@ -1,6 +1,6 @@
 {
   "name": "@buenojs/bueno",
-  "version": "0.8.9",
+  "version": "0.8.10",
   "description": "A Bun-Native Full-Stack Framework",
   "type": "module",
   "main": "./dist/index.js",
