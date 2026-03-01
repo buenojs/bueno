@@ -31,7 +31,7 @@ export class AppController {
 				return Response.json({ message: 'Welcome to Bueno API!', version: '1.0.0' });
 		}
 
-		@Get('health')
+		@Get('/health')
 		health(ctx: Context) {
 				return Response.json({ status: 'ok', timestamp: new Date().toISOString() });
 		}

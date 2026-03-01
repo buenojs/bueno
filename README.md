@@ -71,7 +71,7 @@ server.listen(3000);
 
 ### `bueno new <name>`
 
-Create a new Bueno project.
+Create a new Bueno project with automatic frontend setup for fullstack template.
 
 ```bash
 bueno new my-app
@@ -80,9 +80,22 @@ bueno new my-fullstack --template fullstack --framework react
 bueno new my-app --database postgresql --docker
 ```
 
+**Two-Stage Fullstack Creation:**
+When using `--template fullstack`, Bueno creates your project in two stages:
+1. **Stage 1**: Creates the API backend with your chosen database
+2. **Stage 2**: Automatically runs `add:frontend` with your selected framework
+
+```bash
+# Creates API + React frontend together
+bueno new my-app --template fullstack --framework react
+
+# Creates API + Vue frontend together
+bueno new my-app --template fullstack --framework vue --database postgresql
+```
+
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--template` | `default` | Project template (`default`, `minimal`, `fullstack`, `api`) |
+| `--template` | `default` | Project template (`default`, `minimal`, `fullstack`, `api`, `website`) |
 | `--framework` | `react` | Frontend framework (`react`, `vue`, `svelte`, `solid`) |
 | `--database` | `sqlite` | Database type (`sqlite`, `postgresql`, `mysql`) |
 | `--docker` | `false` | Generate Docker configuration |
@@ -90,6 +103,54 @@ bueno new my-app --database postgresql --docker
 | `--skip-install` | `false` | Skip dependency installation |
 | `--skip-git` | `false` | Skip git initialization |
 | `--yes` | `false` | Use default options |
+
+### `bueno add:frontend <framework>`
+
+Add a frontend framework to an existing Bueno project.
+
+```bash
+# Interactive prompt to choose framework
+bueno add:frontend
+
+# Add React frontend
+bueno add:frontend react
+
+# Add Vue frontend
+bueno add:frontend vue
+
+# Add Svelte frontend
+bueno add:frontend svelte
+
+# Add SolidJS frontend
+bueno add:frontend solid
+
+# Skip dependency installation
+bueno add:frontend react --skip-install
+```
+
+**What Gets Added:**
+- `client/` directory with full frontend setup
+- Framework-specific entry point (`main.tsx` or `main.ts`)
+- Example components and styles
+- Tailwind CSS + PostCSS configuration
+- Bun bundler configuration (framework-optimized)
+- TypeScript configuration for client
+- Development scripts: `dev:server`, `dev:client`, `dev` (concurrent)
+- Build script: `build:client`
+
+**Supported Frameworks:**
+| Framework | Entry Point | JSX Mode |
+|-----------|-------------|----------|
+| React | `client/src/main.tsx` | `react-jsx` |
+| Vue | `client/src/main.ts` | N/A |
+| Svelte | `client/src/main.ts` | N/A |
+| SolidJS | `client/src/main.tsx` | `preserve` |
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `framework` (positional) | (interactive) | Frontend framework (`react`, `vue`, `svelte`, `solid`) |
+| `-f, --framework` | - | Frontend framework as option |
+| `--skip-install` | `false` | Skip dependency installation |
 
 ### `bueno dev`
 
@@ -978,25 +1039,81 @@ describe('UserController', () => {
 
 ## Frontend Support
 
-Bueno provides first-class support for modern frontend frameworks with SSR, SSG, and Island Architecture.
+Bueno provides first-class support for modern frontend frameworks with built-in Bun bundler integration, SSR, SSG, and Island Architecture.
+
+### Getting Started with Frontend
+
+**Option 1: Two-Stage Fullstack (Recommended)**
+```bash
+# Creates API backend + chosen frontend automatically
+bueno new my-app --template fullstack --framework react
+```
+
+**Option 2: Add Frontend to Existing Project**
+```bash
+bueno add:frontend react
+# or with other frameworks
+bueno add:frontend vue
+bueno add:frontend svelte
+bueno add:frontend solid
+```
 
 ### Supported Frameworks
 
-- **React** - Full support with SSR and hydration
-- **Vue** - Server-side rendering with Vue 3
-- **Svelte** - SvelteKit-like experience
-- **Solid** - SolidJS with SSR
+- **React** - Full support with SSR and hydration, Tailwind CSS included
+- **Vue** - Server-side rendering with Vue 3, Tailwind CSS included
+- **Svelte** - SvelteKit-like experience, Tailwind CSS included
+- **SolidJS** - SolidJS with SSR, Tailwind CSS included
 
-### Features
+### Built-in Features
 
 | Feature | Description |
 |---------|-------------|
-| **SSR** | Server-side rendering for SEO and performance |
-| **SSG** | Static site generation at build time |
-| **ISR** | Incremental Static Regeneration |
-| **Islands** | Interactive components with partial hydration |
-| **File-based Routing** | Automatic route generation from file structure |
-| **HMR** | Hot module replacement for instant updates |
+| **Bun Bundler** | Native Bun bundler with zero additional dependencies |
+| **Tailwind CSS** | Pre-configured with PostCSS and autoprefixer |
+| **TypeScript** | Full TypeScript support for client and server |
+| **HMR** | Hot module replacement for instant updates during development |
+| **Dev Scripts** | Convenient scripts for concurrent server/client development |
+| **Framework-Specific** | Optimized loader configurations for each framework |
+
+### Development Workflow
+
+After creating a fullstack project, you get two development modes:
+
+```bash
+# Terminal 1: Backend API
+bun run dev:server
+
+# Terminal 2: Frontend bundler
+bun run dev:client
+
+# Or run both concurrently
+bun run dev
+```
+
+### Project Structure (Fullstack)
+
+```
+my-bueno-app/
+├── server/              # Backend API
+│   ├── main.ts
+│   ├── modules/
+│   └── database/
+├── client/              # Frontend application
+│   ├── src/
+│   │   ├── main.tsx/main.ts  # Entry point
+│   │   ├── App.tsx/vue/svelte # Main component
+│   │   └── styles/            # Global styles (Tailwind)
+│   ├── public/          # Static assets
+│   ├── index.html       # HTML template
+│   ├── bun.bundler.ts   # Bun bundler config
+│   ├── tailwind.config.ts
+│   ├── postcss.config.js
+│   └── tsconfig.json
+├── bueno.config.ts
+├── package.json
+└── tsconfig.json
+```
 
 ### Example
 
@@ -1129,7 +1246,7 @@ bun dev
 
 ## Links
 
-- **Documentation**: [https://buenojs.dev](https://bueno.github.io)
+- **Documentation**: [https://bueno.github.io](https://bueno.github.io)
 - **GitHub**: [https://github.com/buenojs/bueno](https://github.com/buenojs/bueno)
 - **Issues**: [https://github.com/buenojs/bueno/issues](https://github.com/buenojs/bueno/issues)
 - **npm**: [https://www.npmjs.com/package/@buenojs/bueno](https://www.npmjs.com/package/@buenojs/bueno)

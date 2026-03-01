@@ -18,6 +18,7 @@ import { cliConsole, colors, setColorEnabled } from "./core/console";
 
 // Import commands to register them
 import "./commands/new";
+import "./commands/add-frontend";
 import "./commands/generate";
 import "./commands/migration";
 import "./commands/dev";

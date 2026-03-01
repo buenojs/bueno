@@ -9,6 +9,7 @@ import {
 	getOption,
 	getOptionValues,
 	hasFlag,
+	parseArgs,
 } from "../core/args";
 import { cliConsole, colors, printTable } from "../core/console";
 import { isInteractive, prompt, select } from "../core/prompt";
@@ -706,6 +707,28 @@ async function handleNew(args: ParsedArgs): Promise<void> {
 					"Failed to link @buenojs/bueno. Make sure you have run `bun link` in the bueno directory first.",
 				);
 			}
+		}
+	}
+
+	// Stage 2: For fullstack template, add frontend
+	if (template === "fullstack") {
+		cliConsole.subheader("Adding frontend framework...");
+
+		try {
+			const { registry } = await import("./index");
+			const args = parseArgs([
+				"add:frontend",
+				framework,
+				skipInstall ? "--skip-install" : null,
+				`--project-path=${projectPath}`,
+			].filter(Boolean) as string[]);
+
+			await registry.execute("add:frontend", args);
+		} catch (error) {
+			cliConsole.error(
+				`Failed to add frontend: ${error instanceof Error ? error.message : "Unknown error"}`,
+			);
+			cliConsole.warn("You can manually run: bueno add:frontend " + framework);
 		}
 	}
 

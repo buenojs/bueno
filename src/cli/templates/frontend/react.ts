@@ -94,7 +94,8 @@ export function App() {
 			},
 			{
 				path: "client/src/styles/globals.css",
-				content: `@tailwind base;
+				content: `/* PostCSS will process these directives */
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 

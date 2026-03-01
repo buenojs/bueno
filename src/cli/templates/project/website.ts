@@ -51,7 +51,7 @@ console.log('Build complete!');
 function renderDefaultLayout(ctx: LayoutContext): string {
   const title = ctx.page.frontmatter.title || ctx.site.title;
   const description = ctx.page.frontmatter.description || ctx.site.description;
-  
+
   return \`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -89,41 +89,41 @@ const PORT = 3001;
 
 async function serve() {
   console.log(\`Starting server at http://localhost:\${PORT}\`);
-  
+
   Bun.serve({
     port: PORT,
     async fetch(request) {
       const url = new URL(request.url);
       let path = url.pathname;
-      
+
       // Serve index.html for root
       if (path === '/') {
         path = '/index.html';
       }
-      
+
       // Try to serve from dist directory
       const filePath = \`./dist\${path}\`;
       const file = Bun.file(filePath);
-      
+
       if (await file.exists()) {
         return new Response(file);
       }
-      
+
       // For SPA-like behavior, try adding .html extension
       if (!path.includes('.')) {
         const htmlPath = \`./dist\${path}/index.html\`;
         const htmlFile = Bun.file(htmlPath);
-        
+
         if (await htmlFile.exists()) {
           return new Response(htmlFile);
         }
       }
-      
+
       // 404
       return new Response('Not Found', { status: 404 });
     },
   });
-  
+
   console.log(\`Server running at http://localhost:\${PORT}\`);
 }
 
@@ -140,7 +140,7 @@ layout: default
 
 # Welcome to ${config.name}
 
-This is a static website built with [Bueno Framework](https://buenojs.dev).
+This is a static website built with [Bueno Framework](https://bueno.github.io).
 
 ## Getting Started
 
@@ -148,6 +148,57 @@ This is a static website built with [Bueno Framework](https://buenojs.dev).
 2. Run \`bun run dev\` to start development
 3. Run \`bun run build\` to generate static files
 `,
+			},
+			{
+				path: "content/about.md",
+				content: `---
+title: About
+description: About this website
+layout: default
+---
+
+# About This Website
+
+This is a static website built with [Bueno Framework](https://bueno.github.io).
+
+## Features
+
+- Lightning fast static site generation
+- Markdown content support
+- Simple layout system
+- Zero JavaScript overhead
+
+## Getting Started
+
+Visit the [Bueno documentation](https://bueno.github.io) to learn more.
+`,
+			},
+			{
+				path: "layouts/default.html",
+				content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>\${ctx.page.frontmatter.title || ctx.site.title}</title>
+  <meta name="description" content="\${ctx.page.frontmatter.description || ctx.site.description}">
+  <link rel="stylesheet" href="\${ctx.site.baseUrl}styles/main.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <a href="\${ctx.site.baseUrl}">Home</a>
+      <a href="\${ctx.site.baseUrl}about">About</a>
+    </nav>
+  </header>
+  <main>
+    \${ctx.content}
+  </main>
+  <footer>
+    <p>&copy; \${new Date().getFullYear()} \${ctx.site.title}</p>
+  </footer>
+</body>
+</html>`,
 			},
 			{
 				path: "public/styles/main.css",
@@ -246,7 +297,7 @@ NODE_ENV=development
 `,
 			},
 		],
-		directories: ["src", "content", "public/styles", "layouts"],
+		directories: ["src", "content", "public", "public/styles", "layouts"],
 		dependencies: {
 			...getBuenoDependency(),
 		},
