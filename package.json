@@ -1,6 +1,6 @@
 {
   "name": "@buenojs/bueno",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "description": "A Bun-Native Full-Stack Framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -10,7 +10,7 @@
     "access": "public"
   },
   "bin": {
-    "bueno": "./dist/cli/index.js"
+    "bueno": "./dist/cli/bin.js"
   },
   "exports": {
     ".": {
