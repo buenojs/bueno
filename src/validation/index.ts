@@ -9,15 +9,14 @@ import type { Context } from "../context";
 import type {
 	Middleware,
 	StandardIssue,
-	StandardResult,
 	StandardSchema,
 } from "../types";
 
 // ============= Types =============
 
 export type ValidationResult<T> =
-	| { success: true; data: T }
-	| { success: false; issues: StandardIssue[] };
+	| { readonly success: true; readonly data: T }
+	| { readonly success: false; readonly issues: StandardIssue[] };
 
 export interface ValidatorOptions {
 	body?: StandardSchema;
@@ -153,9 +152,9 @@ export function createValidator(options: ValidatorOptions): Middleware {
 			if (!result.success) {
 				return context
 					.status(400)
-					.json({ error: "Validation failed", issues: result.issues });
+					.json({ error: "Validation failed", issues: (result as { success: false; issues: StandardIssue[] }).issues });
 			}
-			context.set("validatedBody", result.data);
+			context.set("validatedBody", (result as { success: true; data: unknown }).data);
 		}
 
 		// Validate query
@@ -164,9 +163,9 @@ export function createValidator(options: ValidatorOptions): Middleware {
 			if (!result.success) {
 				return context
 					.status(400)
-					.json({ error: "Validation failed", issues: result.issues });
+					.json({ error: "Validation failed", issues: (result as { success: false; issues: StandardIssue[] }).issues });
 			}
-			context.set("validatedQuery", result.data);
+			context.set("validatedQuery", (result as { success: true; data: unknown }).data);
 		}
 
 		// Validate params
@@ -175,9 +174,9 @@ export function createValidator(options: ValidatorOptions): Middleware {
 			if (!result.success) {
 				return context
 					.status(400)
-					.json({ error: "Validation failed", issues: result.issues });
+					.json({ error: "Validation failed", issues: (result as { success: false; issues: StandardIssue[] }).issues });
 			}
-			context.set("validatedParams", result.data);
+			context.set("validatedParams", (result as { success: true; data: unknown }).data);
 		}
 
 		// Validate headers
@@ -186,9 +185,9 @@ export function createValidator(options: ValidatorOptions): Middleware {
 			if (!result.success) {
 				return context
 					.status(400)
-					.json({ error: "Validation failed", issues: result.issues });
+					.json({ error: "Validation failed", issues: (result as { success: false; issues: StandardIssue[] }).issues });
 			}
-			context.set("validatedHeaders", result.data);
+			context.set("validatedHeaders", (result as { success: true; data: unknown }).data);
 		}
 
 		return next();
@@ -202,8 +201,8 @@ export function createValidator(options: ValidatorOptions): Middleware {
  */
 export function WithBody(schema: StandardSchema) {
 	return (
-		target: unknown,
-		propertyKey: string | symbol,
+		_target: unknown,
+		_propertyKey: string | symbol,
 		descriptor: PropertyDescriptor,
 	) => {
 		const original = descriptor.value;
@@ -212,9 +211,9 @@ export function WithBody(schema: StandardSchema) {
 			if (!result.success) {
 				return context
 					.status(400)
-					.json({ error: "Validation failed", issues: result.issues });
+					.json({ error: "Validation failed", issues: (result as { success: false; issues: StandardIssue[] }).issues });
 			}
-			context.set("body", result.data);
+			context.set("body", (result as { success: true; data: unknown }).data);
 			return original.call(this, context);
 		};
 		return descriptor;
@@ -226,8 +225,8 @@ export function WithBody(schema: StandardSchema) {
  */
 export function WithQuery(schema: StandardSchema) {
 	return (
-		target: unknown,
-		propertyKey: string | symbol,
+		_target: unknown,
+		_propertyKey: string | symbol,
 		descriptor: PropertyDescriptor,
 	) => {
 		const original = descriptor.value;
@@ -236,9 +235,9 @@ export function WithQuery(schema: StandardSchema) {
 			if (!result.success) {
 				return context
 					.status(400)
-					.json({ error: "Validation failed", issues: result.issues });
+					.json({ error: "Validation failed", issues: (result as { success: false; issues: StandardIssue[] }).issues });
 			}
-			context.set("query", result.data);
+			context.set("query", (result as { success: true; data: unknown }).data);
 			return original.call(this, context);
 		};
 		return descriptor;
@@ -294,7 +293,7 @@ export async function validateEnv<T>(
 
 		if (!result.success) {
 			// Format error messages with context
-			const formattedIssues = result.issues.map((issue) => {
+			const formattedIssues = (result as { success: false; issues: StandardIssue[] }).issues.map((issue) => {
 				const path = issue.path?.join(".") || "root";
 				return {
 					...issue,
@@ -338,7 +337,7 @@ export function validateEnvSync<T>(
 
 		if (!result.success) {
 			// Format error messages with context
-			const formattedIssues = result.issues.map((issue) => {
+			const formattedIssues = (result as { success: false; issues: StandardIssue[] }).issues.map((issue) => {
 				const path = issue.path?.join(".") || "root";
 				return {
 					...issue,

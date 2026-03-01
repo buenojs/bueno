@@ -48,17 +48,20 @@ const builtinFilters: FilterRegistry = {
 		return false;
 	},
 	date: (value, format = "YYYY-MM-DD") => {
-		if (!(value instanceof Date)) {
-			value = new Date(value);
+		let dateObj: Date;
+		if (value instanceof Date) {
+			dateObj = value;
+		} else {
+			dateObj = new Date(value as string | number);
 		}
-		if (isNaN(value.getTime())) return String(value);
+		if (isNaN(dateObj.getTime())) return String(value);
 
-		const year = value.getFullYear();
-		const month = String(value.getMonth() + 1).padStart(2, "0");
-		const date = String(value.getDate()).padStart(2, "0");
-		const hours = String(value.getHours()).padStart(2, "0");
-		const minutes = String(value.getMinutes()).padStart(2, "0");
-		const seconds = String(value.getSeconds()).padStart(2, "0");
+		const year = dateObj.getFullYear();
+		const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+		const date = String(dateObj.getDate()).padStart(2, "0");
+		const hours = String(dateObj.getHours()).padStart(2, "0");
+		const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+		const seconds = String(dateObj.getSeconds()).padStart(2, "0");
 
 		return (format as string)
 			.replace("YYYY", String(year))

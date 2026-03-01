@@ -63,7 +63,7 @@ function parseFrontMatter(content: string): {
 		else if (value === "false") value = false;
 		else if (value === "null") value = null;
 		else if (!isNaN(Number(value)) && value !== "") value = Number(value);
-		else if (value.startsWith("[") && value.endsWith("]")) {
+		else if (typeof value === "string" && value.startsWith("[") && value.endsWith("]")) {
 			// Parse simple arrays: [email, sms, push] or ["email", "sms", "push"]
 			const arrayContent = value.slice(1, -1).trim();
 			value = arrayContent.split(",").map((v) => {

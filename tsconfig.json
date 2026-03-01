@@ -27,7 +27,7 @@
     "strictPropertyInitialization": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "tests"],
+  "exclude": ["node_modules", "dist", "tests", "src/events/**/*", "src/openapi/__tests__/**/*"],
   "ts-node": {
     "transpileOnly": true,
     "compilerOptions": {
